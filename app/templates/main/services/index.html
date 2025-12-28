@@ -29,9 +29,11 @@
                 <tr>
                   <td>
                     <div class="table-title">{{ service.name }}</div>
-                    <div class="muted">{{ service.description or "Sin descripcion" }}</div>
+                    <div class="muted">
+                      {{ service.description|default("Sin descripcion")|truncate(50, True, "...") }}
+                    </div>
                   </td>
-                  <td>${{ "%.2f"|format(service.base_price or 0) }}</td>
+                  <td>$ {{ service.base_price|currency }}</td>
                   <td>
                     {% if service.is_active %}
                       <span class="status success">Activo</span>

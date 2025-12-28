@@ -8,40 +8,137 @@
   <section class="panel settings-panel">
     <div class="panel-header">
       <h2>Marca del taller</h2>
-      <span class="pill">SaaS</span>
     </div>
     <div class="panel-body">
       <form method="post" enctype="multipart/form-data" class="settings-form">
         {{ form.hidden_tag() }}
-        <div class="form-grid">
-          <label>
-            Nombre del taller
-            {{ form.name(class_="input") }}
-          </label>
-          <label>
-            Color primario
-            {{ form.primary_color(class_="input", type="color") }}
-          </label>
-          <label>
-            Color secundario
-            {{ form.secondary_color(class_="input", type="color") }}
-          </label>
-          <label>
-            Color acento
-            {{ form.accent_color(class_="input", type="color") }}
-          </label>
-          <label>
-            Fondo
-            {{ form.background_color(class_="input", type="color") }}
-          </label>
-          <label>
-            Logo del taller
-            {{ form.logo(class_="input") }}
-          </label>
-          <label>
-            Favicon
-            {{ form.favicon(class_="input") }}
-          </label>
+        <label class="full-width">
+          Nombre del taller
+          {{ form.name(class_="input") }}
+        </label>
+        <div class="settings-columns">
+          <div class="settings-column">
+            <div class="settings-section">
+              <div class="section-title">Colores</div>
+              <label>
+                Color primario
+                <div class="color-field">
+                  {{ form.primary_color(class_="input color-input", type="color", data_key="primary") }}
+                  <span class="color-swatch" data-swatch="primary"></span>
+                  <span class="color-value" data-value="primary"></span>
+                </div>
+              </label>
+              <label>
+                Color secundario
+                <div class="color-field">
+                  {{ form.secondary_color(class_="input color-input", type="color", data_key="secondary") }}
+                  <span class="color-swatch" data-swatch="secondary"></span>
+                  <span class="color-value" data-value="secondary"></span>
+                </div>
+              </label>
+              <label>
+                Color acento
+                <div class="color-field">
+                  {{ form.accent_color(class_="input color-input", type="color", data_key="accent") }}
+                  <span class="color-swatch" data-swatch="accent"></span>
+                  <span class="color-value" data-value="accent"></span>
+                </div>
+              </label>
+              <label>
+                Fondo
+                <div class="color-field">
+                  {{ form.background_color(class_="input color-input", type="color", data_key="background") }}
+                  <span class="color-swatch" data-swatch="background"></span>
+                  <span class="color-value" data-value="background"></span>
+                </div>
+              </label>
+              <div class="theme-presets">
+                <div class="theme-header">
+                  <h3>Temas rapidos</h3>
+                  <p class="muted">Elige una paleta base y ajusta despues si quieres.</p>
+                </div>
+                <label>
+                  Seleccionar tema
+                  <select class="input theme-select">
+                    <option value="">Personalizado</option>
+                    <option
+                      value="azul"
+                      data-primary="#1f4cff"
+                      data-secondary="#19b36b"
+                      data-accent="#ff8c2b"
+                      data-background="#f6f7fb"
+                    >
+                      Azul taller
+                    </option>
+                    <option
+                      value="costa"
+                      data-primary="#0f766e"
+                      data-secondary="#38bdf8"
+                      data-accent="#f97316"
+                      data-background="#f0fdfa"
+                    >
+                      Costa verde
+                    </option>
+                    <option
+                      value="grafito"
+                      data-primary="#111827"
+                      data-secondary="#6b7280"
+                      data-accent="#facc15"
+                      data-background="#f9fafb"
+                    >
+                      Grafito
+                    </option>
+                    <option
+                      value="neon"
+                      data-primary="#7c3aed"
+                      data-secondary="#fb7185"
+                      data-accent="#22d3ee"
+                      data-background="#fdf2f8"
+                    >
+                      Neon suave
+                    </option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="settings-column">
+            <div class="settings-section">
+              <div class="section-title">Logo y favicon</div>
+              <label>
+                Logo del taller
+                {{ form.logo(class_="input", id="logo") }}
+                <span class="field-hint">Recomendado 240x240px</span>
+                {% if workshop.logo_path %}
+                  <div class="file-actions">
+                    <button
+                      class="button button-ghost button-compact remove-upload"
+                      type="button"
+                      data-action="{{ url_for('main.settings_remove_logo') }}"
+                    >
+                      Eliminar logo
+                    </button>
+                  </div>
+                {% endif %}
+              </label>
+              <label>
+                Favicon
+                {{ form.favicon(class_="input", id="favicon") }}
+                <span class="field-hint">Recomendado 32x32px</span>
+                {% if workshop.favicon_path %}
+                  <div class="file-actions">
+                    <button
+                      class="button button-ghost button-compact remove-upload"
+                      type="button"
+                      data-action="{{ url_for('main.settings_remove_favicon') }}"
+                    >
+                      Eliminar favicon
+                    </button>
+                  </div>
+                {% endif %}
+              </label>
+            </div>
+          </div>
         </div>
         <div class="settings-preview">
           <div class="preview-card">
@@ -60,4 +157,72 @@
       </form>
     </div>
   </section>
+  <script>
+    const colorInputs = document.querySelectorAll(".color-input");
+
+    const updatePreview = (input) => {
+      const key = input.dataset.key;
+      const swatch = document.querySelector(`[data-swatch="${key}"]`);
+      const value = document.querySelector(`[data-value="${key}"]`);
+      if (!swatch || !value) {
+        return;
+      }
+      swatch.style.background = input.value;
+      value.textContent = input.value.toUpperCase();
+    };
+
+    colorInputs.forEach((input) => {
+      updatePreview(input);
+      input.addEventListener("input", () => updatePreview(input));
+    });
+
+    const themeSelect = document.querySelector(".theme-select");
+    if (themeSelect) {
+      themeSelect.addEventListener("change", () => {
+        const selected = themeSelect.options[themeSelect.selectedIndex];
+        if (!selected || !selected.dataset.primary) {
+          return;
+        }
+        const mapping = {
+          primary: selected.dataset.primary,
+          secondary: selected.dataset.secondary,
+          accent: selected.dataset.accent,
+          background: selected.dataset.background,
+        };
+
+        colorInputs.forEach((input) => {
+          const key = input.dataset.key;
+          if (mapping[key]) {
+            input.value = mapping[key];
+            updatePreview(input);
+          }
+        });
+      });
+    }
+
+    document.querySelectorAll(".remove-upload").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const action = button.dataset.action;
+        const csrfToken = document.querySelector('input[name="csrf_token"]');
+        if (!action || !csrfToken) {
+          return;
+        }
+        button.disabled = true;
+        const payload = new FormData();
+        payload.append("csrf_token", csrfToken.value);
+        const response = await fetch(action, {
+          method: "POST",
+          body: payload,
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        });
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          button.disabled = false;
+        }
+      });
+    });
+  </script>
 {% endblock %}

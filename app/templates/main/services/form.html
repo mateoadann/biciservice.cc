@@ -22,7 +22,11 @@
           </label>
           <label>
             Precio base
-            {{ form.base_price(class_="input", placeholder="0.00") }}
+            {% set base_value = form.base_price._value() %}
+            {% if not base_value and initial_base_price is not none %}
+              {% set base_value = initial_base_price|currency %}
+            {% endif %}
+            {{ form.base_price(class_="input", inputmode="decimal", value=base_value) }}
           </label>
           <label>
             Descripcion
@@ -38,6 +42,35 @@
           <a class="button button-ghost" href="{{ url_for('main.services') }}">Cancelar</a>
         </div>
       </form>
+      <script>
+        const priceInput = document.querySelector('input[name="base_price"]');
+
+        const formatCurrency = (value) => {
+          if (!value) {
+            return "";
+          }
+          const cleaned = value.replace(/[^\d,]/g, "");
+          const parts = cleaned.split(",");
+          const intPart = parts[0] || "";
+          const decRaw = parts[1] || "";
+          const decPart = decRaw.slice(0, 2);
+          const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+          if (cleaned.includes(",")) {
+            return `${intFormatted},${decPart}`;
+          }
+          return intFormatted;
+        };
+
+        if (priceInput) {
+          priceInput.value = formatCurrency(priceInput.value);
+          priceInput.addEventListener("input", () => {
+            priceInput.value = formatCurrency(priceInput.value);
+          });
+          priceInput.addEventListener("blur", () => {
+            priceInput.value = formatCurrency(priceInput.value);
+          });
+        }
+      </script>
     </div>
   </section>
 {% endblock %}

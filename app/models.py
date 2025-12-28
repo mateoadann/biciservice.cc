@@ -90,7 +90,7 @@ class Bicycle(db.Model):
     client_id = db.Column(db.Integer, db.ForeignKey("clients.id"), nullable=False)
     brand = db.Column(db.String(80))
     model = db.Column(db.String(80))
-    serial_number = db.Column(db.String(80))
+    description = db.Column(db.String(300))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     jobs = db.relationship("Job", backref="bicycle", lazy=True)

@@ -20,7 +20,7 @@
               <tr>
                 <th>Marca</th>
                 <th>Modelo</th>
-                <th>Serie</th>
+                <th>Descripcion</th>
                 <th>Cliente</th>
                 <th></th>
               </tr>
@@ -30,7 +30,7 @@
                 <tr>
                   <td>{{ bicycle.brand or "-" }}</td>
                   <td>{{ bicycle.model or "-" }}</td>
-                  <td>{{ bicycle.serial_number or "-" }}</td>
+                  <td>{{ bicycle.description or "-" }}</td>
                   <td>{{ bicycle.client.full_name }}</td>
                   <td class="table-actions">
                     <a class="button button-ghost" href="{{ url_for('main.bicycles_edit', bicycle_id=bicycle.id) }}">Editar</a>

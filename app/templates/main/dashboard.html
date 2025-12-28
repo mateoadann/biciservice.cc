@@ -30,73 +30,68 @@
     <div class="panel">
       <div class="panel-header">
         <h2>Agenda de trabajo</h2>
-        <span class="pill">Hoy</span>
       </div>
       <div class="panel-body">
-        <div class="timeline">
-          <div class="timeline-item">
-            <div class="timeline-dot"></div>
-            <div>
-              <div class="timeline-title">Checklist rapido</div>
-              <div class="muted">Revisar frenos y cambios</div>
-            </div>
-            <span class="chip">Pendiente</span>
+        {% if agenda_jobs %}
+          <div class="timeline">
+            {% for job in agenda_jobs %}
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div>
+                  <div class="timeline-title">{{ job.bicycle.client.full_name }}</div>
+                  <div class="muted">
+                    {{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}
+                    {% if job.items %}
+                      · {{ job.items[0].service_type.name }}
+                    {% endif %}
+                  </div>
+                </div>
+                <span class="chip {{ job.status }}">
+                  {% if job.status == "open" %}Abierto{% endif %}
+                  {% if job.status == "in_progress" %}En progreso{% endif %}
+                  {% if job.status == "ready" %}Listo{% endif %}
+                  {% if job.status == "closed" %}Cerrado{% endif %}
+                </span>
+              </div>
+            {% endfor %}
           </div>
-          <div class="timeline-item">
-            <div class="timeline-dot"></div>
-            <div>
-              <div class="timeline-title">Service premium</div>
-              <div class="muted">Limpieza profunda + ajuste</div>
-            </div>
-            <span class="chip accent">En taller</span>
+        {% else %}
+          <div class="empty-state">
+            <h3>Sin trabajos cargados</h3>
+            <p class="muted">Cuando registres trabajos apareceran aca.</p>
+            <a class="button" href="{{ url_for('main.jobs_create') }}">Crear trabajo</a>
           </div>
-          <div class="timeline-item">
-            <div class="timeline-dot"></div>
-            <div>
-              <div class="timeline-title">Entrega</div>
-              <div class="muted">Cliente Lopez - Bicicleta urbana</div>
-            </div>
-            <span class="chip success">Listo</span>
-          </div>
-        </div>
+        {% endif %}
       </div>
     </div>
     <div class="panel">
       <div class="panel-header">
-        <h2>Metricas del taller</h2>
-        <span class="pill">Semana</span>
+        <h2>Resumen del taller</h2>
       </div>
       <div class="panel-body">
-        <div class="metric">
-          <div>
-            <div class="metric-label">Ingresos</div>
-            <div class="metric-value">$12,480</div>
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="summary-label">Ingresos</div>
+            <div class="summary-value">$ {{ summary.revenue|currency }}</div>
           </div>
-          <div class="metric-bar">
-            <div class="metric-fill" style="width: 74%"></div>
+          <div class="summary-card">
+            <div class="summary-label">Trabajos abiertos</div>
+            <div class="summary-value">{{ summary.open + summary.in_progress }}</div>
           </div>
-        </div>
-        <div class="metric">
-          <div>
-            <div class="metric-label">Satisfaccion</div>
-            <div class="metric-value">96%</div>
+          <div class="summary-card">
+            <div class="summary-label">Trabajos listos</div>
+            <div class="summary-value">{{ summary.ready }}</div>
           </div>
-          <div class="metric-bar">
-            <div class="metric-fill accent" style="width: 96%"></div>
-          </div>
-        </div>
-        <div class="metric">
-          <div>
-            <div class="metric-label">Tiempo promedio</div>
-            <div class="metric-value">2.4 dias</div>
-          </div>
-          <div class="metric-bar">
-            <div class="metric-fill secondary" style="width: 62%"></div>
+          <div class="summary-card">
+            <div class="summary-label">Services activos</div>
+            <div class="summary-value">{{ summary.services_active }}</div>
           </div>
         </div>
-        <div class="panel-note">
-          Dashboard inicial. Los datos reales se mostraran al cargar clientes y trabajos.
-        </div>
+        {% if summary.revenue == 0 and counts.jobs == 0 %}
+          <div class="panel-note">
+            Crea services y trabajos para ver ingresos y rendimiento.
+          </div>
+        {% endif %}
       </div>
     </div>
   </section>

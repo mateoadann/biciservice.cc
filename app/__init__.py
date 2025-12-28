@@ -1,4 +1,5 @@
 import os
+from decimal import Decimal, InvalidOperation
 from flask import Flask, g, session
 from flask_login import current_user
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -64,5 +65,20 @@ def create_app(config_class=Config):
         else:
             theme = default_theme
         return {"theme": theme}
+
+    def format_currency(value):
+        if value is None:
+            return "-"
+        try:
+            if isinstance(value, Decimal):
+                numeric = value
+            else:
+                numeric = Decimal(str(value))
+            formatted = f"{numeric:,.2f}"
+        except (InvalidOperation, ValueError, TypeError):
+            return str(value)
+        return formatted.replace(",", "X").replace(".", ",").replace("X", ".")
+
+    app.jinja_env.filters["currency"] = format_currency
 
     return app

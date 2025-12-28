@@ -19,10 +19,12 @@
             <thead>
               <tr>
                 <th>Bicicleta</th>
-                <th>Service</th>
-                <th>Estado</th>
-                <th>Fecha</th>
-                <th></th>
+                <th class="show-mobile">Ver</th>
+                <th class="hide-mobile">Service</th>
+                <th class="hide-mobile">Estado</th>
+                <th class="hide-mobile">Estado rapido</th>
+                <th class="hide-mobile">Fecha</th>
+                <th class="hide-mobile"></th>
               </tr>
             </thead>
             <tbody>
@@ -32,14 +34,21 @@
                     <div class="table-title">{{ job.bicycle.client.full_name }}</div>
                     <div class="muted">{{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}</div>
                   </td>
-                  <td>
+                  <td class="show-mobile">
+                    <button class="button button-ghost button-compact job-modal-trigger" type="button" data-target="job-details-{{ job.id }}">Ver</button>
+                  </td>
+                  <td class="hide-mobile">
                     {% if job.items %}
-                      {{ job.items[0].service_type.name }} x{{ job.items[0].quantity }}
+                      <div class="chip-list">
+                        {% for item in job.items %}
+                          <span class="chip">{{ item.service_type.name }}</span>
+                        {% endfor %}
+                      </div>
                     {% else %}
                       Sin service
                     {% endif %}
                   </td>
-                  <td>
+                  <td class="hide-mobile">
                     <span class="status {{ job.status }}">
                       {% if job.status == "open" %}Abierto{% endif %}
                       {% if job.status == "in_progress" %}En progreso{% endif %}
@@ -47,8 +56,25 @@
                       {% if job.status == "closed" %}Cerrado{% endif %}
                     </span>
                   </td>
-                  <td>{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "" }}</td>
-                  <td class="table-actions">
+                  <td class="hide-mobile">
+                    <form method="post" action="{{ url_for('main.jobs_status', job_id=job.id) }}" class="inline-form status-form">
+                      {{ status_form.csrf_token }}
+                      <select name="status" class="input input-compact">
+                        <option value="open" {% if job.status == "open" %}selected{% endif %}>Abierto</option>
+                        <option value="in_progress" {% if job.status == "in_progress" %}selected{% endif %}>En progreso</option>
+                        <option value="ready" {% if job.status == "ready" %}selected{% endif %}>Listo</option>
+                        <option value="closed" {% if job.status == "closed" %}selected{% endif %}>Cerrado</option>
+                      </select>
+                      <button class="button button-ghost button-compact icon-button" type="submit" aria-label="Actualizar estado">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M21 12a9 9 0 1 1-2.64-6.36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M21 3v6h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </button>
+                    </form>
+                  </td>
+                  <td class="hide-mobile">{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "" }}</td>
+                  <td class="table-actions hide-mobile">
                     <a class="button button-ghost" href="{{ url_for('main.jobs_edit', job_id=job.id) }}">Editar</a>
                     <form method="post" action="{{ url_for('main.jobs_delete', job_id=job.id) }}" class="inline-form">
                       {{ delete_form.hidden_tag() }}
@@ -56,6 +82,54 @@
                     </form>
                   </td>
                 </tr>
+                <template id="job-details-{{ job.id }}">
+                  <div class="modal-section">
+                    <div class="modal-title">Bicicleta</div>
+                    <div>{{ job.bicycle.client.full_name }}</div>
+                    <div class="muted">{{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}</div>
+                  </div>
+                  <div class="modal-section">
+                    <div class="modal-title">Estado</div>
+                    <div>
+                      {% if job.status == "open" %}Abierto{% endif %}
+                      {% if job.status == "in_progress" %}En progreso{% endif %}
+                      {% if job.status == "ready" %}Listo{% endif %}
+                      {% if job.status == "closed" %}Cerrado{% endif %}
+                    </div>
+                  </div>
+                  <div class="modal-section">
+                    <div class="modal-title">Services</div>
+                    {% if job.items %}
+                      <div class="modal-list">
+                        {% set total = namespace(value=0) %}
+                        {% for item in job.items %}
+                          {% set item_total = (item.unit_price or 0) * item.quantity %}
+                          {% set total.value = total.value + item_total %}
+                          <div class="modal-row">
+                            <span>{{ item.service_type.name }}</span>
+                            <span>$ {{ item.unit_price|currency }}</span>
+                          </div>
+                        {% endfor %}
+                      </div>
+                      <div class="modal-total">
+                        <span>Total</span>
+                        <span>$ {{ total.value|currency }}</span>
+                      </div>
+                    {% else %}
+                      <div class="muted">Sin services asignados.</div>
+                    {% endif %}
+                  </div>
+                  <div class="modal-section">
+                    <div class="modal-title">Fecha</div>
+                    <div>{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "" }}</div>
+                  </div>
+                  {% if job.notes %}
+                    <div class="modal-section">
+                      <div class="modal-title">Notas</div>
+                      <div>{{ job.notes }}</div>
+                    </div>
+                  {% endif %}
+                </template>
               {% endfor %}
             </tbody>
           </table>
@@ -69,4 +143,55 @@
       {% endif %}
     </div>
   </section>
+  <div class="modal-overlay" id="jobModal" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Detalle del trabajo</h3>
+        <button class="modal-close" type="button" aria-label="Cerrar">X</button>
+      </div>
+      <div class="modal-body"></div>
+    </div>
+  </div>
+  <script>
+    const modal = document.querySelector("#jobModal");
+    const modalBody = modal ? modal.querySelector(".modal-body") : null;
+    const modalClose = modal ? modal.querySelector(".modal-close") : null;
+
+    const closeModal = () => {
+      if (modal) {
+        modal.classList.remove("is-open");
+        modal.setAttribute("aria-hidden", "true");
+      }
+    };
+
+    document.querySelectorAll(".job-modal-trigger").forEach((button) => {
+      button.addEventListener("click", () => {
+        const targetId = button.dataset.target;
+        const template = document.querySelector(`#${targetId}`);
+        if (template && modalBody) {
+          modalBody.innerHTML = template.innerHTML;
+          modal.classList.add("is-open");
+          modal.setAttribute("aria-hidden", "false");
+        }
+      });
+    });
+
+    if (modalClose) {
+      modalClose.addEventListener("click", closeModal);
+    }
+
+    if (modal) {
+      modal.addEventListener("click", (event) => {
+        if (event.target === modal) {
+          closeModal();
+        }
+      });
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeModal();
+      }
+    });
+  </script>
 {% endblock %}

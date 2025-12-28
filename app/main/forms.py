@@ -1,10 +1,12 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
+from decimal import Decimal, InvalidOperation
+
 from wtforms import (
     BooleanField,
     DecimalField,
-    IntegerField,
     SelectField,
+    SelectMultipleField,
     StringField,
     TextAreaField,
 )
@@ -14,6 +16,36 @@ from ..config import Config
 
 
 HEX_COLOR = Regexp(r"^#(?:[0-9a-fA-F]{3}){1,2}$", message="Use hex color")
+
+
+def _format_decimal(value: Decimal) -> str:
+    formatted = f"{value:,.2f}"
+    return formatted.replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+class LocalizedDecimalField(DecimalField):
+    def _value(self):
+        if self.data is None:
+            return ""
+        try:
+            return _format_decimal(self.data)
+        except (InvalidOperation, ValueError, TypeError):
+            return str(self.data)
+
+    def process_formdata(self, valuelist):
+        if not valuelist:
+            self.data = None
+            return
+        raw = valuelist[0].strip()
+        if raw == "":
+            self.data = None
+            return
+        normalized = raw.replace(".", "").replace(",", ".")
+        try:
+            self.data = Decimal(normalized)
+        except InvalidOperation as exc:
+            self.data = None
+            raise ValueError(self.gettext("Not a valid decimal value.")) from exc
 
 
 class WorkshopSettingsForm(FlaskForm):
@@ -32,17 +64,43 @@ class ClientForm(FlaskForm):
     phone = StringField("Phone", validators=[Optional(), Length(max=40)])
 
 
+BRAND_CHOICES = [
+    "Specialized",
+    "BMC",
+    "BH",
+    "Cannodale",
+    "Canyon",
+    "Cervelo",
+    "Cube",
+    "Giant",
+    "Marin",
+    "Megamo",
+    "Merida",
+    "Orbea",
+    "Otra",
+    "Pinarello",
+    "Santa Cruz",
+    "Sava",
+    "Scott",
+    "Trek",
+    "Vairo",
+    "Venzo",
+    "Volta",
+]
+
+
 class BicycleForm(FlaskForm):
     client_id = SelectField("Cliente", coerce=int, validators=[DataRequired()])
-    brand = StringField("Marca", validators=[Optional(), Length(max=80)])
+    brand_text = StringField("Marca", validators=[Optional(), Length(max=80)])
+    brand_select = SelectField("Marca", validators=[Optional()], choices=[])
     model = StringField("Modelo", validators=[Optional(), Length(max=80)])
-    serial_number = StringField("Serie", validators=[Optional(), Length(max=80)])
+    description = TextAreaField("Descripcion", validators=[Optional(), Length(max=300)])
 
 
 class ServiceTypeForm(FlaskForm):
     name = StringField("Nombre", validators=[DataRequired(), Length(max=120)])
     description = TextAreaField("Descripcion", validators=[Optional(), Length(max=500)])
-    base_price = DecimalField(
+    base_price = LocalizedDecimalField(
         "Precio base", validators=[Optional(), NumberRange(min=0)], places=2
     )
     is_active = BooleanField("Activo")
@@ -61,12 +119,21 @@ class JobForm(FlaskForm):
         validators=[DataRequired()],
     )
     notes = TextAreaField("Notas", validators=[Optional(), Length(max=1000)])
-    service_type_id = SelectField("Service", coerce=int, validators=[Optional()])
-    quantity = IntegerField(
-        "Cantidad", validators=[Optional(), NumberRange(min=1)], default=1
+    service_type_ids = SelectMultipleField(
+        "Services", coerce=int, validators=[Optional()]
     )
-    unit_price = DecimalField(
-        "Precio unitario", validators=[Optional(), NumberRange(min=0)], places=2
+
+
+class JobStatusForm(FlaskForm):
+    status = SelectField(
+        "Estado",
+        choices=[
+            ("open", "Abierto"),
+            ("in_progress", "En progreso"),
+            ("ready", "Listo"),
+            ("closed", "Cerrado"),
+        ],
+        validators=[DataRequired()],
     )
 
 

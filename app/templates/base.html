@@ -6,6 +6,8 @@
     <title>{{ theme.name }} | Service Bicycle CRM</title>
     {% if theme.favicon_path %}
       <link rel="icon" href="{{ url_for('static', filename=theme.favicon_path) }}">
+    {% else %}
+      <link rel="icon" href="{{ url_for('static', filename='css/favicon_bike1.png') }}">
     {% endif %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,7 +25,8 @@
   <body>
     <div class="page">
       <aside class="sidebar">
-        <div class="brand">
+        <div class="sidebar-header">
+          <a class="brand brand-link" href="{{ url_for('main.dashboard') }}">
           {% if theme.logo_path %}
             <img src="{{ url_for('static', filename=theme.logo_path) }}" alt="{{ theme.name }} logo">
           {% else %}
@@ -33,8 +36,12 @@
             <div class="brand-title">{{ theme.name }}</div>
             <div class="brand-subtitle">Service Bicycle CRM</div>
           </div>
+          </a>
+          <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="sidebarNav">
+            Menu
+          </button>
         </div>
-        <nav class="nav">
+        <nav class="nav" id="sidebarNav">
           <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
           <a class="nav-link" href="{{ url_for('main.clients') }}">Clientes</a>
           <a class="nav-link" href="{{ url_for('main.bicycles') }}">Bicicletas</a>
@@ -43,9 +50,6 @@
           <a class="nav-link" href="{{ url_for('main.settings') }}">Personalizacion</a>
           <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
         </nav>
-        <div class="sidebar-footer">
-          <div class="badge">SaaS-ready</div>
-        </div>
       </aside>
       <main class="content">
         <header class="topbar">
@@ -72,5 +76,23 @@
         {% block content %}{% endblock %}
       </main>
     </div>
+    <script>
+      const navToggle = document.querySelector(".nav-toggle");
+      const nav = document.querySelector("#sidebarNav");
+
+      if (navToggle && nav) {
+        navToggle.addEventListener("click", () => {
+          const isOpen = nav.classList.toggle("is-open");
+          navToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        });
+      }
+
+      document.querySelectorAll(".flash.success").forEach((flash) => {
+        setTimeout(() => {
+          flash.classList.add("flash-hide");
+          setTimeout(() => flash.remove(), 350);
+        }, 3000);
+      });
+    </script>
   </body>
 </html>

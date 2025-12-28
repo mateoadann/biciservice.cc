@@ -25,23 +25,33 @@
             {{ form.status(class_="input") }}
           </label>
           <label>
-            Service
-            {{ form.service_type_id(class_="input") }}
-          </label>
-          <label>
-            Cantidad
-            {{ form.quantity(class_="input") }}
-          </label>
-          <label>
-            Precio unitario
-            {{ form.unit_price(class_="input", placeholder="0.00") }}
+            Services
+            <div class="service-options">
+              {% if services %}
+                {% for service in services %}
+                  <label class="service-option">
+                    <input type="checkbox" name="service_type_ids" value="{{ service.id }}"
+                      {% if service.id in selected_ids %}checked{% endif %}>
+                    <span>
+                      <span class="service-name">{{ service.name }}</span>
+                      <span class="service-price">$ {{ service.base_price|currency }}</span>
+                      {% if service.description %}
+                        <span class="service-desc">{{ service.description }}</span>
+                      {% endif %}
+                    </span>
+                  </label>
+                {% endfor %}
+              {% else %}
+                <span class="muted">No hay services creados.</span>
+              {% endif %}
+            </div>
           </label>
           <label>
             Notas
             {{ form.notes(class_="input") }}
           </label>
         </div>
-        <div class="panel-note">Si no seleccionas service, el trabajo se crea sin items.</div>
+        <div class="panel-note">Puedes seleccionar multiples services. Cada item se agrega con cantidad 1.</div>
         <div class="form-actions">
           <button class="button" type="submit">{{ submit_label }}</button>
           <a class="button button-ghost" href="{{ url_for('main.jobs') }}">Cancelar</a>

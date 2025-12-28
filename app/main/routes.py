@@ -3,16 +3,19 @@ from pathlib import Path
 
 from flask import current_app, flash, g, redirect, render_template, request, url_for
 from flask_login import login_required
+from sqlalchemy import func
 from werkzeug.utils import secure_filename
 
 from . import main_bp
 from ..extensions import db
 from ..models import Bicycle, Client, Job, JobItem, ServiceType
 from .forms import (
+    BRAND_CHOICES,
     BicycleForm,
     ClientForm,
     DeleteForm,
     JobForm,
+    JobStatusForm,
     ServiceTypeForm,
     WorkshopSettingsForm,
 )
@@ -30,6 +33,14 @@ def _save_upload(file_storage, workshop_id):
     file_storage.save(file_path)
     rel_path = os.path.relpath(file_path, Path(__file__).resolve().parent.parent / "static")
     return rel_path.replace(os.path.sep, "/")
+
+
+def _delete_upload(rel_path):
+    if not rel_path:
+        return
+    file_path = Path(current_app.static_folder) / rel_path
+    if file_path.exists():
+        file_path.unlink()
 
 
 def _get_workshop_or_redirect():
@@ -66,16 +77,28 @@ def _bicycle_choices(workshop):
 
 
 def _service_choices(workshop):
-    services = (
+    services = _services_list(workshop)
+    return [(service.id, service.name) for service in services]
+
+
+def _services_list(workshop):
+    return (
         ServiceType.query.filter_by(workshop_id=workshop.id)
         .order_by(ServiceType.name.asc())
         .all()
     )
-    choices = [(0, "Sin service")]
-    for service in services:
-        price_label = f"{service.base_price:.2f}" if service.base_price else "0.00"
-        choices.append((service.id, f"{service.name} (${price_label})"))
-    return choices
+
+
+def _brand_choices():
+    return [("", "Seleccionar marca")] + [(brand, brand) for brand in BRAND_CHOICES]
+
+
+def _resolve_brand(form):
+    if form.brand_text.data and form.brand_text.data.strip():
+        return form.brand_text.data.strip()
+    if form.brand_select.data:
+        return form.brand_select.data
+    return None
 
 
 @main_bp.route("/")
@@ -99,7 +122,54 @@ def dashboard():
         else 0,
         "jobs": Job.query.filter_by(workshop_id=workshop.id).count() if workshop else 0,
     }
-    return render_template("main/dashboard.html", counts=counts, workshop=workshop)
+    agenda_jobs = []
+    summary = {
+        "revenue": 0,
+        "open": 0,
+        "in_progress": 0,
+        "ready": 0,
+        "closed": 0,
+        "services_active": 0,
+    }
+    if workshop:
+        agenda_jobs = (
+            Job.query.filter_by(workshop_id=workshop.id)
+            .order_by(Job.created_at.desc())
+            .limit(5)
+            .all()
+        )
+        revenue = (
+            db.session.query(
+                func.coalesce(func.sum(JobItem.unit_price * JobItem.quantity), 0)
+            )
+            .join(Job, Job.id == JobItem.job_id)
+            .filter(Job.workshop_id == workshop.id)
+            .scalar()
+        )
+        status_counts = dict(
+            db.session.query(Job.status, func.count(Job.id))
+            .filter(Job.workshop_id == workshop.id)
+            .group_by(Job.status)
+            .all()
+        )
+        summary = {
+            "revenue": revenue,
+            "open": status_counts.get("open", 0),
+            "in_progress": status_counts.get("in_progress", 0),
+            "ready": status_counts.get("ready", 0),
+            "closed": status_counts.get("closed", 0),
+            "services_active": ServiceType.query.filter_by(
+                workshop_id=workshop.id, is_active=True
+            ).count(),
+        }
+
+    return render_template(
+        "main/dashboard.html",
+        counts=counts,
+        workshop=workshop,
+        agenda_jobs=agenda_jobs,
+        summary=summary,
+    )
 
 
 @main_bp.route("/settings", methods=["GET", "POST"])
@@ -126,9 +196,13 @@ def settings():
 
         logo_path = _save_upload(form.logo.data, workshop.id)
         if logo_path:
+            if workshop.logo_path and workshop.logo_path != logo_path:
+                _delete_upload(workshop.logo_path)
             workshop.logo_path = logo_path
         favicon_path = _save_upload(form.favicon.data, workshop.id)
         if favicon_path:
+            if workshop.favicon_path and workshop.favicon_path != favicon_path:
+                _delete_upload(workshop.favicon_path)
             workshop.favicon_path = favicon_path
 
         db.session.commit()
@@ -136,6 +210,46 @@ def settings():
         return redirect(url_for("main.settings"))
 
     return render_template("main/settings.html", form=form, workshop=workshop)
+
+
+@main_bp.route("/settings/remove-logo", methods=["POST"])
+@login_required
+def settings_remove_logo():
+    workshop, redirect_response = _get_workshop_or_redirect()
+    if redirect_response:
+        return redirect_response
+
+    form = DeleteForm()
+    if not form.validate_on_submit():
+        return redirect(url_for("main.settings"))
+
+    if workshop.logo_path:
+        _delete_upload(workshop.logo_path)
+        workshop.logo_path = None
+        db.session.commit()
+        flash("Logo eliminado", "success")
+
+    return redirect(url_for("main.settings"))
+
+
+@main_bp.route("/settings/remove-favicon", methods=["POST"])
+@login_required
+def settings_remove_favicon():
+    workshop, redirect_response = _get_workshop_or_redirect()
+    if redirect_response:
+        return redirect_response
+
+    form = DeleteForm()
+    if not form.validate_on_submit():
+        return redirect(url_for("main.settings"))
+
+    if workshop.favicon_path:
+        _delete_upload(workshop.favicon_path)
+        workshop.favicon_path = None
+        db.session.commit()
+        flash("Favicon eliminado", "success")
+
+    return redirect(url_for("main.settings"))
 
 
 @main_bp.route("/clients")
@@ -270,14 +384,16 @@ def bicycles_create():
 
     form = BicycleForm()
     form.client_id.choices = client_choices
+    form.brand_select.choices = _brand_choices()
 
     if form.validate_on_submit():
+        brand = _resolve_brand(form)
         bicycle = Bicycle(
             workshop_id=workshop.id,
             client_id=form.client_id.data,
-            brand=form.brand.data,
+            brand=brand,
             model=form.model.data,
-            serial_number=form.serial_number.data,
+            description=form.description.data,
         )
         db.session.add(bicycle)
         db.session.commit()
@@ -304,18 +420,26 @@ def bicycles_edit(bicycle_id):
     )
     form = BicycleForm()
     form.client_id.choices = _client_choices(workshop)
+    form.brand_select.choices = _brand_choices()
 
     if request.method == "GET":
         form.client_id.data = bicycle.client_id
-        form.brand.data = bicycle.brand
+        form.brand_text.data = bicycle.brand
+        if bicycle.brand:
+            form.brand_select.data = (
+                bicycle.brand if bicycle.brand in BRAND_CHOICES else "Otra"
+            )
+        else:
+            form.brand_select.data = ""
         form.model.data = bicycle.model
-        form.serial_number.data = bicycle.serial_number
+        form.description.data = bicycle.description
 
     if form.validate_on_submit():
+        brand = _resolve_brand(form)
         bicycle.client_id = form.client_id.data
-        bicycle.brand = form.brand.data
+        bicycle.brand = brand
         bicycle.model = form.model.data
-        bicycle.serial_number = form.serial_number.data
+        bicycle.description = form.description.data
         db.session.commit()
         flash("Bicicleta actualizada", "success")
         return redirect(url_for("main.bicycles"))
@@ -400,6 +524,7 @@ def services_create():
         form=form,
         title="Nuevo service",
         submit_label="Crear service",
+        initial_base_price=None,
     )
 
 
@@ -413,18 +538,13 @@ def services_edit(service_id):
     service = (
         ServiceType.query.filter_by(id=service_id, workshop_id=workshop.id).first_or_404()
     )
-    form = ServiceTypeForm()
-
-    if request.method == "GET":
-        form.name.data = service.name
-        form.description.data = service.description
-        form.base_price.data = service.base_price
-        form.is_active.data = service.is_active
+    form = ServiceTypeForm(obj=service)
 
     if form.validate_on_submit():
         service.name = form.name.data
         service.description = form.description.data
-        service.base_price = form.base_price.data or 0
+        if form.base_price.data is not None:
+            service.base_price = form.base_price.data
         service.is_active = form.is_active.data
         db.session.commit()
         flash("Service actualizado", "success")
@@ -435,6 +555,7 @@ def services_edit(service_id):
         form=form,
         title="Editar service",
         submit_label="Guardar cambios",
+        initial_base_price=service.base_price,
     )
 
 
@@ -478,6 +599,7 @@ def jobs():
         "main/jobs/index.html",
         jobs=jobs_list,
         delete_form=DeleteForm(),
+        status_form=JobStatusForm(),
     )
 
 
@@ -495,7 +617,8 @@ def jobs_create():
 
     form = JobForm()
     form.bicycle_id.choices = bicycle_choices
-    form.service_type_id.choices = _service_choices(workshop)
+    services_list = _services_list(workshop)
+    form.service_type_ids.choices = [(service.id, service.name) for service in services_list]
 
     if form.validate_on_submit():
         job = Job(
@@ -507,23 +630,22 @@ def jobs_create():
         db.session.add(job)
         db.session.flush()
 
-        service_type_id = form.service_type_id.data
-        if service_type_id:
-            service = ServiceType.query.filter_by(
-                id=service_type_id, workshop_id=workshop.id
-            ).first()
-            if service:
-                unit_price = (
-                    form.unit_price.data
-                    if form.unit_price.data is not None
-                    else service.base_price
-                )
-                quantity = form.quantity.data or 1
+        selected_ids = {
+            service_id for service_id in form.service_type_ids.data if service_id
+        }
+        if selected_ids:
+            services = (
+                ServiceType.query.filter(
+                    ServiceType.workshop_id == workshop.id,
+                    ServiceType.id.in_(selected_ids),
+                ).all()
+            )
+            for service in services:
                 job_item = JobItem(
                     job_id=job.id,
                     service_type_id=service.id,
-                    quantity=quantity,
-                    unit_price=unit_price,
+                    quantity=1,
+                    unit_price=service.base_price,
                 )
                 db.session.add(job_item)
 
@@ -531,9 +653,12 @@ def jobs_create():
         flash("Trabajo creado", "success")
         return redirect(url_for("main.jobs"))
 
+    selected_ids = set(form.service_type_ids.data or [])
     return render_template(
         "main/jobs/form.html",
         form=form,
+        services=services_list,
+        selected_ids=selected_ids,
         title="Nuevo trabajo",
         submit_label="Crear trabajo",
     )
@@ -549,63 +674,78 @@ def jobs_edit(job_id):
     job = Job.query.filter_by(id=job_id, workshop_id=workshop.id).first_or_404()
     form = JobForm()
     form.bicycle_id.choices = _bicycle_choices(workshop)
-    form.service_type_id.choices = _service_choices(workshop)
-
-    job_item = job.items[0] if job.items else None
+    services_list = _services_list(workshop)
+    form.service_type_ids.choices = [(service.id, service.name) for service in services_list]
+    existing_items = {item.service_type_id: item for item in job.items}
 
     if request.method == "GET":
         form.bicycle_id.data = job.bicycle_id
         form.status.data = job.status
         form.notes.data = job.notes
-        if job_item:
-            form.service_type_id.data = job_item.service_type_id
-            form.quantity.data = job_item.quantity
-            form.unit_price.data = job_item.unit_price
-        else:
-            form.service_type_id.data = 0
+        form.service_type_ids.data = list(existing_items.keys())
 
     if form.validate_on_submit():
         job.bicycle_id = form.bicycle_id.data
         job.status = form.status.data
         job.notes = form.notes.data
 
-        service_type_id = form.service_type_id.data
-        if service_type_id:
-            service = ServiceType.query.filter_by(
-                id=service_type_id, workshop_id=workshop.id
-            ).first()
-            if service:
-                unit_price = (
-                    form.unit_price.data
-                    if form.unit_price.data is not None
-                    else service.base_price
-                )
-                quantity = form.quantity.data or 1
-                if job_item:
-                    job_item.service_type_id = service.id
-                    job_item.unit_price = unit_price
-                    job_item.quantity = quantity
-                else:
-                    job_item = JobItem(
+        selected_ids = {
+            service_id for service_id in form.service_type_ids.data if service_id
+        }
+        services = (
+            ServiceType.query.filter(
+                ServiceType.workshop_id == workshop.id,
+                ServiceType.id.in_(selected_ids),
+            ).all()
+        )
+        selected_map = {service.id: service for service in services}
+
+        for service_id, item in existing_items.items():
+            if service_id not in selected_ids:
+                db.session.delete(item)
+
+        for service_id, service in selected_map.items():
+            if service_id not in existing_items:
+                db.session.add(
+                    JobItem(
                         job_id=job.id,
-                        service_type_id=service.id,
-                        quantity=quantity,
-                        unit_price=unit_price,
+                        service_type_id=service_id,
+                        quantity=1,
+                        unit_price=service.base_price,
                     )
-                    db.session.add(job_item)
-        elif job_item:
-            db.session.delete(job_item)
+                )
 
         db.session.commit()
         flash("Trabajo actualizado", "success")
         return redirect(url_for("main.jobs"))
 
+    selected_ids = set(form.service_type_ids.data or [])
     return render_template(
         "main/jobs/form.html",
         form=form,
+        services=services_list,
+        selected_ids=selected_ids,
         title="Editar trabajo",
         submit_label="Guardar cambios",
     )
+
+
+@main_bp.route("/jobs/<int:job_id>/status", methods=["POST"])
+@login_required
+def jobs_status(job_id):
+    workshop, redirect_response = _get_workshop_or_redirect()
+    if redirect_response:
+        return redirect_response
+
+    form = JobStatusForm()
+    if not form.validate_on_submit():
+        return redirect(url_for("main.jobs"))
+
+    job = Job.query.filter_by(id=job_id, workshop_id=workshop.id).first_or_404()
+    job.status = form.status.data
+    db.session.commit()
+    flash("Estado actualizado", "success")
+    return redirect(url_for("main.jobs"))
 
 
 @main_bp.route("/jobs/<int:job_id>/delete", methods=["POST"])

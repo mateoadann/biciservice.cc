@@ -76,7 +76,7 @@ def upgrade():
     sa.Column('client_id', sa.Integer(), nullable=False),
     sa.Column('brand', sa.String(length=80), nullable=True),
     sa.Column('model', sa.String(length=80), nullable=True),
-    sa.Column('serial_number', sa.String(length=80), nullable=True),
+    sa.Column('description', sa.String(length=300), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ),
     sa.ForeignKeyConstraint(['workshop_id'], ['workshops.id'], ),
