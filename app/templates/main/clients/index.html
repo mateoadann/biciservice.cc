@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block page_title %}Clientes{% endblock %}
+
+{% block page_actions %}
+  <a class="button" href="{{ url_for('main.clients_create') }}">Nuevo cliente</a>
+{% endblock %}
+
+{% block content %}
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Clientes registrados</h2>
+      <span class="pill">{{ clients|length }} total</span>
+    </div>
+    <div class="panel-body">
+      {% if clients %}
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Telefono</th>
+                <th>Bicicletas</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for client in clients %}
+                <tr>
+                  <td>{{ client.full_name }}</td>
+                  <td>{{ client.email or "-" }}</td>
+                  <td>{{ client.phone or "-" }}</td>
+                  <td>{{ client.bicycles|length }}</td>
+                  <td class="table-actions">
+                    <a class="button button-ghost" href="{{ url_for('main.clients_edit', client_id=client.id) }}">Editar</a>
+                    <form method="post" action="{{ url_for('main.clients_delete', client_id=client.id) }}" class="inline-form">
+                      {{ delete_form.hidden_tag() }}
+                      <button class="button button-danger" type="submit">Eliminar</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <h3>No hay clientes aun</h3>
+          <p class="muted">Crea el primer cliente para empezar a registrar bicicletas.</p>
+          <a class="button" href="{{ url_for('main.clients_create') }}">Crear cliente</a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

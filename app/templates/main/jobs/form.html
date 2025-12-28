@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block page_actions %}
+  <a class="button button-ghost" href="{{ url_for('main.jobs') }}">Volver</a>
+{% endblock %}
+
+{% block content %}
+  <section class="panel">
+    <div class="panel-header">
+      <h2>{{ title }}</h2>
+      <span class="pill">Trabajos</span>
+    </div>
+    <div class="panel-body">
+      <form method="post" class="form-stack">
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+          <label>
+            Bicicleta
+            {{ form.bicycle_id(class_="input") }}
+          </label>
+          <label>
+            Estado
+            {{ form.status(class_="input") }}
+          </label>
+          <label>
+            Service
+            {{ form.service_type_id(class_="input") }}
+          </label>
+          <label>
+            Cantidad
+            {{ form.quantity(class_="input") }}
+          </label>
+          <label>
+            Precio unitario
+            {{ form.unit_price(class_="input", placeholder="0.00") }}
+          </label>
+          <label>
+            Notas
+            {{ form.notes(class_="input") }}
+          </label>
+        </div>
+        <div class="panel-note">Si no seleccionas service, el trabajo se crea sin items.</div>
+        <div class="form-actions">
+          <button class="button" type="submit">{{ submit_label }}</button>
+          <a class="button button-ghost" href="{{ url_for('main.jobs') }}">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}

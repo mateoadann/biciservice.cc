@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block page_title %}Personalizacion{% endblock %}
+
+{% block page_actions %}{% endblock %}
+
+{% block content %}
+  <section class="panel settings-panel">
+    <div class="panel-header">
+      <h2>Marca del taller</h2>
+      <span class="pill">SaaS</span>
+    </div>
+    <div class="panel-body">
+      <form method="post" enctype="multipart/form-data" class="settings-form">
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+          <label>
+            Nombre del taller
+            {{ form.name(class_="input") }}
+          </label>
+          <label>
+            Color primario
+            {{ form.primary_color(class_="input", type="color") }}
+          </label>
+          <label>
+            Color secundario
+            {{ form.secondary_color(class_="input", type="color") }}
+          </label>
+          <label>
+            Color acento
+            {{ form.accent_color(class_="input", type="color") }}
+          </label>
+          <label>
+            Fondo
+            {{ form.background_color(class_="input", type="color") }}
+          </label>
+          <label>
+            Logo del taller
+            {{ form.logo(class_="input") }}
+          </label>
+          <label>
+            Favicon
+            {{ form.favicon(class_="input") }}
+          </label>
+        </div>
+        <div class="settings-preview">
+          <div class="preview-card">
+            {% if workshop.logo_path %}
+              <img src="{{ url_for('static', filename=workshop.logo_path) }}" alt="Logo actual" />
+            {% else %}
+              <div class="brand-mark">SB</div>
+            {% endif %}
+            <div>
+              <div class="preview-title">{{ workshop.name }}</div>
+              <div class="muted">Preview de marca</div>
+            </div>
+          </div>
+          <button class="button" type="submit">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}

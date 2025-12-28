@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block page_actions %}
+  <a class="button button-ghost" href="{{ url_for('main.clients') }}">Volver</a>
+{% endblock %}
+
+{% block content %}
+  <section class="panel">
+    <div class="panel-header">
+      <h2>{{ title }}</h2>
+      <span class="pill">Clientes</span>
+    </div>
+    <div class="panel-body">
+      <form method="post" class="form-stack">
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+          <label>
+            Nombre completo
+            {{ form.full_name(class_="input") }}
+          </label>
+          <label>
+            Email
+            {{ form.email(class_="input") }}
+          </label>
+          <label>
+            Telefono
+            {{ form.phone(class_="input") }}
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="button" type="submit">{{ submit_label }}</button>
+          <a class="button button-ghost" href="{{ url_for('main.clients') }}">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}

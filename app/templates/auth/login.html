@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login | Service Bicycle CRM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  </head>
+  <body class="auth-body">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="brand-mark">SB</div>
+        <div>
+          <h1>Bienvenido</h1>
+          <p class="muted">Gestiona el service del taller desde un solo lugar.</p>
+        </div>
+      </div>
+      <form method="post" class="auth-form">
+        {{ form.hidden_tag() }}
+        <label>
+          Email
+          {{ form.email(class_="input") }}
+        </label>
+        <label>
+          Password
+          {{ form.password(class_="input") }}
+        </label>
+        <label class="checkbox">
+          {{ form.remember() }}
+          Remember me
+        </label>
+        <button class="button" type="submit">Login</button>
+      </form>
+      <div class="auth-footer">
+        <span>No tienes cuenta?</span>
+        <a href="{{ url_for('auth.register') }}">Crear cuenta</a>
+      </div>
+    </div>
+  </body>
+</html>

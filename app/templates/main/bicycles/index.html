@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block page_title %}Bicicletas{% endblock %}
+
+{% block page_actions %}
+  <a class="button" href="{{ url_for('main.bicycles_create') }}">Nueva bicicleta</a>
+{% endblock %}
+
+{% block content %}
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Bicicletas registradas</h2>
+      <span class="pill">{{ bicycles|length }} total</span>
+    </div>
+    <div class="panel-body">
+      {% if bicycles %}
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Marca</th>
+                <th>Modelo</th>
+                <th>Serie</th>
+                <th>Cliente</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for bicycle in bicycles %}
+                <tr>
+                  <td>{{ bicycle.brand or "-" }}</td>
+                  <td>{{ bicycle.model or "-" }}</td>
+                  <td>{{ bicycle.serial_number or "-" }}</td>
+                  <td>{{ bicycle.client.full_name }}</td>
+                  <td class="table-actions">
+                    <a class="button button-ghost" href="{{ url_for('main.bicycles_edit', bicycle_id=bicycle.id) }}">Editar</a>
+                    <form method="post" action="{{ url_for('main.bicycles_delete', bicycle_id=bicycle.id) }}" class="inline-form">
+                      {{ delete_form.hidden_tag() }}
+                      <button class="button button-danger" type="submit">Eliminar</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <h3>No hay bicicletas aun</h3>
+          <p class="muted">Registra una bicicleta vinculada a un cliente.</p>
+          <a class="button" href="{{ url_for('main.bicycles_create') }}">Crear bicicleta</a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

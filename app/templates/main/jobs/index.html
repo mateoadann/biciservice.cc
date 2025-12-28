@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block page_title %}Trabajos{% endblock %}
+
+{% block page_actions %}
+  <a class="button" href="{{ url_for('main.jobs_create') }}">Nuevo trabajo</a>
+{% endblock %}
+
+{% block content %}
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Trabajos en taller</h2>
+      <span class="pill">{{ jobs|length }} total</span>
+    </div>
+    <div class="panel-body">
+      {% if jobs %}
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Bicicleta</th>
+                <th>Service</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in jobs %}
+                <tr>
+                  <td>
+                    <div class="table-title">{{ job.bicycle.client.full_name }}</div>
+                    <div class="muted">{{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}</div>
+                  </td>
+                  <td>
+                    {% if job.items %}
+                      {{ job.items[0].service_type.name }} x{{ job.items[0].quantity }}
+                    {% else %}
+                      Sin service
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="status {{ job.status }}">
+                      {% if job.status == "open" %}Abierto{% endif %}
+                      {% if job.status == "in_progress" %}En progreso{% endif %}
+                      {% if job.status == "ready" %}Listo{% endif %}
+                      {% if job.status == "closed" %}Cerrado{% endif %}
+                    </span>
+                  </td>
+                  <td>{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "" }}</td>
+                  <td class="table-actions">
+                    <a class="button button-ghost" href="{{ url_for('main.jobs_edit', job_id=job.id) }}">Editar</a>
+                    <form method="post" action="{{ url_for('main.jobs_delete', job_id=job.id) }}" class="inline-form">
+                      {{ delete_form.hidden_tag() }}
+                      <button class="button button-danger" type="submit">Eliminar</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <h3>No hay trabajos aun</h3>
+          <p class="muted">Empieza creando un trabajo con un service asociado.</p>
+          <a class="button" href="{{ url_for('main.jobs_create') }}">Crear trabajo</a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

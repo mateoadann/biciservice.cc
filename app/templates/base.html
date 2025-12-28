@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ theme.name }} | Service Bicycle CRM</title>
+    {% if theme.favicon_path %}
+      <link rel="icon" href="{{ url_for('static', filename=theme.favicon_path) }}">
+    {% endif %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <style>
+      :root {
+        --color-primary: {{ theme.primary }};
+        --color-secondary: {{ theme.secondary }};
+        --color-accent: {{ theme.accent }};
+        --color-background: {{ theme.background }};
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <aside class="sidebar">
+        <div class="brand">
+          {% if theme.logo_path %}
+            <img src="{{ url_for('static', filename=theme.logo_path) }}" alt="{{ theme.name }} logo">
+          {% else %}
+            <div class="brand-mark">SB</div>
+          {% endif %}
+          <div>
+            <div class="brand-title">{{ theme.name }}</div>
+            <div class="brand-subtitle">Service Bicycle CRM</div>
+          </div>
+        </div>
+        <nav class="nav">
+          <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+          <a class="nav-link" href="{{ url_for('main.clients') }}">Clientes</a>
+          <a class="nav-link" href="{{ url_for('main.bicycles') }}">Bicicletas</a>
+          <a class="nav-link" href="{{ url_for('main.services') }}">Services</a>
+          <a class="nav-link" href="{{ url_for('main.jobs') }}">Trabajos</a>
+          <a class="nav-link" href="{{ url_for('main.settings') }}">Personalizacion</a>
+          <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
+        </nav>
+        <div class="sidebar-footer">
+          <div class="badge">SaaS-ready</div>
+        </div>
+      </aside>
+      <main class="content">
+        <header class="topbar">
+          <div>
+            <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+            <p class="muted">Control del service del taller</p>
+          </div>
+          <div class="topbar-actions">
+            {% block page_actions %}
+              <a class="button button-ghost" href="{{ url_for('main.jobs_create') }}">Nuevo trabajo</a>
+              <a class="button" href="{{ url_for('main.clients_create') }}">Nuevo cliente</a>
+            {% endblock %}
+          </div>
+        </header>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-stack">
+              {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+  <section class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Clientes</div>
+      <div class="stat-value">{{ counts.clients }}</div>
+      <div class="stat-meta">Activos en el taller</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Bicicletas</div>
+      <div class="stat-value">{{ counts.bicycles }}</div>
+      <div class="stat-meta">Registradas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Services</div>
+      <div class="stat-value">{{ counts.services }}</div>
+      <div class="stat-meta">Tipos disponibles</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Trabajos</div>
+      <div class="stat-value">{{ counts.jobs }}</div>
+      <div class="stat-meta">En proceso</div>
+    </div>
+  </section>
+
+  <section class="panel-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Agenda de trabajo</h2>
+        <span class="pill">Hoy</span>
+      </div>
+      <div class="panel-body">
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div>
+              <div class="timeline-title">Checklist rapido</div>
+              <div class="muted">Revisar frenos y cambios</div>
+            </div>
+            <span class="chip">Pendiente</span>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div>
+              <div class="timeline-title">Service premium</div>
+              <div class="muted">Limpieza profunda + ajuste</div>
+            </div>
+            <span class="chip accent">En taller</span>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div>
+              <div class="timeline-title">Entrega</div>
+              <div class="muted">Cliente Lopez - Bicicleta urbana</div>
+            </div>
+            <span class="chip success">Listo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Metricas del taller</h2>
+        <span class="pill">Semana</span>
+      </div>
+      <div class="panel-body">
+        <div class="metric">
+          <div>
+            <div class="metric-label">Ingresos</div>
+            <div class="metric-value">$12,480</div>
+          </div>
+          <div class="metric-bar">
+            <div class="metric-fill" style="width: 74%"></div>
+          </div>
+        </div>
+        <div class="metric">
+          <div>
+            <div class="metric-label">Satisfaccion</div>
+            <div class="metric-value">96%</div>
+          </div>
+          <div class="metric-bar">
+            <div class="metric-fill accent" style="width: 96%"></div>
+          </div>
+        </div>
+        <div class="metric">
+          <div>
+            <div class="metric-label">Tiempo promedio</div>
+            <div class="metric-value">2.4 dias</div>
+          </div>
+          <div class="metric-bar">
+            <div class="metric-fill secondary" style="width: 62%"></div>
+          </div>
+        </div>
+        <div class="panel-note">
+          Dashboard inicial. Los datos reales se mostraran al cargar clientes y trabajos.
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block page_actions %}
+  <a class="button button-ghost" href="{{ url_for('main.services') }}">Volver</a>
+{% endblock %}
+
+{% block content %}
+  <section class="panel">
+    <div class="panel-header">
+      <h2>{{ title }}</h2>
+      <span class="pill">Services</span>
+    </div>
+    <div class="panel-body">
+      <form method="post" class="form-stack">
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+          <label>
+            Nombre
+            {{ form.name(class_="input") }}
+          </label>
+          <label>
+            Precio base
+            {{ form.base_price(class_="input", placeholder="0.00") }}
+          </label>
+          <label>
+            Descripcion
+            {{ form.description(class_="input") }}
+          </label>
+          <label class="checkbox">
+            {{ form.is_active() }}
+            Activo
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="button" type="submit">{{ submit_label }}</button>
+          <a class="button button-ghost" href="{{ url_for('main.services') }}">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}

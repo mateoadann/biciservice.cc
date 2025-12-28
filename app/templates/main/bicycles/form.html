@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block page_actions %}
+  <a class="button button-ghost" href="{{ url_for('main.bicycles') }}">Volver</a>
+{% endblock %}
+
+{% block content %}
+  <section class="panel">
+    <div class="panel-header">
+      <h2>{{ title }}</h2>
+      <span class="pill">Bicicletas</span>
+    </div>
+    <div class="panel-body">
+      <form method="post" class="form-stack">
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+          <label>
+            Cliente
+            {{ form.client_id(class_="input") }}
+          </label>
+          <label>
+            Marca
+            {{ form.brand(class_="input") }}
+          </label>
+          <label>
+            Modelo
+            {{ form.model(class_="input") }}
+          </label>
+          <label>
+            Serie
+            {{ form.serial_number(class_="input") }}
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="button" type="submit">{{ submit_label }}</button>
+          <a class="button button-ghost" href="{{ url_for('main.bicycles') }}">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}
