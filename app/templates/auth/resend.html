@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login | Service Bicycle CRM</title>
+    <title>Reenviar verificacion | Service Bicycle CRM</title>
     <script>
       (function () {
         const stored = localStorage.getItem("theme");
@@ -22,8 +22,8 @@
       <div class="auth-header">
         <div class="brand-mark">SB</div>
         <div>
-          <h1>Bienvenido</h1>
-          <p class="muted">Gestiona el service del taller desde un solo lugar.</p>
+          <h1>Reenviar verificacion</h1>
+          <p class="muted">Ingresa tu email para recibir el link.</p>
         </div>
       </div>
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -44,26 +44,10 @@
             <span class="field-error">{{ form.email.errors[0] }}</span>
           {% endif %}
         </label>
-        <label>
-          Password
-          {{ form.password(class_="input") }}
-          {% if form.password.errors %}
-            <span class="field-error">{{ form.password.errors[0] }}</span>
-          {% endif %}
-        </label>
-        <label class="checkbox">
-          {{ form.remember() }}
-          Remember me
-        </label>
-        <button class="button" type="submit">Login</button>
+        <button class="button" type="submit">Reenviar</button>
       </form>
       <div class="auth-footer">
-        <span>No tienes cuenta?</span>
-        <a href="{{ url_for('auth.register') }}">Crear cuenta</a>
-      </div>
-      <div class="auth-footer">
-        <span>¿No llego el email?</span>
-        <a href="{{ url_for('auth.resend_confirmation') }}">Reenviar verificacion</a>
+        <a href="{{ url_for('auth.login') }}">Volver al login</a>
       </div>
     </div>
   </body>

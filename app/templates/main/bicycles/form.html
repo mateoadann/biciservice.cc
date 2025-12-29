@@ -22,19 +22,7 @@
           </label>
           <label>
             Marca
-            <span class="field-desktop">
-              {{ form.brand_text(class_="input", list="brand-list", placeholder="Buscar marca") }}
-            </span>
-            <span class="field-mobile">
-              {{ form.brand_select(class_="input") }}
-            </span>
-            <datalist id="brand-list">
-              {% for value, label in form.brand_select.choices %}
-                {% if value %}
-                  <option value="{{ value }}">{{ label }}</option>
-                {% endif %}
-              {% endfor %}
-            </datalist>
+            {{ form.brand_select(class_="input") }}
           </label>
           <label>
             Modelo
@@ -50,21 +38,6 @@
           <a class="button button-ghost" href="{{ url_for('main.bicycles') }}">Cancelar</a>
         </div>
       </form>
-      <script>
-        const desktopField = document.querySelector(".field-desktop input");
-        const mobileField = document.querySelector(".field-mobile select");
-
-        const toggleBrandInputs = () => {
-          const isMobile = window.matchMedia("(max-width: 980px)").matches;
-          if (desktopField && mobileField) {
-            desktopField.disabled = isMobile;
-            mobileField.disabled = !isMobile;
-          }
-        };
-
-        toggleBrandInputs();
-        window.addEventListener("resize", toggleBrandInputs);
-      </script>
     </div>
   </section>
 {% endblock %}

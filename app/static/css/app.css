@@ -25,6 +25,21 @@ body {
   min-height: 100vh;
 }
 
+html[data-theme="dark"] {
+  --color-ink: #f8fafc;
+  --color-muted: #94a3b8;
+  --color-surface: #0f172a;
+  --color-border: rgba(148, 163, 184, 0.2);
+  --shadow-soft: 0 18px 32px rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 22px 36px rgba(0, 0, 0, 0.55);
+}
+
+html[data-theme="dark"] body {
+  background: radial-gradient(circle at top left, rgba(31, 76, 255, 0.18), transparent 50%),
+    radial-gradient(circle at 30% 20%, rgba(25, 179, 107, 0.18), transparent 45%),
+    linear-gradient(135deg, var(--color-background), #0b1020 60%);
+}
+
 .page {
   display: flex;
   min-height: 100vh;
@@ -39,6 +54,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 32px;
+}
+
+html[data-theme="dark"] .sidebar {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(10, 15, 30, 0.95));
 }
 
 .sidebar-header {
@@ -93,6 +112,61 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(31, 76, 255, 0.06);
+}
+
+html[data-theme="dark"] .theme-toggle {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.switch input {
+  display: none;
+}
+
+.switch-slider {
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.2);
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.switch-slider::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.2s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.switch input:checked + .switch-slider {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+}
+
+.switch input:checked + .switch-slider::after {
+  transform: translateX(20px);
 }
 
 .nav-toggle {
@@ -151,6 +225,10 @@ body {
   background: radial-gradient(circle, rgba(255, 140, 43, 0.18), transparent 60%);
   border-radius: 50%;
   z-index: 0;
+}
+
+html[data-theme="dark"] .content::after {
+  background: radial-gradient(circle, rgba(255, 140, 43, 0.25), transparent 65%);
 }
 
 .topbar {
@@ -309,6 +387,27 @@ a.button {
 
 .table-wrap {
   overflow-x: auto;
+}
+
+.table-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+
+.filter-field {
+  display: grid;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.filter-field span {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
 }
 
 .table {
@@ -586,6 +685,11 @@ label {
   color: var(--color-muted);
 }
 
+.field-error {
+  font-size: 0.8rem;
+  color: #b91c1c;
+}
+
 .file-actions {
   display: flex;
   align-items: center;
@@ -643,19 +747,28 @@ label {
   justify-self: end;
 }
 
-.field-mobile {
-  display: none;
-}
-
-.field-desktop {
-  display: block;
-}
 
 .input {
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--color-border);
   font-family: inherit;
+}
+
+.input[type="file"] {
+  padding: 6px;
+  background: rgba(31, 76, 255, 0.04);
+}
+
+.input[type="file"]::file-selector-button {
+  border: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--color-primary), #5d7bff);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 10px;
 }
 
 .input-compact {
@@ -795,6 +908,18 @@ select[multiple].input {
 .modal-body {
   display: grid;
   gap: 14px;
+}
+
+.confirm-modal #confirmMessage {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-ink);
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .modal-section {
@@ -962,13 +1087,6 @@ select[multiple].input {
     display: inline-flex;
   }
 
-  .field-desktop {
-    display: none;
-  }
-
-  .field-mobile {
-    display: block;
-  }
 
 
   .content {
@@ -1004,6 +1122,16 @@ select[multiple].input {
 
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .table-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-field {
+    width: 100%;
+    min-width: 0;
   }
 
   .settings-columns {

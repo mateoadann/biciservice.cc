@@ -15,7 +15,7 @@ from wtforms.validators import DataRequired, Email, Length, NumberRange, Optiona
 from ..config import Config
 
 
-HEX_COLOR = Regexp(r"^#(?:[0-9a-fA-F]{3}){1,2}$", message="Use hex color")
+HEX_COLOR = Regexp(r"^#(?:[0-9a-fA-F]{3}){1,2}$", message="Usa un color hex valido")
 
 
 def _format_decimal(value: Decimal) -> str:
@@ -45,7 +45,7 @@ class LocalizedDecimalField(DecimalField):
             self.data = Decimal(normalized)
         except InvalidOperation as exc:
             self.data = None
-            raise ValueError(self.gettext("Not a valid decimal value.")) from exc
+            raise ValueError(self.gettext("Valor decimal invalido.")) from exc
 
 
 class WorkshopSettingsForm(FlaskForm):
@@ -65,9 +65,8 @@ class ClientForm(FlaskForm):
 
 
 BRAND_CHOICES = [
-    "Specialized",
-    "BMC",
     "BH",
+    "BMC",
     "Cannodale",
     "Canyon",
     "Cervelo",
@@ -82,6 +81,7 @@ BRAND_CHOICES = [
     "Santa Cruz",
     "Sava",
     "Scott",
+    "Specialized",
     "Trek",
     "Vairo",
     "Venzo",
@@ -91,8 +91,7 @@ BRAND_CHOICES = [
 
 class BicycleForm(FlaskForm):
     client_id = SelectField("Cliente", coerce=int, validators=[DataRequired()])
-    brand_text = StringField("Marca", validators=[Optional(), Length(max=80)])
-    brand_select = SelectField("Marca", validators=[Optional()], choices=[])
+    brand_select = SelectField("Marca", validators=[DataRequired()], choices=[])
     model = StringField("Modelo", validators=[Optional(), Length(max=80)])
     description = TextAreaField("Descripcion", validators=[Optional(), Length(max=300)])
 

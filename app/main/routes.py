@@ -1,10 +1,14 @@
 import os
+import re
 from pathlib import Path
+from uuid import uuid4
 
 from flask import current_app, flash, g, redirect, render_template, request, url_for
 from flask_login import login_required
 from sqlalchemy import func
 from werkzeug.utils import secure_filename
+from PIL import Image
+from io import BytesIO
 
 from . import main_bp
 from ..extensions import db
@@ -21,18 +25,44 @@ from .forms import (
 )
 
 
+def _validate_upload(file_storage):
+    filename = secure_filename(file_storage.filename)
+    if not filename or "." not in filename:
+        return None, "Nombre de archivo invalido."
+    ext = filename.rsplit(".", 1)[-1].lower()
+    allowed = current_app.config["ALLOWED_IMAGE_EXTENSIONS"]
+    if ext not in allowed:
+        return None, "Formato de archivo no permitido."
+    data = file_storage.read()
+    file_storage.stream.seek(0)
+    if ext == "svg":
+        text = data.decode("utf-8", errors="ignore").lower()
+        if "<svg" not in text or re.search(r"<script|onload=|onerror=", text):
+            return None, "SVG invalido."
+    else:
+        try:
+            image = Image.open(BytesIO(data))
+            image.verify()
+            if image.format not in {"JPEG", "PNG", "ICO"}:
+                return None, "Archivo de imagen invalido."
+        except Exception:
+            return None, "Archivo de imagen invalido."
+    return filename, None
+
+
 def _save_upload(file_storage, workshop_id):
     if not file_storage:
-        return None
-    filename = secure_filename(file_storage.filename)
-    if not filename:
-        return None
+        return None, None
+    filename, error = _validate_upload(file_storage)
+    if error:
+        return None, error
     upload_root = Path(current_app.config["UPLOAD_FOLDER"]) / str(workshop_id)
     upload_root.mkdir(parents=True, exist_ok=True)
-    file_path = upload_root / filename
+    unique_name = f"{uuid4().hex}_{filename}"
+    file_path = upload_root / unique_name
     file_storage.save(file_path)
     rel_path = os.path.relpath(file_path, Path(__file__).resolve().parent.parent / "static")
-    return rel_path.replace(os.path.sep, "/")
+    return rel_path.replace(os.path.sep, "/"), None
 
 
 def _delete_upload(rel_path):
@@ -46,7 +76,7 @@ def _delete_upload(rel_path):
 def _get_workshop_or_redirect():
     workshop = g.active_workshop
     if workshop is None:
-        flash("No workshop selected", "error")
+        flash("No hay taller seleccionado", "error")
         return None, redirect(url_for("main.dashboard"))
     return workshop, None
 
@@ -94,11 +124,7 @@ def _brand_choices():
 
 
 def _resolve_brand(form):
-    if form.brand_text.data and form.brand_text.data.strip():
-        return form.brand_text.data.strip()
-    if form.brand_select.data:
-        return form.brand_select.data
-    return None
+    return form.brand_select.data or None
 
 
 @main_bp.route("/")
@@ -194,21 +220,30 @@ def settings():
         workshop.accent_color = form.accent_color.data or workshop.accent_color
         workshop.background_color = form.background_color.data or workshop.background_color
 
-        logo_path = _save_upload(form.logo.data, workshop.id)
+        logo_path, logo_error = _save_upload(form.logo.data, workshop.id)
+        if logo_error:
+            flash(logo_error, "error")
+            return redirect(url_for("main.settings"))
         if logo_path:
             if workshop.logo_path and workshop.logo_path != logo_path:
                 _delete_upload(workshop.logo_path)
             workshop.logo_path = logo_path
-        favicon_path = _save_upload(form.favicon.data, workshop.id)
+
+        favicon_path, favicon_error = _save_upload(form.favicon.data, workshop.id)
+        if favicon_error:
+            flash(favicon_error, "error")
+            return redirect(url_for("main.settings"))
         if favicon_path:
             if workshop.favicon_path and workshop.favicon_path != favicon_path:
                 _delete_upload(workshop.favicon_path)
             workshop.favicon_path = favicon_path
 
         db.session.commit()
-        flash("Workshop settings updated", "success")
+        flash("Configuracion del taller actualizada", "success")
         return redirect(url_for("main.settings"))
 
+    if request.method == "POST":
+        flash("Revisa los campos ingresados", "error")
     return render_template("main/settings.html", form=form, workshop=workshop)
 
 
@@ -290,6 +325,8 @@ def clients_create():
         flash("Cliente creado", "success")
         return redirect(url_for("main.clients"))
 
+    if request.method == "POST":
+        flash("Revisa los campos ingresados", "error")
     return render_template(
         "main/clients/form.html",
         form=form,
@@ -321,6 +358,8 @@ def clients_edit(client_id):
         flash("Cliente actualizado", "success")
         return redirect(url_for("main.clients"))
 
+    if request.method == "POST":
+        flash("Revisa los campos ingresados", "error")
     return render_template(
         "main/clients/form.html",
         form=form,
@@ -363,9 +402,11 @@ def bicycles():
         .order_by(Bicycle.id.desc())
         .all()
     )
+    brands = sorted({bicycle.brand for bicycle in bicycles_list if bicycle.brand})
     return render_template(
         "main/bicycles/index.html",
         bicycles=bicycles_list,
+        brands=brands,
         delete_form=DeleteForm(),
     )
 
@@ -400,6 +441,8 @@ def bicycles_create():
         flash("Bicicleta creada", "success")
         return redirect(url_for("main.bicycles"))
 
+    if request.method == "POST":
+        flash("Revisa los campos ingresados", "error")
     return render_template(
         "main/bicycles/form.html",
         form=form,
@@ -424,13 +467,7 @@ def bicycles_edit(bicycle_id):
 
     if request.method == "GET":
         form.client_id.data = bicycle.client_id
-        form.brand_text.data = bicycle.brand
-        if bicycle.brand:
-            form.brand_select.data = (
-                bicycle.brand if bicycle.brand in BRAND_CHOICES else "Otra"
-            )
-        else:
-            form.brand_select.data = ""
+        form.brand_select.data = bicycle.brand or ""
         form.model.data = bicycle.model
         form.description.data = bicycle.description
 
@@ -444,6 +481,8 @@ def bicycles_edit(bicycle_id):
         flash("Bicicleta actualizada", "success")
         return redirect(url_for("main.bicycles"))
 
+    if request.method == "POST":
+        flash("Revisa los campos ingresados", "error")
     return render_template(
         "main/bicycles/form.html",
         form=form,
@@ -466,9 +505,20 @@ def bicycles_delete(bicycle_id):
     bicycle = (
         Bicycle.query.filter_by(id=bicycle_id, workshop_id=workshop.id).first_or_404()
     )
-    if bicycle.jobs:
-        flash("No se puede borrar una bicicleta con trabajos", "error")
+    in_progress = Job.query.filter_by(
+        workshop_id=workshop.id, bicycle_id=bicycle.id, status="in_progress"
+    ).first()
+    if in_progress:
+        flash("No puedes eliminar una bicicleta con trabajos en progreso", "error")
         return redirect(url_for("main.bicycles"))
+
+    jobs = Job.query.filter_by(
+        workshop_id=workshop.id, bicycle_id=bicycle.id
+    ).all()
+    for job in jobs:
+        for item in job.items:
+            db.session.delete(item)
+        db.session.delete(job)
 
     db.session.delete(bicycle)
     db.session.commit()
@@ -519,6 +569,8 @@ def services_create():
         flash("Service creado", "success")
         return redirect(url_for("main.services"))
 
+    if request.method == "POST":
+        flash("Revisa los campos ingresados", "error")
     return render_template(
         "main/services/form.html",
         form=form,
@@ -550,6 +602,8 @@ def services_edit(service_id):
         flash("Service actualizado", "success")
         return redirect(url_for("main.services"))
 
+    if request.method == "POST":
+        flash("Revisa los campos ingresados", "error")
     return render_template(
         "main/services/form.html",
         form=form,
@@ -653,6 +707,8 @@ def jobs_create():
         flash("Trabajo creado", "success")
         return redirect(url_for("main.jobs"))
 
+    if request.method == "POST":
+        flash("Revisa los campos ingresados", "error")
     selected_ids = set(form.service_type_ids.data or [])
     return render_template(
         "main/jobs/form.html",
@@ -719,6 +775,8 @@ def jobs_edit(job_id):
         flash("Trabajo actualizado", "success")
         return redirect(url_for("main.jobs"))
 
+    if request.method == "POST":
+        flash("Revisa los campos ingresados", "error")
     selected_ids = set(form.service_type_ids.data or [])
     return render_template(
         "main/jobs/form.html",
@@ -744,7 +802,7 @@ def jobs_status(job_id):
     job = Job.query.filter_by(id=job_id, workshop_id=workshop.id).first_or_404()
     job.status = form.status.data
     db.session.commit()
-    flash("Estado actualizado", "success")
+    flash("Estado actualizado correctamente", "success")
     return redirect(url_for("main.jobs"))
 
 
@@ -760,6 +818,9 @@ def jobs_delete(job_id):
         return redirect(url_for("main.jobs"))
 
     job = Job.query.filter_by(id=job_id, workshop_id=workshop.id).first_or_404()
+    if job.status == "in_progress":
+        flash("No puedes eliminar un trabajo en proceso", "error")
+        return redirect(url_for("main.jobs"))
     for item in job.items:
         db.session.delete(item)
     db.session.delete(job)

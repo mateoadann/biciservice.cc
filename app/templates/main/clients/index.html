@@ -14,6 +14,20 @@
     </div>
     <div class="panel-body">
       {% if clients %}
+        <div class="table-filters">
+          <label class="filter-field">
+            <span>Buscar</span>
+            <input class="input input-compact" id="clientSearch" type="search" placeholder="Buscar cliente">
+          </label>
+          <label class="filter-field">
+            <span>Filtro</span>
+            <select class="input input-compact" id="clientFilter">
+              <option value="all">Todos</option>
+              <option value="with">Con bicicletas</option>
+              <option value="without">Sin bicicletas</option>
+            </select>
+          </label>
+        </div>
         <div class="table-wrap">
           <table class="table">
             <thead>
@@ -27,16 +41,29 @@
             </thead>
             <tbody>
               {% for client in clients %}
-                <tr>
+                <tr data-bikes="{{ client.bicycles|length }}" data-search="{{ client.full_name }} {{ client.email or '' }} {{ client.phone or '' }}">
                   <td>{{ client.full_name }}</td>
                   <td>{{ client.email or "-" }}</td>
                   <td>{{ client.phone or "-" }}</td>
                   <td>{{ client.bicycles|length }}</td>
                   <td class="table-actions">
                     <a class="button button-ghost" href="{{ url_for('main.clients_edit', client_id=client.id) }}">Editar</a>
-                    <form method="post" action="{{ url_for('main.clients_delete', client_id=client.id) }}" class="inline-form">
+                    <form
+                      method="post"
+                      action="{{ url_for('main.clients_delete', client_id=client.id) }}"
+                      class="inline-form js-confirm"
+                      data-confirm-title="Eliminar cliente"
+                      data-confirm-message="Vas a eliminar este cliente. ¿Continuar?"
+                      data-confirm-final="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?"
+                    >
                       {{ delete_form.hidden_tag() }}
-                      <button class="button button-danger" type="submit">Eliminar</button>
+                      <button class="button button-danger icon-button" type="submit" aria-label="Eliminar">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M8 6V4h8v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M6 6l1 14h10l1-14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </button>
                     </form>
                   </td>
                 </tr>
@@ -53,4 +80,30 @@
       {% endif %}
     </div>
   </section>
+  <script>
+    const clientSearch = document.querySelector("#clientSearch");
+    const clientFilter = document.querySelector("#clientFilter");
+    const clientRows = document.querySelectorAll("tbody tr");
+
+    const filterClients = () => {
+      const query = (clientSearch?.value || "").toLowerCase().trim();
+      const filter = clientFilter?.value || "all";
+
+      clientRows.forEach((row) => {
+        const haystack = (row.dataset.search || "").toLowerCase();
+        const bikes = parseInt(row.dataset.bikes || "0", 10);
+        const matchesQuery = !query || haystack.includes(query);
+        const matchesFilter =
+          filter === "all" || (filter === "with" && bikes > 0) || (filter === "without" && bikes === 0);
+        row.style.display = matchesQuery && matchesFilter ? "" : "none";
+      });
+    };
+
+    if (clientSearch) {
+      clientSearch.addEventListener("input", filterClients);
+    }
+    if (clientFilter) {
+      clientFilter.addEventListener("change", filterClients);
+    }
+  </script>
 {% endblock %}

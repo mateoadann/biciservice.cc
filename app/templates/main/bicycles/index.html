@@ -14,6 +14,21 @@
     </div>
     <div class="panel-body">
       {% if bicycles %}
+        <div class="table-filters">
+          <label class="filter-field">
+            <span>Buscar</span>
+            <input class="input input-compact" id="bicycleSearch" type="search" placeholder="Buscar bicicleta o cliente">
+          </label>
+          <label class="filter-field">
+            <span>Marca</span>
+            <select class="input input-compact" id="bicycleBrandFilter">
+              <option value="all">Todas</option>
+              {% for brand in brands %}
+                <option value="{{ brand }}">{{ brand }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
         <div class="table-wrap">
           <table class="table">
             <thead>
@@ -27,16 +42,29 @@
             </thead>
             <tbody>
               {% for bicycle in bicycles %}
-                <tr>
+                <tr data-brand="{{ bicycle.brand or '' }}" data-search="{{ bicycle.brand or '' }} {{ bicycle.model or '' }} {{ bicycle.description or '' }} {{ bicycle.client.full_name }}">
                   <td>{{ bicycle.brand or "-" }}</td>
                   <td>{{ bicycle.model or "-" }}</td>
                   <td>{{ bicycle.description or "-" }}</td>
                   <td>{{ bicycle.client.full_name }}</td>
                   <td class="table-actions">
                     <a class="button button-ghost" href="{{ url_for('main.bicycles_edit', bicycle_id=bicycle.id) }}">Editar</a>
-                    <form method="post" action="{{ url_for('main.bicycles_delete', bicycle_id=bicycle.id) }}" class="inline-form">
+                    <form
+                      method="post"
+                      action="{{ url_for('main.bicycles_delete', bicycle_id=bicycle.id) }}"
+                      class="inline-form js-confirm"
+                      data-confirm-title="Eliminar bicicleta"
+                      data-confirm-message="Vas a eliminar esta bicicleta. ¿Continuar?"
+                      data-confirm-final="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?"
+                    >
                       {{ delete_form.hidden_tag() }}
-                      <button class="button button-danger" type="submit">Eliminar</button>
+                      <button class="button button-danger icon-button" type="submit" aria-label="Eliminar">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M8 6V4h8v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M6 6l1 14h10l1-14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </button>
                     </form>
                   </td>
                 </tr>
@@ -53,4 +81,29 @@
       {% endif %}
     </div>
   </section>
+  <script>
+    const bicycleSearch = document.querySelector("#bicycleSearch");
+    const bicycleBrandFilter = document.querySelector("#bicycleBrandFilter");
+    const bicycleRows = document.querySelectorAll("tbody tr");
+
+    const filterBicycles = () => {
+      const query = (bicycleSearch?.value || "").toLowerCase().trim();
+      const brand = bicycleBrandFilter?.value || "all";
+
+      bicycleRows.forEach((row) => {
+        const haystack = (row.dataset.search || "").toLowerCase();
+        const rowBrand = (row.dataset.brand || "").toLowerCase();
+        const matchesQuery = !query || haystack.includes(query);
+        const matchesBrand = brand === "all" || rowBrand === brand.toLowerCase();
+        row.style.display = matchesQuery && matchesBrand ? "" : "none";
+      });
+    };
+
+    if (bicycleSearch) {
+      bicycleSearch.addEventListener("input", filterBicycles);
+    }
+    if (bicycleBrandFilter) {
+      bicycleBrandFilter.addEventListener("change", filterBicycles);
+    }
+  </script>
 {% endblock %}

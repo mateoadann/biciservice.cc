@@ -14,6 +14,22 @@
     </div>
     <div class="panel-body">
       {% if jobs %}
+        <div class="table-filters">
+          <label class="filter-field">
+            <span>Buscar</span>
+            <input class="input input-compact" id="jobSearch" type="search" placeholder="Buscar por cliente, bici o service">
+          </label>
+          <label class="filter-field">
+            <span>Estado</span>
+            <select class="input input-compact" id="jobStatusFilter">
+              <option value="all">Todos</option>
+              <option value="open">Abierto</option>
+              <option value="in_progress">En progreso</option>
+              <option value="ready">Listo</option>
+              <option value="closed">Cerrado</option>
+            </select>
+          </label>
+        </div>
         <div class="table-wrap">
           <table class="table">
             <thead>
@@ -29,7 +45,10 @@
             </thead>
             <tbody>
               {% for job in jobs %}
-                <tr>
+                <tr
+                  data-status="{{ job.status }}"
+                  data-search="{{ job.bicycle.client.full_name }} {{ job.bicycle.brand or '' }} {{ job.bicycle.model or '' }} {% for item in job.items %}{{ item.service_type.name }} {% endfor %}"
+                >
                   <td>
                     <div class="table-title">{{ job.bicycle.client.full_name }}</div>
                     <div class="muted">{{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}</div>
@@ -59,27 +78,36 @@
                   <td class="hide-mobile">
                     <form method="post" action="{{ url_for('main.jobs_status', job_id=job.id) }}" class="inline-form status-form">
                       {{ status_form.csrf_token }}
-                      <select name="status" class="input input-compact">
+                      <select name="status" class="input input-compact status-select">
                         <option value="open" {% if job.status == "open" %}selected{% endif %}>Abierto</option>
                         <option value="in_progress" {% if job.status == "in_progress" %}selected{% endif %}>En progreso</option>
                         <option value="ready" {% if job.status == "ready" %}selected{% endif %}>Listo</option>
                         <option value="closed" {% if job.status == "closed" %}selected{% endif %}>Cerrado</option>
                       </select>
-                      <button class="button button-ghost button-compact icon-button" type="submit" aria-label="Actualizar estado">
-                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M21 12a9 9 0 1 1-2.64-6.36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          <path d="M21 3v6h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                      </button>
                     </form>
                   </td>
                   <td class="hide-mobile">{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "" }}</td>
                   <td class="table-actions hide-mobile">
                     <a class="button button-ghost" href="{{ url_for('main.jobs_edit', job_id=job.id) }}">Editar</a>
-                    <form method="post" action="{{ url_for('main.jobs_delete', job_id=job.id) }}" class="inline-form">
-                      {{ delete_form.hidden_tag() }}
-                      <button class="button button-danger" type="submit">Eliminar</button>
-                    </form>
+                    {% if job.status != "in_progress" %}
+                      <form
+                        method="post"
+                        action="{{ url_for('main.jobs_delete', job_id=job.id) }}"
+                        class="inline-form js-confirm"
+                        data-confirm-title="Eliminar trabajo"
+                        data-confirm-message="Vas a eliminar este trabajo. ¿Continuar?"
+                        data-confirm-final="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?"
+                      >
+                        {{ delete_form.hidden_tag() }}
+                        <button class="button button-danger icon-button" type="submit" aria-label="Eliminar">
+                          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 6V4h8v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M6 6l1 14h10l1-14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </button>
+                      </form>
+                    {% endif %}
                   </td>
                 </tr>
                 <template id="job-details-{{ job.id }}">
@@ -175,6 +203,39 @@
         }
       });
     });
+
+    document.querySelectorAll(".status-select").forEach((select) => {
+      select.addEventListener("change", () => {
+        const form = select.closest("form");
+        if (form) {
+          form.submit();
+        }
+      });
+    });
+
+    const jobSearch = document.querySelector("#jobSearch");
+    const jobStatusFilter = document.querySelector("#jobStatusFilter");
+    const jobRows = document.querySelectorAll("tbody tr");
+
+    const filterJobs = () => {
+      const query = (jobSearch?.value || "").toLowerCase().trim();
+      const status = jobStatusFilter?.value || "all";
+
+      jobRows.forEach((row) => {
+        const haystack = (row.dataset.search || "").toLowerCase();
+        const rowStatus = row.dataset.status || "";
+        const matchesQuery = !query || haystack.includes(query);
+        const matchesStatus = status === "all" || rowStatus === status;
+        row.style.display = matchesQuery && matchesStatus ? "" : "none";
+      });
+    };
+
+    if (jobSearch) {
+      jobSearch.addEventListener("input", filterJobs);
+    }
+    if (jobStatusFilter) {
+      jobStatusFilter.addEventListener("change", filterJobs);
+    }
 
     if (modalClose) {
       modalClose.addEventListener("click", closeModal);

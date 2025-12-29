@@ -1,9 +1,10 @@
 import os
 from decimal import Decimal, InvalidOperation
-from flask import Flask, g, session
+from flask import Flask, g, request, session, url_for, flash
 from flask_login import current_user
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
+from flask_wtf.csrf import CSRFError
 
 from .config import Config
 from .extensions import csrf, db, login_manager, migrate
@@ -25,7 +26,7 @@ def create_app(config_class=Config):
     csrf.init_app(app)
 
     login_manager.login_view = "auth.login"
-    login_manager.login_message = "Please log in to continue."
+    login_manager.login_message = "Inicia sesion para continuar."
 
     from .auth.routes import auth_bp
     from .main.routes import main_bp
@@ -65,6 +66,30 @@ def create_app(config_class=Config):
         else:
             theme = default_theme
         return {"theme": theme}
+
+    @app.after_request
+    def apply_security_headers(response):
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=()"
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "img-src 'self' data:; "
+            "style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "script-src 'self' 'unsafe-inline'"
+        )
+        if request.is_secure:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        return response
+
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(error):
+        flash("La sesion expiro. Intenta de nuevo.", "error")
+        return redirect(request.referrer or url_for("auth.login")), 400
 
     def format_currency(value):
         if value is None:

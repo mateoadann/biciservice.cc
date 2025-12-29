@@ -4,6 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ theme.name }} | Service Bicycle CRM</title>
+    <script>
+      (function () {
+        const stored = localStorage.getItem("theme");
+        if (stored) {
+          document.documentElement.setAttribute("data-theme", stored);
+        }
+      })();
+    </script>
     {% if theme.favicon_path %}
       <link rel="icon" href="{{ url_for('static', filename=theme.favicon_path) }}">
     {% else %}
@@ -49,6 +57,13 @@
           <a class="nav-link" href="{{ url_for('main.jobs') }}">Trabajos</a>
           <a class="nav-link" href="{{ url_for('main.settings') }}">Personalizacion</a>
           <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
+          <div class="theme-toggle">
+            <span>Modo oscuro</span>
+            <label class="switch">
+              <input type="checkbox" id="themeToggle" aria-label="Activar modo oscuro">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
         </nav>
       </aside>
       <main class="content">
@@ -75,6 +90,21 @@
         {% endwith %}
         {% block content %}{% endblock %}
       </main>
+      <div class="modal-overlay" id="confirmModal" aria-hidden="true">
+        <div class="modal confirm-modal">
+          <div class="modal-header">
+            <h3 id="confirmTitle">Confirmar accion</h3>
+            <button class="modal-close" type="button" aria-label="Cerrar">X</button>
+          </div>
+          <div class="modal-body">
+            <p id="confirmMessage"></p>
+          </div>
+          <div class="confirm-actions">
+            <button class="button button-ghost" type="button" id="confirmCancel">Cancelar</button>
+            <button class="button button-danger" type="button" id="confirmAccept">Continuar</button>
+          </div>
+        </div>
+      </div>
     </div>
     <script>
       const navToggle = document.querySelector(".nav-toggle");
@@ -87,11 +117,146 @@
         });
       }
 
+      const root = document.documentElement;
+      const themeToggle = document.querySelector("#themeToggle");
+      const baseColors = {
+        primary: getComputedStyle(root).getPropertyValue("--color-primary").trim(),
+        secondary: getComputedStyle(root).getPropertyValue("--color-secondary").trim(),
+        accent: getComputedStyle(root).getPropertyValue("--color-accent").trim(),
+        background: getComputedStyle(root).getPropertyValue("--color-background").trim(),
+      };
+
+      const parseHex = (hex) => {
+        const clean = hex.replace("#", "");
+        if (clean.length === 3) {
+          return clean.split("").map((c) => parseInt(c + c, 16));
+        }
+        if (clean.length === 6) {
+          return [0, 2, 4].map((i) => parseInt(clean.slice(i, i + 2), 16));
+        }
+        return null;
+      };
+
+      const darken = (hex, factor) => {
+        const rgb = parseHex(hex);
+        if (!rgb) {
+          return hex;
+        }
+        const result = rgb.map((value) => Math.max(0, Math.round(value * factor)));
+        return `#${result.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+      };
+
+      const applyTheme = (mode) => {
+        if (mode === "dark") {
+          root.setAttribute("data-theme", "dark");
+          root.style.setProperty("--color-primary", darken(baseColors.primary, 0.7));
+          root.style.setProperty("--color-secondary", darken(baseColors.secondary, 0.7));
+          root.style.setProperty("--color-accent", darken(baseColors.accent, 0.7));
+          root.style.setProperty("--color-background", darken(baseColors.background, 0.15));
+        } else {
+          root.removeAttribute("data-theme");
+          root.style.setProperty("--color-primary", baseColors.primary);
+          root.style.setProperty("--color-secondary", baseColors.secondary);
+          root.style.setProperty("--color-accent", baseColors.accent);
+          root.style.setProperty("--color-background", baseColors.background);
+        }
+      };
+
+      const storedTheme = localStorage.getItem("theme");
+      if (storedTheme) {
+        applyTheme(storedTheme);
+      }
+      if (themeToggle) {
+        themeToggle.checked = root.getAttribute("data-theme") === "dark";
+        themeToggle.addEventListener("change", () => {
+          const mode = themeToggle.checked ? "dark" : "light";
+          localStorage.setItem("theme", mode);
+          applyTheme(mode);
+        });
+      }
+
       document.querySelectorAll(".flash.success").forEach((flash) => {
         setTimeout(() => {
           flash.classList.add("flash-hide");
           setTimeout(() => flash.remove(), 350);
         }, 3000);
+      });
+
+      const confirmModal = document.querySelector("#confirmModal");
+      const confirmTitle = document.querySelector("#confirmTitle");
+      const confirmMessage = document.querySelector("#confirmMessage");
+      const confirmCancel = document.querySelector("#confirmCancel");
+      const confirmAccept = document.querySelector("#confirmAccept");
+      const confirmClose = confirmModal ? confirmModal.querySelector(".modal-close") : null;
+      let confirmStep = 0;
+      let pendingForm = null;
+
+      const closeConfirm = () => {
+        if (!confirmModal) {
+          return;
+        }
+        confirmModal.classList.remove("is-open");
+        confirmModal.setAttribute("aria-hidden", "true");
+        confirmStep = 0;
+        pendingForm = null;
+      };
+
+      const openConfirm = (form) => {
+        if (!confirmModal || !form) {
+          return;
+        }
+        pendingForm = form;
+        confirmStep = 1;
+        const title = form.dataset.confirmTitle || "Confirmar accion";
+        const message =
+          form.dataset.confirmMessage || "Vas a eliminar este registro. ¿Continuar?";
+        confirmTitle.textContent = title;
+        confirmMessage.textContent = message;
+        confirmAccept.textContent = "Continuar";
+        confirmModal.classList.add("is-open");
+        confirmModal.setAttribute("aria-hidden", "false");
+      };
+
+      if (confirmAccept) {
+        confirmAccept.addEventListener("click", () => {
+          if (!pendingForm) {
+            return;
+          }
+          if (confirmStep === 1) {
+            confirmStep = 2;
+            const finalMessage =
+              pendingForm.dataset.confirmFinal ||
+              "Esta accion no se puede deshacer. ¿Confirmas la eliminacion?";
+            confirmMessage.textContent = finalMessage;
+            confirmAccept.textContent = "Eliminar";
+            return;
+          }
+          pendingForm.submit();
+          closeConfirm();
+        });
+      }
+
+      if (confirmCancel) {
+        confirmCancel.addEventListener("click", closeConfirm);
+      }
+
+      if (confirmClose) {
+        confirmClose.addEventListener("click", closeConfirm);
+      }
+
+      if (confirmModal) {
+        confirmModal.addEventListener("click", (event) => {
+          if (event.target === confirmModal) {
+            closeConfirm();
+          }
+        });
+      }
+
+      document.querySelectorAll("form.js-confirm").forEach((form) => {
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          openConfirm(form);
+        });
       });
     </script>
   </body>
