@@ -1,5 +1,7 @@
 import os
+import random
 import re
+import string
 from pathlib import Path
 from uuid import uuid4
 
@@ -117,6 +119,14 @@ def _services_list(workshop):
         .order_by(ServiceType.name.asc())
         .all()
     )
+
+
+def _generate_job_code():
+    alphabet = string.ascii_uppercase + string.digits
+    while True:
+        code = "".join(random.choices(alphabet, k=4))
+        if not Job.query.filter_by(code=code).first():
+            return code
 
 
 def _brand_choices():
@@ -678,6 +688,7 @@ def jobs_create():
         job = Job(
             workshop_id=workshop.id,
             bicycle_id=form.bicycle_id.data,
+            code=_generate_job_code(),
             status=form.status.data,
             notes=form.notes.data,
         )
@@ -801,6 +812,7 @@ def jobs_status(job_id):
 
     job = Job.query.filter_by(id=job_id, workshop_id=workshop.id).first_or_404()
     job.status = form.status.data
+    # TODO: Cuando el estado pase a "ready", generar un PDF con el detalle del service.
     db.session.commit()
     flash("Estado actualizado correctamente", "success")
     return redirect(url_for("main.jobs"))

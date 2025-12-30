@@ -36,9 +36,10 @@
               <tr>
                 <th>Bicicleta</th>
                 <th class="show-mobile">Ver</th>
+                <th class="hide-mobile">Codigo</th>
                 <th class="hide-mobile">Service</th>
                 <th class="hide-mobile">Estado</th>
-                <th class="hide-mobile">Estado rapido</th>
+                <th class="hide-mobile">Actualizar estado</th>
                 <th class="hide-mobile">Fecha</th>
                 <th class="hide-mobile"></th>
               </tr>
@@ -47,7 +48,7 @@
               {% for job in jobs %}
                 <tr
                   data-status="{{ job.status }}"
-                  data-search="{{ job.bicycle.client.full_name }} {{ job.bicycle.brand or '' }} {{ job.bicycle.model or '' }} {% for item in job.items %}{{ item.service_type.name }} {% endfor %}"
+                  data-search="{{ job.code or '' }} {{ job.bicycle.client.full_name }} {{ job.bicycle.brand or '' }} {{ job.bicycle.model or '' }} {% for item in job.items %}{{ item.service_type.name }} {% endfor %}"
                 >
                   <td>
                     <div class="table-title">{{ job.bicycle.client.full_name }}</div>
@@ -55,6 +56,9 @@
                   </td>
                   <td class="show-mobile">
                     <button class="button button-ghost button-compact job-modal-trigger" type="button" data-target="job-details-{{ job.id }}">Ver</button>
+                  </td>
+                  <td class="hide-mobile">
+                    <span class="job-code">{{ job.code or "-" }}</span>
                   </td>
                   <td class="hide-mobile">
                     {% if job.items %}
@@ -88,7 +92,19 @@
                   </td>
                   <td class="hide-mobile">{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "" }}</td>
                   <td class="table-actions hide-mobile">
-                    <a class="button button-ghost" href="{{ url_for('main.jobs_edit', job_id=job.id) }}">Editar</a>
+                    <button
+                      class="button button-ghost button-compact job-modal-trigger"
+                      type="button"
+                      data-target="job-details-{{ job.id }}"
+                    >
+                      Ver
+                    </button>
+                    <a class="button button-ghost icon-button" href="{{ url_for('main.jobs_edit', job_id=job.id) }}" aria-label="Editar">
+                      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 20h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </a>
                     {% if job.status != "in_progress" %}
                       <form
                         method="post"
@@ -115,6 +131,10 @@
                     <div class="modal-title">Bicicleta</div>
                     <div>{{ job.bicycle.client.full_name }}</div>
                     <div class="muted">{{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}</div>
+                  </div>
+                  <div class="modal-section">
+                    <div class="modal-title">Codigo</div>
+                    <div>{{ job.code or "-" }}</div>
                   </div>
                   <div class="modal-section">
                     <div class="modal-title">Estado</div>

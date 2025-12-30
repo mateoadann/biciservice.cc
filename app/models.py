@@ -119,6 +119,7 @@ class Job(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     workshop_id = db.Column(db.Integer, db.ForeignKey("workshops.id"), nullable=False)
     bicycle_id = db.Column(db.Integer, db.ForeignKey("bicycles.id"), nullable=False)
+    code = db.Column(db.String(4), unique=True, nullable=False)
     status = db.Column(db.String(40), default="open")
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
