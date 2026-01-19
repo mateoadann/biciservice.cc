@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import current_app, url_for
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -22,5 +22,16 @@ def confirm_email_token(token: str, expires_in: int) -> str | None:
 def send_confirmation_email(user) -> None:
     token = generate_confirmation_token(user.email)
     confirm_url = url_for("auth.confirm_email", token=token, _external=True)
-    current_app.logger.info("Confirm email for %s: %s", user.email, confirm_url)
-    user.confirmation_sent_at = datetime.utcnow()
+    message = f"Confirm email for {user.email}: {confirm_url}"
+    current_app.logger.warning(message)
+    print(message, flush=True)
+    user.confirmation_sent_at = datetime.now(timezone.utc)
+
+
+def send_password_reset_email(user, token: str) -> None:
+    reset_url = url_for(
+        "auth.reset_password", user_id=user.id, token=token, _external=True
+    )
+    message = f"Reset password for {user.email}: {reset_url}"
+    current_app.logger.warning(message)
+    print(message, flush=True)

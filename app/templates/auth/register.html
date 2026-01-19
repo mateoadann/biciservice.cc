@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="es" data-theme="light">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Register | Service Bicycle CRM</title>
+    <title>Crear cuenta | {{ theme.name }}</title>
     <script>
       (function () {
         const stored = localStorage.getItem("theme");
@@ -26,6 +26,7 @@
           <p class="muted">Configura tu cuenta en menos de un minuto.</p>
         </div>
       </div>
+
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           <div class="flash-stack">
@@ -35,48 +36,55 @@
           </div>
         {% endif %}
       {% endwith %}
+
       <form method="post" class="auth-form">
         {{ form.hidden_tag() }}
+
         <label>
           Nombre completo
-          {{ form.full_name(class_="input") }}
+          {{ form.full_name(class_="input full-width", placeholder="Juan Perez") }}
           {% if form.full_name.errors %}
             <span class="field-error">{{ form.full_name.errors[0] }}</span>
           {% endif %}
         </label>
+
         <label>
           Email
-          {{ form.email(class_="input") }}
+          {{ form.email(class_="input full-width", placeholder="tu@email.com") }}
           {% if form.email.errors %}
             <span class="field-error">{{ form.email.errors[0] }}</span>
           {% endif %}
         </label>
+
         <label>
           Nombre del taller
-          {{ form.workshop_name(class_="input") }}
+          {{ form.workshop_name(class_="input full-width", placeholder="Taller de Bicicletas") }}
           {% if form.workshop_name.errors %}
             <span class="field-error">{{ form.workshop_name.errors[0] }}</span>
           {% endif %}
         </label>
+
         <label>
-          Password
-          {{ form.password(class_="input") }}
-          <span class="field-hint">Minimo 8 caracteres, con mayuscula, minuscula y numero.</span>
+          Contrasena
+          {{ form.password(class_="input full-width", placeholder="••••••••") }}
+          <span class="field-hint">Minimo 8 caracteres, mayuscula, minuscula y numero.</span>
           {% if form.password.errors %}
             <span class="field-error">{{ form.password.errors[0] }}</span>
           {% endif %}
         </label>
+
         <label>
-          Confirmar password
-          {{ form.confirm(class_="input") }}
+          Confirmar contrasena
+          {{ form.confirm(class_="input full-width", placeholder="••••••••") }}
           {% if form.confirm.errors %}
             <span class="field-error">{{ form.confirm.errors[0] }}</span>
           {% endif %}
         </label>
-        <button class="button" type="submit">Crear cuenta</button>
+
+        <button type="submit" class="button full-width">Crear cuenta</button>
       </form>
+
       <div class="auth-footer">
-        <span>Ya tienes cuenta?</span>
         <a href="{{ url_for('auth.login') }}">Volver al login</a>
       </div>
     </div>
