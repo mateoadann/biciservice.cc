@@ -46,6 +46,7 @@ htmlcov/
 .vscode/
 .idea/
 .DS_Store
+node_modules/
 
 # App uploads
 app/static/uploads/

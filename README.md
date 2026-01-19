@@ -34,6 +34,14 @@ personalizar logo, nombre del taller, favicon y paleta de colores.
 6. Levantar la app:
    `flask --app wsgi.py run`
 
+## Configuracion con Docker
+1. Levantar servicios:
+   `docker compose up --build`
+2. Ejecutar migraciones:
+   `docker compose exec web flask --app wsgi.py db upgrade`
+3. Abrir la app en el navegador:
+   `http://localhost:5000`
+
 ## Variables de entorno
 - `SECRET_KEY`: clave de sesion
 - `DATABASE_URL`: URL de Postgres (`postgresql+psycopg://...`)
