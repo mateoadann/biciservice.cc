@@ -1,6 +1,8 @@
 import os
+import click
 from decimal import Decimal, InvalidOperation
-from flask import Flask, g, request, session, url_for, flash
+from datetime import datetime, timezone
+from flask import Flask, g, request, session, url_for, flash, redirect
 from flask_login import current_user
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
@@ -8,7 +10,7 @@ from flask_wtf.csrf import CSRFError
 
 from .config import Config
 from .extensions import csrf, db, login_manager, migrate
-from .models import User, Workshop
+from .models import User, Workshop, Store
 
 
 def create_app(config_class=Config):
@@ -27,9 +29,10 @@ def create_app(config_class=Config):
 
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Inicia sesion para continuar."
+    login_manager.session_protection = "strong"
 
     from .auth.routes import auth_bp
-    from .main.routes import main_bp
+    from .main import main_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -41,7 +44,10 @@ def create_app(config_class=Config):
     @app.before_request
     def set_active_workshop():
         g.active_workshop = None
+        g.active_store = None
         if not current_user.is_authenticated:
+            return
+        if current_user.role == "super_admin":
             return
         workshop_id = session.get("active_workshop_id")
         if workshop_id:
@@ -49,6 +55,39 @@ def create_app(config_class=Config):
         if g.active_workshop is None and current_user.workshops:
             g.active_workshop = current_user.workshops[0]
             session["active_workshop_id"] = g.active_workshop.id
+
+        if g.active_workshop is None:
+            return
+
+        active_store_id = session.get("active_store_id")
+        store = None
+        if active_store_id:
+            store = Store.query.filter_by(
+                id=active_store_id, workshop_id=g.active_workshop.id
+            ).first()
+
+        if current_user.role != "owner":
+            if current_user.store_id:
+                store = Store.query.filter_by(
+                    id=current_user.store_id, workshop_id=g.active_workshop.id
+                ).first()
+            else:
+                store = None
+            if store:
+                session["active_store_id"] = store.id
+            else:
+                session.pop("active_store_id", None)
+        else:
+            if store is None:
+                store = (
+                    Store.query.filter_by(workshop_id=g.active_workshop.id)
+                    .order_by(Store.id.asc())
+                    .first()
+                )
+                if store:
+                    session["active_store_id"] = store.id
+
+        g.active_store = store
 
     @app.context_processor
     def inject_theme():
@@ -61,11 +100,21 @@ def create_app(config_class=Config):
             "favicon_path": None,
             "name": "Service Bicycle CRM",
         }
+        stores = []
         if g.get("active_workshop"):
             theme = g.active_workshop.theme()
+            stores = (
+                Store.query.filter_by(workshop_id=g.active_workshop.id)
+                .order_by(Store.name.asc())
+                .all()
+            )
         else:
             theme = default_theme
-        return {"theme": theme}
+        return {
+            "theme": theme,
+            "stores": stores,
+            "active_store": g.get("active_store"),
+        }
 
     @app.after_request
     def apply_security_headers(response):
@@ -103,6 +152,34 @@ def create_app(config_class=Config):
         except (InvalidOperation, ValueError, TypeError):
             return str(value)
         return formatted.replace(",", "X").replace(".", ",").replace("X", ".")
+
+    @app.cli.command("create-superadmin")
+    @click.option("--email", prompt=True)
+    @click.option("--name", prompt=True)
+    @click.option("--password", prompt=True, hide_input=True, confirmation_prompt=True)
+    def create_superadmin(email, name, password):
+        """Crea un usuario super_admin."""
+        email_value = email.strip().lower()
+        existing_super = User.query.filter_by(role="super_admin").first()
+        if existing_super:
+            click.echo("Ya existe un super admin")
+            return
+        existing = User.query.filter_by(email=email_value).first()
+        if existing:
+            click.echo("El email ya existe")
+            return
+        user = User(
+            full_name=name.strip(),
+            email=email_value,
+            role="super_admin",
+            store_id=None,
+            email_confirmed=True,
+            email_confirmed_at=datetime.now(timezone.utc),
+        )
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        click.echo("Super admin creado")
 
     app.jinja_env.filters["currency"] = format_currency
 

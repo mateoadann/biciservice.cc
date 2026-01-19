@@ -1,16 +1,18 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileAllowed, FileField
+from flask_wtf.file import FileAllowed, FileField, FileRequired
 from decimal import Decimal, InvalidOperation
 
 from wtforms import (
     BooleanField,
+    DateField,
     DecimalField,
+    PasswordField,
     SelectField,
     SelectMultipleField,
     StringField,
     TextAreaField,
 )
-from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional, Regexp
+from wtforms.validators import DataRequired, Email, EqualTo, Length, NumberRange, Optional, Regexp, ValidationError
 
 from ..config import Config
 
@@ -59,9 +61,77 @@ class WorkshopSettingsForm(FlaskForm):
 
 
 class ClientForm(FlaskForm):
-    full_name = StringField("Full name", validators=[DataRequired(), Length(max=120)])
-    email = StringField("Email", validators=[Optional(), Email(), Length(max=255)])
-    phone = StringField("Phone", validators=[Optional(), Length(max=40)])
+    full_name = StringField("Full name", validators=[DataRequired(message="Campo obligatorio"), Length(max=120)])
+    email = StringField("Email", validators=[DataRequired(message="Campo obligatorio"), Email(message="Email invalido"), Length(max=255)])
+    phone = StringField("Phone", validators=[DataRequired(message="Campo obligatorio"), Length(max=40)])
+
+
+class StoreForm(FlaskForm):
+    name = StringField("Nombre", validators=[DataRequired(), Length(max=120)])
+
+
+class UserCreateForm(FlaskForm):
+    full_name = StringField("Nombre", validators=[DataRequired(), Length(max=120)])
+    email = StringField("Email", validators=[DataRequired(), Email(), Length(max=255)])
+    role = SelectField(
+        "Rol",
+        choices=[("owner", "Owner"), ("staff", "Staff")],
+        validators=[DataRequired()],
+    )
+    store_id = SelectField("Sucursal", coerce=int, validators=[DataRequired()])
+    password = PasswordField(
+        "Password", validators=[DataRequired(), Length(min=8, max=64)]
+    )
+    confirm = PasswordField(
+        "Confirm password",
+        validators=[
+            DataRequired(),
+            EqualTo("password", message="Las contrasenas no coinciden"),
+        ],
+    )
+
+
+class UserEditForm(FlaskForm):
+    full_name = StringField("Nombre", validators=[DataRequired(), Length(max=120)])
+    email = StringField("Email", validators=[DataRequired(), Email(), Length(max=255)])
+    role = SelectField(
+        "Rol",
+        choices=[("owner", "Owner"), ("staff", "Staff")],
+        validators=[DataRequired()],
+    )
+    store_id = SelectField("Sucursal", coerce=int, validators=[DataRequired()])
+    password = PasswordField(
+        "Password", validators=[Optional(), Length(min=8, max=64)]
+    )
+    confirm = PasswordField("Confirm password", validators=[Optional()])
+
+    def validate_confirm(self, field):
+        if self.password.data and field.data != self.password.data:
+            raise ValidationError("Las contrasenas no coinciden")
+
+
+class SuperAdminProfileForm(FlaskForm):
+    full_name = StringField("Nombre", validators=[DataRequired(), Length(max=120)])
+    email = StringField("Email", validators=[DataRequired(), Email(), Length(max=255)])
+    password = PasswordField(
+        "Password", validators=[Optional(), Length(min=8, max=64)]
+    )
+    confirm = PasswordField("Confirm password", validators=[Optional()])
+
+    def validate_confirm(self, field):
+        if self.password.data and field.data != self.password.data:
+            raise ValidationError("Las contrasenas no coinciden")
+
+    def validate_password(self, field):
+        password = field.data or ""
+        if password and (
+            not any(char.islower() for char in password)
+            or not any(char.isupper() for char in password)
+            or not any(char.isdigit() for char in password)
+        ):
+            raise ValidationError(
+                "La contrasena debe incluir mayuscula, minuscula y numero"
+            )
 
 
 BRAND_CHOICES = [
@@ -92,7 +162,7 @@ BRAND_CHOICES = [
 class BicycleForm(FlaskForm):
     client_id = SelectField("Cliente", coerce=int, validators=[DataRequired()])
     brand_select = SelectField("Marca", validators=[DataRequired()], choices=[])
-    model = StringField("Modelo", validators=[Optional(), Length(max=80)])
+    model = StringField("Modelo", validators=[DataRequired(message="Campo obligatorio"), Length(max=80)])
     description = TextAreaField("Descripcion", validators=[Optional(), Length(max=300)])
 
 
@@ -100,13 +170,16 @@ class ServiceTypeForm(FlaskForm):
     name = StringField("Nombre", validators=[DataRequired(), Length(max=120)])
     description = TextAreaField("Descripcion", validators=[Optional(), Length(max=500)])
     base_price = LocalizedDecimalField(
-        "Precio base", validators=[Optional(), NumberRange(min=0)], places=2
+        "Precio base", validators=[DataRequired(message="Campo obligatorio"), NumberRange(min=0)], places=2
     )
     is_active = BooleanField("Activo")
 
 
 class JobForm(FlaskForm):
     bicycle_id = SelectField("Bicicleta", coerce=int, validators=[DataRequired()])
+    estimated_delivery_at = DateField(
+        "Entrega estimada", validators=[DataRequired(message="Campo obligatorio")]
+    )
     status = SelectField(
         "Estado",
         choices=[
@@ -122,6 +195,10 @@ class JobForm(FlaskForm):
         "Services", coerce=int, validators=[Optional()]
     )
 
+    def validate_service_type_ids(self, field):
+        if not field.data:
+            raise ValidationError("Selecciona al menos un service")
+
 
 class JobStatusForm(FlaskForm):
     status = SelectField(
@@ -136,5 +213,37 @@ class JobStatusForm(FlaskForm):
     )
 
 
+class TwoFactorSetupForm(FlaskForm):
+    code = StringField(
+        "Codigo",
+        validators=[
+            DataRequired(message="Campo obligatorio"),
+            Length(min=6, max=6),
+            Regexp(r"^\d{6}$", message="Codigo invalido"),
+        ],
+    )
+
+
+class TwoFactorDisableForm(FlaskForm):
+    password = PasswordField(
+        "Password", validators=[DataRequired(message="Campo obligatorio")]
+    )
+
+
 class DeleteForm(FlaskForm):
     pass
+
+
+class CSVImportForm(FlaskForm):
+    import_type = SelectField(
+        "Tipo de importacion",
+        choices=[("clients", "Clientes"), ("bicycles", "Bicicletas")],
+        validators=[DataRequired()],
+    )
+    csv_file = FileField(
+        "Archivo CSV",
+        validators=[
+            FileRequired(message="Archivo requerido"),
+            FileAllowed(["csv"], "Archivo CSV requerido"),
+        ],
+    )

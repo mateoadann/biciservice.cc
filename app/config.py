@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,3 +25,10 @@ class Config:
     SECURITY_EMAIL_CONFIRM_EXPIRES = 60 * 60
     LOGIN_RATE_LIMIT_WINDOW = 300
     LOGIN_RATE_LIMIT_MAX = 5
+    SECURITY_PASSWORD_RESET_EXPIRES = 60 * 60
+    SECURITY_TWO_FACTOR_ISSUER = "Service Bicycle CRM"
+    LOGIN_LOCKOUT_MAX = 5
+    LOGIN_LOCKOUT_DURATION = 900
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
+    REMEMBER_COOKIE_DURATION = timedelta(days=14)
+    SESSION_REFRESH_EACH_REQUEST = False
