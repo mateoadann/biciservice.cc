@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block page_title %}Seguridad{% endblock %}
+
+{% block content %}
+  <section class="panel settings-panel">
+    <div class="panel-header">
+      <div>
+        <h2>Seguridad</h2>
+        <p class="muted">Gestiona el acceso y la verificacion en dos pasos.</p>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="security-stack">
+      {% if current_user.two_factor_enabled %}
+        <div class="status success">2FA activado</div>
+        <div class="form-grid">
+          <div>
+            <div class="field-label">Estado</div>
+            <div>Protegido con 2FA</div>
+          </div>
+          <div>
+            <div class="field-label">Desactivar 2FA</div>
+            <form method="post">
+              {{ disable_form.hidden_tag() }}
+              <input type="hidden" name="form_name" value="disable_2fa">
+              <label>
+                Password
+                {{ disable_form.password(class_="input") }}
+                {% if disable_form.password.errors %}
+                  <span class="field-error">{{ disable_form.password.errors[0] }}</span>
+                {% endif %}
+              </label>
+              <button class="button button-ghost" type="submit">Desactivar</button>
+            </form>
+          </div>
+        </div>
+      {% else %}
+        <div class="status muted">2FA desactivado</div>
+        <div class="form-grid">
+          <div>
+            <div class="field-label">Paso 1</div>
+            <p class="muted">Abre tu app de autenticacion y agrega una cuenta.</p>
+            <div class="field-label">Secreto</div>
+            <input class="input input-compact" type="text" value="{{ setup_secret or '-' }}" readonly>
+            <div class="field-label">URI</div>
+            <input class="input input-compact" type="text" value="{{ setup_uri or '-' }}" readonly>
+          </div>
+          <div>
+            <div class="field-label">Paso 2</div>
+            <p class="muted">Ingresa el codigo de 6 digitos para activar 2FA.</p>
+            <form method="post">
+              {{ setup_form.hidden_tag() }}
+              <input type="hidden" name="form_name" value="enable_2fa">
+              <label>
+                Codigo
+                {{ setup_form.code(class_="input", inputmode="numeric", autocomplete="one-time-code") }}
+                {% if setup_form.code.errors %}
+                  <span class="field-error">{{ setup_form.code.errors[0] }}</span>
+                {% endif %}
+              </label>
+              <button class="button" type="submit">Activar 2FA</button>
+            </form>
+          </div>
+        </div>
+      {% endif %}
+      <p class="muted security-note">La seguridad 2FA usa un codigo temporal de tu app.</p>
+          </div>
+    </div>
+  </section>
+{% endblock %}

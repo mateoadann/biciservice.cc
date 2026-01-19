@@ -7,10 +7,10 @@
 {% endblock %}
 
 {% block content %}
-  <section class="panel">
+  <section class="panel panel-table">
     <div class="panel-header">
       <h2>Bicicletas registradas</h2>
-      <span class="pill">{{ bicycles|length }} total</span>
+      <span class="pill">{{ pagination.total }} total</span>
     </div>
     <div class="panel-body">
       {% if bicycles %}
@@ -28,6 +28,23 @@
               {% endfor %}
             </select>
           </label>
+          {% if pagination.pages > 1 %}
+            <div class="pagination pagination-top">
+              <div class="pagination-info">Mostrando {{ pagination.start }}-{{ pagination.end }} de {{ pagination.total }}</div>
+              <div class="pagination-actions">
+                {% if pagination.has_prev %}
+                  <a class="button button-ghost button-compact" href="{{ url_for('main.bicycles', page=pagination.prev_num) }}">Anterior</a>
+                {% else %}
+                  <span class="button button-ghost button-compact is-disabled" aria-disabled="true">Anterior</span>
+                {% endif %}
+                {% if pagination.has_next %}
+                  <a class="button button-ghost button-compact" href="{{ url_for('main.bicycles', page=pagination.next_num) }}">Siguiente</a>
+                {% else %}
+                  <span class="button button-ghost button-compact is-disabled" aria-disabled="true">Siguiente</span>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
         </div>
         <div class="table-wrap">
           <table class="table">
@@ -45,10 +62,10 @@
                 <tr data-brand="{{ bicycle.brand or '' }}" data-search="{{ bicycle.brand or '' }} {{ bicycle.model or '' }} {{ bicycle.description or '' }} {{ bicycle.client.full_name }}">
                   <td>{{ bicycle.brand or "-" }}</td>
                   <td>{{ bicycle.model or "-" }}</td>
-                  <td>{{ bicycle.description or "-" }}</td>
+                  <td><span class="truncate" title="{{ bicycle.description or "-" }}">{{ bicycle.description or "-" }}</span></td>
                   <td>{{ bicycle.client.full_name }}</td>
                   <td class="table-actions">
-                    <a class="button button-ghost" href="{{ url_for('main.bicycles_edit', bicycle_id=bicycle.id) }}">Editar</a>
+                    <a class="button button-ghost" href="{{ url_for('main.bicycles_detail', bicycle_id=bicycle.id) }}">Ver</a>
                     <form
                       method="post"
                       action="{{ url_for('main.bicycles_delete', bicycle_id=bicycle.id) }}"
@@ -56,6 +73,7 @@
                       data-confirm-title="Eliminar bicicleta"
                       data-confirm-message="Vas a eliminar esta bicicleta. ¿Continuar?"
                       data-confirm-final="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?"
+                        data-confirm-final-accept="Eliminar"
                     >
                       {{ delete_form.hidden_tag() }}
                       <button class="button button-danger icon-button" type="submit" aria-label="Eliminar">
@@ -71,7 +89,7 @@
               {% endfor %}
             </tbody>
           </table>
-        </div>
+                </div>
       {% else %}
         <div class="empty-state">
           <h3>No hay bicicletas aun</h3>

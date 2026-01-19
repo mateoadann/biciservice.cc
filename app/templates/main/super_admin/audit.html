@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block page_title %}Auditoria global{% endblock %}
+
+{% block page_actions %}
+  <a class="button button-ghost" href="{{ url_for('main.super_admin_dashboard') }}">Panel global</a>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Auditoria global</h2>
+      <p class="muted">Registro de acciones recientes</p>
+    </div>
+  </div>
+  {% if logs %}
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Usuario</th>
+            <th>Accion</th>
+            <th>Entidad</th>
+            <th>Taller</th>
+            <th>Sucursal</th>
+            <th>Detalle</th>
+            <th>IP</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+            <tr>
+              <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M') if log.created_at else '-' }}</td>
+              <td>{{ log.user.full_name if log.user else 'Sistema' }}</td>
+              <td>{{ log.action }}</td>
+              <td>{{ log.entity_type }}{% if log.entity_id %} #{{ log.entity_id }}{% endif %}</td>
+              <td>{{ log.workshop.name if log.workshop else '-' }}</td>
+              <td>{{ log.store.name if log.store else '-' }}</td>
+              <td>{{ log.description or '-' }}</td>
+              <td>{{ log.ip_address or '-' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="muted">No hay registros.</p>
+  {% endif %}
+</section>
+{% endblock %}

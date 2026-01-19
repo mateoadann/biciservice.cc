@@ -2,12 +2,13 @@
 
 {% block page_title %}{{ title }}{% endblock %}
 
+
 {% block page_actions %}
   <a class="button button-ghost" href="{{ url_for('main.bicycles') }}">Volver</a>
 {% endblock %}
 
 {% block content %}
-  <section class="panel">
+  <section class="panel panel-scroll">
     <div class="panel-header">
       <h2>{{ title }}</h2>
       <span class="pill">Bicicletas</span>
@@ -18,19 +19,33 @@
         <div class="form-grid">
           <label>
             Cliente
-            {{ form.client_id(class_="input") }}
+            <div class="search-select">
+              <input
+                class="input"
+                id="clientSearchInput"
+                type="search"
+                placeholder="Buscar cliente" required
+                autocomplete="off"
+                value="{{ selected_client_label }}"
+              >
+              <div class="search-results" id="clientSearchResults" role="listbox" aria-label="Resultados"></div>
+            </div>
+            {{ form.client_id(id="clientSelect", class_="input visually-hidden") }}
+            {% if form.client_id.errors %}
+              <span class="field-error">{{ form.client_id.errors[0] }}</span>
+            {% endif %}
           </label>
           <label>
             Marca
-            {{ form.brand_select(class_="input") }}
+            {{ form.brand_select(class_="input", required=True) }}
           </label>
           <label>
             Modelo
-            {{ form.model(class_="input") }}
+            {{ form.model(class_="input", required=True) }}
           </label>
           <label>
             Descripcion
-            {{ form.description(class_="input") }}
+            {{ form.description(class_="input input-short") }}
           </label>
         </div>
         <div class="form-actions">
@@ -40,4 +55,98 @@
       </form>
     </div>
   </section>
+  <script>
+    const clientInput = document.querySelector("#clientSearchInput");
+    const clientSelect = document.querySelector("#clientSelect");
+    const clientResults = document.querySelector("#clientSearchResults");
+    const clientOptions = {{ client_options|tojson }};
+
+    if (clientInput && clientSelect && clientResults) {
+      const optionMap = new Map(
+        clientOptions.map((option) => [option.label, option.id])
+      );
+      const minChars = 1;
+
+      const closeResults = () => {
+        clientResults.classList.remove("is-open");
+        clientResults.innerHTML = "";
+      };
+
+      const openResults = (items) => {
+        if (!items.length) {
+          clientResults.innerHTML = '<div class="search-empty">Sin resultados</div>';
+        } else {
+          clientResults.innerHTML = items
+            .map(
+              (item) =>
+                `<button class="search-result" type="button" data-id="${item.id}" data-label="${item.label}">${item.label}</button>`
+            )
+            .join("");
+        }
+        clientResults.classList.add("is-open");
+      };
+
+      const syncClient = () => {
+        const match = optionMap.get(clientInput.value.trim());
+        clientSelect.value = match || "";
+      };
+
+      clientInput.addEventListener("input", () => {
+        const query = clientInput.value.trim().toLowerCase();
+        if (query.length < minChars) {
+          closeResults();
+          syncClient();
+          return;
+        }
+        const matches = clientOptions.filter((option) =>
+          option.label.toLowerCase().includes(query)
+        );
+        openResults(matches.slice(0, 20));
+      });
+
+      clientInput.addEventListener("blur", () => {
+        setTimeout(() => {
+          closeResults();
+          syncClient();
+        }, 150);
+      });
+
+      clientResults.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+      });
+
+      clientResults.addEventListener("click", (event) => {
+        const button = event.target.closest(".search-result");
+        if (!button) {
+          return;
+        }
+        clientInput.value = button.dataset.label || "";
+        clientSelect.value = button.dataset.id || "";
+        closeResults();
+      });
+
+      const submitButton = document.querySelector("button[type=\"submit\"]");
+      const brandSelect = document.querySelector("select[name=\"brand_select\"]");
+      const modelInput = document.querySelector("input[name=\"model\"]");
+
+      const updateState = () => {
+        const hasClient = clientSelect.value.trim().length > 0;
+        const hasBrand = brandSelect ? brandSelect.value.trim().length > 0 : false;
+        const hasModel = modelInput ? modelInput.value.trim().length > 0 : false;
+        if (submitButton) {
+          submitButton.disabled = !(hasClient && hasBrand && hasModel);
+        }
+      };
+
+      if (brandSelect) {
+        brandSelect.addEventListener("change", updateState);
+      }
+      if (modelInput) {
+        modelInput.addEventListener("input", updateState);
+      }
+      clientInput.addEventListener("input", updateState);
+      updateState();
+      syncClient();
+    }
+  </script>
 {% endblock %}

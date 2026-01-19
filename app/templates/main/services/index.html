@@ -42,8 +42,8 @@
                     {% endif %}
                   </td>
                   <td class="table-actions">
-                    <a class="button button-ghost" href="{{ url_for('main.services_edit', service_id=service.id) }}">Editar</a>
-                    <form method="post" action="{{ url_for('main.services_delete', service_id=service.id) }}" class="inline-form">
+                    <a class="button button-ghost" href="{{ url_for('main.services_detail', service_id=service.id) }}">Ver</a>
+                    <form method="post" action="{{ url_for('main.services_delete', service_id=service.id) }}" class="inline-form js-confirm" data-confirm-title="Eliminar service" data-confirm-message="Vas a eliminar este service. ¿Continuar?" data-confirm-final="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?" data-confirm-final-accept="Eliminar">
                       {{ delete_form.hidden_tag() }}
                       <button class="button button-danger" type="submit">Eliminar</button>
                     </form>

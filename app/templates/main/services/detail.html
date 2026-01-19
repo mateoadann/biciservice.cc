@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block page_title %}Detalle de service{% endblock %}
+
+{% block page_actions %}
+  <a class="button" href="{{ url_for('main.services_edit', service_id=service.id) }}">Editar service</a>
+{% endblock %}
+
+{% block content %}
+  <div class="detail-stack">
+    <section class="panel panel-scroll">
+      <div class="panel-header">
+        <div>
+          <h2>{{ service.name }}</h2>
+          <p class="muted">Detalle del service</p>
+        </div>
+        <a class="button button-ghost button-compact" href="{{ url_for('main.services') }}">Volver a services</a>
+      </div>
+      <div class="panel-body">
+        <div class="form-grid">
+          <div>
+            <div class="field-label">Descripcion</div>
+            <div>{{ service.description or "-" }}</div>
+          </div>
+          <div>
+            <div class="field-label">Precio base</div>
+            <div>$ {{ service.base_price|currency }}</div>
+          </div>
+          <div>
+            <div class="field-label">Estado</div>
+            <div>
+              {% if service.is_active %}
+                <span class="status success">Activo</span>
+              {% else %}
+                <span class="status muted">Pausado</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <details class="panel panel-collapsible">
+      <summary class="panel-header panel-toggle">
+        <h2>Auditoria</h2>
+        <span class="panel-toggle-icon" aria-hidden="true"></span>
+      </summary>
+      <div class="panel-body">
+        <div class="form-grid">
+          <div>
+            <div class="field-label">Creado en</div>
+            <div>{{ created_at.strftime('%Y-%m-%d %H:%M') if created_at else '-' }}</div>
+          </div>
+          <div>
+            <div class="field-label">Creado por</div>
+            <div>{{ created_by or '-' }}</div>
+          </div>
+          <div>
+            <div class="field-label">Actualizado en</div>
+            <div>{{ updated_at.strftime('%Y-%m-%d %H:%M') if updated_at else '-' }}</div>
+          </div>
+          <div>
+            <div class="field-label">Actualizado por</div>
+            <div>{{ updated_by or '-' }}</div>
+          </div>
+        </div>
+        <p class="muted">Estos datos son generados por el sistema y no se pueden editar.</p>
+      </div>
+    </details>
+  </div>
+{% endblock %}

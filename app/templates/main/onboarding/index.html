@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block page_title %}Onboarding{% endblock %}
+
+{% block page_actions %}{% endblock %}
+
+{% block content %}
+  <section class="panel panel-scroll">
+    <div class="panel-header">
+      <div>
+        <h2>Onboarding</h2>
+        <p class="muted">Importa datos iniciales con CSV.</p>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="wizard-steps">
+        <div class="wizard-step">
+          <div class="wizard-step-number">1</div>
+          <div>
+            <div class="wizard-step-title">Prepara tu CSV</div>
+            <div class="muted">Usa los encabezados recomendados.</div>
+          </div>
+        </div>
+        <div class="wizard-step">
+          <div class="wizard-step-number">2</div>
+          <div>
+            <div class="wizard-step-title">Sube el archivo</div>
+            <div class="muted">Selecciona el tipo de importacion y carga el CSV.</div>
+          </div>
+        </div>
+        <div class="wizard-step">
+          <div class="wizard-step-number">3</div>
+          <div>
+            <div class="wizard-step-title">Confirma la carga</div>
+            <div class="muted">El sistema creara los registros validos.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-note">
+        <div class="field-label">Plantillas XLSX</div>
+        <div class="template-links">
+          <a class="button button-ghost button-compact" href="{{ url_for('static', filename='templates/clientes_template.xlsx') }}" download>Descargar clientes</a>
+          <a class="button button-ghost button-compact" href="{{ url_for('static', filename='templates/bicicletas_template.xlsx') }}" download>Descargar bicicletas</a>
+        </div>
+      </div>
+
+      <form method="post" enctype="multipart/form-data" class="form-stack">
+        {{ form.hidden_tag() }}
+        <label>
+          Tipo de importacion
+          {{ form.import_type(class_="input") }}
+          <span class="field-hint">Clientes o bicicletas.</span>
+          {% if form.import_type.errors %}
+            <span class="field-error">{{ form.import_type.errors[0] }}</span>
+          {% endif %}
+        </label>
+        <label>
+          Archivo CSV
+          {{ form.csv_file(class_="input", accept=".csv") }}
+          <span class="field-hint">Formato UTF-8, separado por comas.</span>
+          {% if form.csv_file.errors %}
+            <span class="field-error">{{ form.csv_file.errors[0] }}</span>
+          {% endif %}
+        </label>
+
+        <div class="panel-note">
+          <div class="field-label">Ejemplo clientes</div>
+          <pre class="code-sample">full_name,email,phone
+Luciano Adan,luciano@email.com,351555555</pre>
+          <div class="field-label">Ejemplo bicicletas</div>
+          <pre class="code-sample">client_email,brand,model,description
+luciano@email.com,Trek,Marlin,Revisar frenos</pre>
+        </div>
+
+        <button class="button" type="submit">Importar</button>
+      </form>
+    </div>
+  </section>
+{% endblock %}

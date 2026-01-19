@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block page_title %}Usuarios{% endblock %}
+
+{% block page_actions %}
+  <a class="button" href="{{ url_for('main.users_create') }}">Nuevo usuario</a>
+{% endblock %}
+
+{% block content %}
+  <section class="panel panel-scroll">
+    <div class="panel-header">
+      <h2>Usuarios del taller</h2>
+      <span class="pill">{{ users|length }} total</span>
+    </div>
+    <div class="panel-body">
+      {% if users %}
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Sucursal</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in users %}
+                <tr>
+                  <td>{{ user.full_name }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>{{ "Owner" if user.role == "owner" else "Staff" }}</td>
+                  <td>{{ user.store.name if user.store else "-" }}</td>
+                  <td class="table-actions">
+                    <a class="button button-ghost" href="{{ url_for('main.users_detail', user_id=user.id) }}">Ver</a>
+                    <a class="button button-ghost" href="{{ url_for('main.users_edit', user_id=user.id) }}">Editar</a>
+                    {% if current_user.id != user.id %}
+                      <form
+                        method="post"
+                        action="{{ url_for('main.users_delete', user_id=user.id) }}"
+                        class="inline-form js-confirm"
+                        data-confirm-title="Eliminar usuario"
+                        data-confirm-message="Vas a eliminar este usuario. ¿Continuar?"
+                        data-confirm-final="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?"
+                        data-confirm-final-accept="Eliminar"
+                      >
+                        {{ delete_form.hidden_tag() }}
+                        <button class="button button-danger icon-button" type="submit" aria-label="Eliminar">
+                          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 6V4h8v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M6 6l1 14h10l1-14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </button>
+                      </form>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <h3>No hay usuarios creados</h3>
+          <p class="muted">Crea usuarios para asignarlos a una sucursal.</p>
+          <a class="button" href="{{ url_for('main.users_create') }}">Crear usuario</a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

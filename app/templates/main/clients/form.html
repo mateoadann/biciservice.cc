@@ -7,26 +7,26 @@
 {% endblock %}
 
 {% block content %}
-  <section class="panel">
+  <section class="panel panel-scroll">
     <div class="panel-header">
       <h2>{{ title }}</h2>
       <span class="pill">Clientes</span>
     </div>
     <div class="panel-body">
-      <form method="post" class="form-stack">
+      <form method="post" class="form-stack" id="clientForm">
         {{ form.hidden_tag() }}
         <div class="form-grid">
           <label>
             Nombre completo
-            {{ form.full_name(class_="input") }}
+            {{ form.full_name(class_="input", required=True) }}
           </label>
           <label>
             Email
-            {{ form.email(class_="input") }}
+            {{ form.email(class_="input", required=True) }}
           </label>
           <label>
             Telefono
-            {{ form.phone(class_="input") }}
+            {{ form.phone(class_="input", required=True) }}
           </label>
         </div>
         <div class="form-actions">
@@ -36,4 +36,27 @@
       </form>
     </div>
   </section>
+  <script>
+    const clientForm = document.querySelector("#clientForm");
+    if (clientForm) {
+      const submitButton = clientForm.querySelector("button[type=\"submit\"]");
+      const requiredFields = [
+        clientForm.querySelector("input[name=\"full_name\"]"),
+        clientForm.querySelector("input[name=\"email\"]"),
+        clientForm.querySelector("input[name=\"phone\"]"),
+      ].filter(Boolean);
+
+      const updateState = () => {
+        const allFilled = requiredFields.every((field) => field.value.trim().length > 0);
+        if (submitButton) {
+          submitButton.disabled = !allFilled;
+        }
+      };
+
+      requiredFields.forEach((field) => {
+        field.addEventListener("input", updateState);
+      });
+      updateState();
+    }
+  </script>
 {% endblock %}

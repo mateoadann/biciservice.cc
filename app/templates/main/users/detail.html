@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block page_title %}Detalle de usuario{% endblock %}
+
+{% block page_actions %}
+  <a class="button" href="{{ url_for('main.users_edit', user_id=user.id) }}">Editar usuario</a>
+{% endblock %}
+
+{% block content %}
+  <div class="detail-stack">
+    <section class="panel panel-scroll">
+      <div class="panel-header">
+        <div>
+          <h2>{{ user.full_name }}</h2>
+          <p class="muted">Detalle del usuario</p>
+        </div>
+        <a class="button button-ghost button-compact" href="{{ url_for('main.users') }}">Volver a usuarios</a>
+      </div>
+      <div class="panel-body">
+        <div class="form-grid">
+          <div>
+            <div class="field-label">Email</div>
+            <div>{{ user.email }}</div>
+          </div>
+          <div>
+            <div class="field-label">Rol</div>
+            <div>{{ "Owner" if user.role == "owner" else "Staff" }}</div>
+          </div>
+          <div>
+            <div class="field-label">Sucursal</div>
+            <div>{{ user.store.name if user.store else "-" }}</div>
+          </div>
+          <div>
+            <div class="field-label">Estado</div>
+            <div>
+              <span class="status {{ 'success' if user.is_active else 'muted' }}">
+                {{ 'Activo' if user.is_active else 'Inactivo' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <details class="panel panel-collapsible">
+      <summary class="panel-header panel-toggle">
+        <h2>Auditoria</h2>
+        <span class="panel-toggle-icon" aria-hidden="true"></span>
+      </summary>
+      <div class="panel-body">
+        <div class="form-grid">
+          <div>
+            <div class="field-label">Creado en</div>
+            <div>{{ created_at.strftime('%Y-%m-%d %H:%M') if created_at else '-' }}</div>
+          </div>
+          <div>
+            <div class="field-label">Creado por</div>
+            <div>{{ created_by or '-' }}</div>
+          </div>
+          <div>
+            <div class="field-label">Actualizado en</div>
+            <div>{{ updated_at.strftime('%Y-%m-%d %H:%M') if updated_at else '-' }}</div>
+          </div>
+          <div>
+            <div class="field-label">Actualizado por</div>
+            <div>{{ updated_by or '-' }}</div>
+          </div>
+        </div>
+        <p class="muted">Estos datos son generados por el sistema y no se pueden editar.</p>
+      </div>
+    </details>
+  </div>
+{% endblock %}

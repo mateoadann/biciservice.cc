@@ -1,256 +1,381 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ theme.name }} | Service Bicycle CRM</title>
-    <script>
-      (function () {
-        const stored = localStorage.getItem("theme");
-        if (stored) {
-          document.documentElement.setAttribute("data-theme", stored);
-        }
-      })();
-    </script>
-    {% if theme.favicon_path %}
-      <link rel="icon" href="{{ url_for('static', filename=theme.favicon_path) }}">
-    {% else %}
-      <link rel="icon" href="{{ url_for('static', filename='css/favicon_bike1.png') }}">
-    {% endif %}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
-    <style>
-      :root {
-        --color-primary: {{ theme.primary }};
-        --color-secondary: {{ theme.secondary }};
-        --color-accent: {{ theme.accent }};
-        --color-background: {{ theme.background }};
-      }
-    </style>
-  </head>
-  <body>
-    <div class="page">
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <a class="brand brand-link" href="{{ url_for('main.dashboard') }}">
+<html lang="es" data-theme="light">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ theme.name }}</title>
+
+  <!-- Theme Persistence -->
+  <script>
+    if (localStorage.getItem("theme") === "dark" || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.setAttribute("data-theme", "dark");
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
+
+  <!-- Favicon -->
+  {% if theme.favicon_path %}
+  <link rel="icon" href="{{ url_for('static', filename=theme.favicon_path) }}">
+  {% else %}
+  <link rel="icon" href="{{ url_for('static', filename='css/favicon_bike1.png') }}">
+  {% endif %}
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+
+  <!-- Custom Theme Colors -->
+  <style>
+    :root {
+      --color-primary: {{ theme.primary or '#1f4cff' }};
+      --color-secondary: {{ theme.secondary or '#19b36b' }};
+      --color-accent: {{ theme.accent or '#ff8c2b' }};
+      --color-background: {{ theme.background or '#f6f7fb' }};
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    {% if current_user.is_authenticated %}
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <a class="brand brand-link" href="{{ url_for('main.dashboard') }}">
           {% if theme.logo_path %}
-            <img src="{{ url_for('static', filename=theme.logo_path) }}" alt="{{ theme.name }} logo">
+          <img src="{{ url_for('static', filename=theme.logo_path) }}" alt="{{ theme.name }} logo">
           {% else %}
-            <div class="brand-mark">SB</div>
+          {% set brand_name = theme.name or "Workshop" %}
+          {% set brand_words = brand_name.split() %}
+          {% if brand_words|length > 1 %}
+          {% set brand_initials = (brand_words[0][0] ~ brand_words[1][0])|upper %}
+          {% else %}
+          {% set brand_initials = brand_name[:1]|upper %}
+          {% endif %}
+          <div class="brand-mark">{{ brand_initials }}</div>
           {% endif %}
           <div>
             <div class="brand-title">{{ theme.name }}</div>
-            <div class="brand-subtitle">Service Bicycle CRM</div>
+            <div class="brand-subtitle">Service Bicycle</div>
           </div>
-          </a>
-          <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="sidebarNav">
-            Menu
+        </a>
+        <button class="nav-toggle" type="button" aria-label="Abrir menu">Menu</button>
+      </div>
+
+      <button class="sidebar-collapse-toggle" type="button" aria-label="Alternar barra lateral" aria-pressed="false">
+        <span class="sidebar-collapse-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="collapse-open size-6">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5" />
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="collapse-closed size-6">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
+          </svg>
+        </span>
+      </button>
+
+      <nav class="nav">
+        {% if current_user.role != "super_admin" %}
+        <a href="{{ url_for('main.dashboard') }}" class="nav-link" title="Dashboard">
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+            </svg>
+          </span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+        <a href="{{ url_for('main.clients') }}" class="nav-link" title="Clientes">
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="3"></circle>
+              <path d="M5 21c0-3.5 2.7-6 7-6s7 2.5 7 6"></path>
+            </svg>
+          </span>
+          <span class="nav-label">Clientes</span>
+        </a>
+        <a href="{{ url_for('main.bicycles') }}" class="nav-link" title="Bicicletas">
+          <span class="nav-icon" aria-hidden="true">
+            {% include 'components/icons/bike.svg' %}
+          </span>
+          <span class="nav-label">Bicicletas</span>
+        </a>
+        <a href="{{ url_for('main.services') }}" class="nav-link" title="Service">
+          <span class="nav-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75a4.5 4.5 0 0 1-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 1 1-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 0 1 6.336-4.486l-3.276 3.276a3.004 3.004 0 0 0 2.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.867 19.125h.008v.008h-.008v-.008Z" />
+              </svg>
+          </span>
+          <span class="nav-label">Service</span>
+        </a>
+        <a href="{{ url_for('main.jobs') }}" class="nav-link" title="Trabajos">
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 3h10v4H7z"></path>
+              <path d="M6 7h12v14H6z"></path>
+              <path d="M9 11h6"></path>
+              <path d="M9 15h6"></path>
+            </svg>
+          </span>
+          <span class="nav-label">Trabajos</span>
+        </a>
+        {% if current_user.role == "owner" %}
+        <div class="nav-group">
+          <button type="button" class="nav-group-toggle" aria-expanded="false" aria-controls="ownerConfigMenu">
+            <span class="nav-group-content">
+              <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z">
+                  </path>
+                </svg>
+              </span>
+              <span class="nav-label">Configuracion</span>
+            </span>
+            <span class="nav-arrow" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="m4.5 5.25 7.5 7.5 7.5-7.5m-15 6 7.5 7.5 7.5-7.5" />
+              </svg>
+            </span>
           </button>
+          <div id="ownerConfigMenu" class="nav-group-menu">
+            <a href="{{ url_for('main.settings') }}" class="nav-link">Personalizacion</a>
+            <a href="{{ url_for('main.stores') }}" class="nav-link">Sucursales</a>
+            <a href="{{ url_for('main.users') }}" class="nav-link">Usuarios</a>
+            <a href="{{ url_for('main.security') }}" class="nav-link">Seguridad</a>
+            <a href="{{ url_for('main.onboarding') }}" class="nav-link">Onboarding</a>
+            <a href="{{ url_for('main.audit') }}" class="nav-link">Auditoria</a>
+          </div>
         </div>
-        <nav class="nav" id="sidebarNav">
-          <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
-          <a class="nav-link" href="{{ url_for('main.clients') }}">Clientes</a>
-          <a class="nav-link" href="{{ url_for('main.bicycles') }}">Bicicletas</a>
-          <a class="nav-link" href="{{ url_for('main.services') }}">Services</a>
-          <a class="nav-link" href="{{ url_for('main.jobs') }}">Trabajos</a>
-          <a class="nav-link" href="{{ url_for('main.settings') }}">Personalizacion</a>
-          <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
-        </nav>
-      </aside>
-      <main class="content">
-        <header class="topbar">
-          <div>
-            <h1>{% block page_title %}Dashboard{% endblock %}</h1>
-            <p class="muted">Control del service del taller</p>
-          </div>
-          <div class="topbar-actions">
-            {% block page_actions %}
-              <a class="button button-ghost" href="{{ url_for('main.jobs_create') }}">Nuevo trabajo</a>
-              <a class="button" href="{{ url_for('main.clients_create') }}">Nuevo cliente</a>
-            {% endblock %}
-          </div>
-        </header>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div class="flash-stack">
-              {% for category, message in messages %}
-                <div class="flash {{ category }}">{{ message }}</div>
+        {% endif %}
+        {% endif %}
+
+        {% if current_user.role == "super_admin" %}
+        <div class="muted">Super Admin</div>
+        <a href="{{ url_for('main.super_admin_dashboard') }}" class="nav-link">Panel Global</a>
+        <a href="{{ url_for('main.super_admin_owners') }}" class="nav-link">Owners</a>
+        <a href="{{ url_for('main.super_admin_audit') }}" class="nav-link">Auditoria Global</a>
+        {% endif %}
+
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="{{ url_for('auth.logout') }}" class="nav-link" title="Cerrar Sesion">
+          <span class="nav-icon" aria-hidden="true">
+            {% include 'components/icons/logout.svg' %}
+          </span>
+          <span class="nav-label">Cerrar Sesion</span>
+        </a>
+      </div>
+    </aside>
+    {% endif %}
+
+    <main class="content">
+      {% if current_user.is_authenticated %}
+      <header class="topbar">
+        <div>
+          <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+          <p class="muted">{% block page_subtitle %}Vista general del taller{% endblock %}</p>
+        </div>
+        <div class="topbar-actions">
+          {% if current_user.role == "owner" and stores %}
+          <form method="post" action="{{ url_for('main.stores_switch') }}" id="storeForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="store_id" onchange="this.form.submit()" class="input input-compact">
+              {% for store in stores %}
+              <option value="{{ store.id }}" {% if active_store and store.id==active_store.id %}selected{% endif %}>
+                {{ store.name }}
+              </option>
               {% endfor %}
-            </div>
+            </select>
+          </form>
           {% endif %}
-        {% endwith %}
-        {% block content %}{% endblock %}
-      </main>
-      <div class="modal-overlay" id="confirmModal" aria-hidden="true">
-        <div class="modal confirm-modal">
-          <div class="modal-header">
-            <h3 id="confirmTitle">Confirmar accion</h3>
-            <button class="modal-close" type="button" aria-label="Cerrar">X</button>
-          </div>
-          <div class="modal-body">
-            <p id="confirmMessage"></p>
-          </div>
-          <div class="confirm-actions">
-            <button class="button button-ghost" type="button" id="confirmCancel">Cancelar</button>
-            <button class="button button-danger" type="button" id="confirmAccept">Continuar</button>
-          </div>
+
+          {% block page_actions %}
+          {% if current_user.role != "super_admin" %}
+          <a class="button" href="{{ url_for('main.jobs_create') }}">Nuevo trabajo</a>
+          {% endif %}
+          {% endblock %}
+        </div>
+      </header>
+      {% endif %}
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-stack">
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="confirmOverlay" aria-hidden="true">
+    <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+      <div class="modal-header">
+        <h3 id="confirmTitle">Confirmar</h3>
+        <button class="modal-close" type="button" aria-label="Cerrar" id="confirmClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmMessage"></p>
+        <div class="confirm-actions">
+          <button class="button button-ghost" type="button" id="confirmCancel">Cancelar</button>
+          <button class="button button-danger" type="button" id="confirmAccept">Continuar</button>
         </div>
       </div>
     </div>
-    <script>
-      const navToggle = document.querySelector(".nav-toggle");
-      const nav = document.querySelector("#sidebarNav");
+  </div>
 
-      if (navToggle && nav) {
-        navToggle.addEventListener("click", () => {
-          const isOpen = nav.classList.toggle("is-open");
-          navToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-        });
+  <script>
+    const navToggle = document.querySelector('.nav-toggle');
+    const nav = document.querySelector('.nav');
+    const sidebar = document.querySelector('.sidebar');
+    const collapseToggle = document.querySelector('.sidebar-collapse-toggle');
+    const sidebarStateKey = 'sidebarCollapsed';
+    const confirmOverlay = document.getElementById('confirmOverlay');
+    const confirmTitle = document.getElementById('confirmTitle');
+    const confirmMessage = document.getElementById('confirmMessage');
+    const confirmCancel = document.getElementById('confirmCancel');
+    const confirmAccept = document.getElementById('confirmAccept');
+    const confirmClose = document.getElementById('confirmClose');
+    let confirmForm = null;
+    let confirmStep = 1;
+
+    const setSidebarState = (collapsed, persist = true) => {
+      if (!sidebar) return;
+      sidebar.classList.toggle('sidebar-collapsed', collapsed);
+      collapseToggle?.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
+      if (!persist) return;
+      try {
+        localStorage.setItem(sidebarStateKey, String(collapsed));
+      } catch (error) {
+        console.warn('No se pudo almacenar el estado del sidebar', error);
       }
+    };
 
-      const root = document.documentElement;
-      const themeToggle = document.querySelector("#themeToggle");
-      const baseColors = {
-        primary: getComputedStyle(root).getPropertyValue("--color-primary").trim(),
-        secondary: getComputedStyle(root).getPropertyValue("--color-secondary").trim(),
-        accent: getComputedStyle(root).getPropertyValue("--color-accent").trim(),
-        background: getComputedStyle(root).getPropertyValue("--color-background").trim(),
-      };
-
-      const parseHex = (hex) => {
-        const clean = hex.replace("#", "");
-        if (clean.length === 3) {
-          return clean.split("").map((c) => parseInt(c + c, 16));
-        }
-        if (clean.length === 6) {
-          return [0, 2, 4].map((i) => parseInt(clean.slice(i, i + 2), 16));
-        }
+    const persisted = (() => {
+      try {
+        return localStorage.getItem(sidebarStateKey);
+      } catch (error) {
         return null;
-      };
-
-      const darken = (hex, factor) => {
-        const rgb = parseHex(hex);
-        if (!rgb) {
-          return hex;
-        }
-        const result = rgb.map((value) => Math.max(0, Math.round(value * factor)));
-        return `#${result.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
-      };
-
-      const applyTheme = (mode) => {
-        if (mode === "dark") {
-          root.setAttribute("data-theme", "dark");
-          root.style.setProperty("--color-primary", darken(baseColors.primary, 0.7));
-          root.style.setProperty("--color-secondary", darken(baseColors.secondary, 0.7));
-          root.style.setProperty("--color-accent", darken(baseColors.accent, 0.7));
-          root.style.setProperty("--color-background", darken(baseColors.background, 0.15));
-        } else {
-          root.removeAttribute("data-theme");
-          root.style.setProperty("--color-primary", baseColors.primary);
-          root.style.setProperty("--color-secondary", baseColors.secondary);
-          root.style.setProperty("--color-accent", baseColors.accent);
-          root.style.setProperty("--color-background", baseColors.background);
-        }
-      };
-
-      const storedTheme = localStorage.getItem("theme");
-      if (storedTheme) {
-        applyTheme(storedTheme);
       }
-      if (themeToggle) {
-        themeToggle.checked = root.getAttribute("data-theme") === "dark";
-        themeToggle.addEventListener("change", () => {
-          const mode = themeToggle.checked ? "dark" : "light";
-          localStorage.setItem("theme", mode);
-          applyTheme(mode);
-        });
-      }
+    })();
+    if (persisted === 'true') {
+      setSidebarState(true, false);
+    }
 
-      document.querySelectorAll(".flash.success").forEach((flash) => {
-        setTimeout(() => {
-          flash.classList.add("flash-hide");
-          setTimeout(() => flash.remove(), 350);
-        }, 3000);
+    navToggle?.addEventListener('click', () => {
+      nav?.classList.toggle('is-open');
+    });
+
+    document.querySelectorAll('.nav-group-toggle').forEach((toggle) => {
+      const menu = toggle.nextElementSibling;
+      toggle.addEventListener('click', () => {
+        const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', String(!isExpanded));
+        menu?.classList.toggle('is-open', !isExpanded);
       });
+    });
 
-      const confirmModal = document.querySelector("#confirmModal");
-      const confirmTitle = document.querySelector("#confirmTitle");
-      const confirmMessage = document.querySelector("#confirmMessage");
-      const confirmCancel = document.querySelector("#confirmCancel");
-      const confirmAccept = document.querySelector("#confirmAccept");
-      const confirmClose = confirmModal ? confirmModal.querySelector(".modal-close") : null;
-      let confirmStep = 0;
-      let pendingForm = null;
+    const openConfirmModal = (form, step = 1) => {
+      if (!confirmOverlay || !confirmTitle || !confirmMessage || !confirmAccept) return;
+      confirmForm = form;
+      confirmStep = step;
+      const title = form.dataset.confirmTitle || 'Confirmar accion';
+      const firstMessage = form.dataset.confirmMessage || 'Confirmar accion?';
+      confirmTitle.textContent = title;
+      confirmMessage.textContent = firstMessage;
+      confirmAccept.textContent = 'Continuar';
+      confirmOverlay.classList.add('is-open');
+      confirmOverlay.setAttribute('aria-hidden', 'false');
+    };
 
-      const closeConfirm = () => {
-        if (!confirmModal) {
+    const closeConfirmModal = () => {
+      if (!confirmOverlay) return;
+      confirmOverlay.classList.remove('is-open');
+      confirmOverlay.setAttribute('aria-hidden', 'true');
+      confirmForm = null;
+      confirmStep = 1;
+    };
+
+    confirmCancel?.addEventListener('click', closeConfirmModal);
+    confirmClose?.addEventListener('click', closeConfirmModal);
+    confirmOverlay?.addEventListener('click', (event) => {
+      if (event.target === confirmOverlay) {
+        closeConfirmModal();
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeConfirmModal();
+      }
+    });
+
+    confirmAccept?.addEventListener('click', () => {
+      if (!confirmForm) return;
+      confirmForm.dataset.confirmed = 'true';
+      closeConfirmModal();
+      confirmForm.submit();
+    });
+
+    document.querySelectorAll('form.js-confirm').forEach((form) => {
+      form.addEventListener('submit', (event) => {
+        if (form.dataset.confirmed === 'true') {
           return;
         }
-        confirmModal.classList.remove("is-open");
-        confirmModal.setAttribute("aria-hidden", "true");
-        confirmStep = 0;
-        pendingForm = null;
-      };
-
-      const openConfirm = (form) => {
-        if (!confirmModal || !form) {
-          return;
-        }
-        pendingForm = form;
-        confirmStep = 1;
-        const title = form.dataset.confirmTitle || "Confirmar accion";
-        const message =
-          form.dataset.confirmMessage || "Vas a eliminar este registro. ¿Continuar?";
-        confirmTitle.textContent = title;
-        confirmMessage.textContent = message;
-        confirmAccept.textContent = "Continuar";
-        confirmModal.classList.add("is-open");
-        confirmModal.setAttribute("aria-hidden", "false");
-      };
-
-      if (confirmAccept) {
-        confirmAccept.addEventListener("click", () => {
-          if (!pendingForm) {
-            return;
-          }
-          if (confirmStep === 1) {
-            confirmStep = 2;
-            const finalMessage =
-              pendingForm.dataset.confirmFinal ||
-              "Esta accion no se puede deshacer. ¿Confirmas la eliminacion?";
-            confirmMessage.textContent = finalMessage;
-            confirmAccept.textContent = "Eliminar";
-            return;
-          }
-          pendingForm.submit();
-          closeConfirm();
-        });
-      }
-
-      if (confirmCancel) {
-        confirmCancel.addEventListener("click", closeConfirm);
-      }
-
-      if (confirmClose) {
-        confirmClose.addEventListener("click", closeConfirm);
-      }
-
-      if (confirmModal) {
-        confirmModal.addEventListener("click", (event) => {
-          if (event.target === confirmModal) {
-            closeConfirm();
-          }
-        });
-      }
-
-      document.querySelectorAll("form.js-confirm").forEach((form) => {
-        form.addEventListener("submit", (event) => {
-          event.preventDefault();
-          openConfirm(form);
-        });
+        event.preventDefault();
+        openConfirmModal(form, 1);
       });
-    </script>
-  </body>
+    });
+
+    collapseToggle?.addEventListener('click', () => {
+      const collapsed = !sidebar?.classList.contains('sidebar-collapsed');
+      setSidebarState(Boolean(collapsed));
+    });
+
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+      themeToggle.checked = document.documentElement.classList.contains('dark');
+      themeToggle.addEventListener('change', (event) => {
+        const isDark = event.target.checked;
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        document.documentElement.classList.toggle('dark', isDark);
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      });
+    }
+
+    setTimeout(() => {
+      document.querySelectorAll('.flash').forEach((el) => {
+        el.classList.add('flash-hide');
+        setTimeout(() => el.remove(), 300);
+      });
+    }, 4000);
+  </script>
+</body>
+
 </html>

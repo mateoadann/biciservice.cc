@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-  <section class="panel">
+  <section class="panel panel-scroll">
     <div class="panel-header">
       <h2>{{ title }}</h2>
       <span class="pill">Trabajos</span>
@@ -18,38 +18,98 @@
         <div class="form-grid">
           <label>
             Bicicleta
-            {{ form.bicycle_id(class_="input") }}
+            <div class="search-select">
+              <input
+                class="input"
+                id="bicycleSearchInput"
+                type="search"
+                placeholder="Buscar bicicleta o cliente"
+                autocomplete="off"
+                value="{{ selected_bicycle_label }}"
+              >
+              <div class="search-results" id="bicycleSearchResults" role="listbox" aria-label="Resultados"></div>
+            </div>
+            {% if form.bicycle_id.errors %}
+              <span class="field-error">{{ form.bicycle_id.errors[0] }}</span>
+            {% endif %}
+          </label>
+          <label>
+            Entrega estimada
+            {{ form.estimated_delivery_at(class_="input", type="date", required=True) }}
+            {% if form.estimated_delivery_at.errors %}
+              <span class="field-error">{{ form.estimated_delivery_at.errors[0] }}</span>
+            {% endif %}
           </label>
           <label>
             Estado
-            {{ form.status(class_="input") }}
-          </label>
-          <label>
-            Services
-            <div class="service-options">
-              {% if services %}
-                {% for service in services %}
-                  <label class="service-option">
-                    <input type="checkbox" name="service_type_ids" value="{{ service.id }}"
-                      {% if service.id in selected_ids %}checked{% endif %}>
-                    <span>
-                      <span class="service-name">{{ service.name }}</span>
-                      <span class="service-price">$ {{ service.base_price|currency }}</span>
-                      {% if service.description %}
-                        <span class="service-desc">{{ service.description }}</span>
-                      {% endif %}
-                    </span>
-                  </label>
-                {% endfor %}
-              {% else %}
-                <span class="muted">No hay services creados.</span>
-              {% endif %}
-            </div>
+            {{ form.status(class_="input", required=True) }}
           </label>
           <label>
             Notas
             {{ form.notes(class_="input") }}
           </label>
+        </div>
+        <div class="panel-note">
+          <div class="field-label">Services</div>
+          <div class="service-options">
+            {% if services %}
+              {% for service in services %}
+                <label class="service-option">
+                  <input type="checkbox" name="service_type_ids" value="{{ service.id }}"
+                    {% if service.id in selected_ids %}checked{% endif %}>
+                  <span>
+                    <span class="service-name">{{ service.name }}</span>
+                    <span class="service-price">$ {{ service.base_price|currency }}</span>
+                    {% if service.description %}
+                      <span class="service-desc">{{ service.description }}</span>
+                    {% endif %}
+                  </span>
+                </label>
+              {% endfor %}
+            {% else %}
+              <span class="muted">No hay services creados.</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="panel-note">
+          <div class="field-label">Repuestos y gastos</div>
+          <div class="parts-list" id="partsList">
+            {% for part in parts_data %}
+              <div class="part-row">
+                <input
+                  class="input"
+                  name="part_description"
+                  type="text"
+                  placeholder="Descripcion"
+                  value="{{ part.description }}"
+                >
+                <input
+                  class="input input-compact"
+                  name="part_quantity"
+                  type="number"
+                  min="1"
+                  placeholder="1"
+                  value="{{ part.quantity }}"
+                >
+                <input
+                  class="input input-compact js-money"
+                  name="part_unit_price"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0,00"
+                  value="{{ part.unit_price }}"
+                >
+                <select class="input input-compact" name="part_kind">
+                  <option value="part" {% if part.kind == "part" %}selected{% endif %}>Repuesto</option>
+                  <option value="supply" {% if part.kind == "supply" %}selected{% endif %}>Insumo</option>
+                  <option value="other" {% if part.kind == "other" %}selected{% endif %}>Otro</option>
+                </select>
+                <button class="button button-ghost icon-button part-remove" type="button" aria-label="Quitar">X</button>
+              </div>
+            {% endfor %}
+          </div>
+          <button class="button button-ghost button-compact" type="button" id="addPart">Agregar repuesto</button>
+          <p class="muted">Los repuestos se suman al total del trabajo.</p>
         </div>
         <div class="panel-note">Puedes seleccionar multiples services. Cada item se agrega con cantidad 1.</div>
         <div class="form-actions">
@@ -59,4 +119,164 @@
       </form>
     </div>
   </section>
+  <script>
+    const bicycleInput = document.querySelector("#bicycleSearchInput");
+    const bicycleSelect = document.querySelector("#bicycleSelect");
+    const bicycleResults = document.querySelector("#bicycleSearchResults");
+    const bicycleOptions = {{ bicycle_options|tojson }};
+
+    if (bicycleInput && bicycleSelect && bicycleResults) {
+      const optionMap = new Map(
+        bicycleOptions.map((option) => [option.label, option.id])
+      );
+      const minChars = 1;
+
+      const closeResults = () => {
+        bicycleResults.classList.remove("is-open");
+        bicycleResults.innerHTML = "";
+      };
+
+      const openResults = (items) => {
+        if (!items.length) {
+          bicycleResults.innerHTML = '<div class="search-empty">Sin resultados</div>';
+        } else {
+          bicycleResults.innerHTML = items
+            .map(
+              (item) =>
+                `<button class="search-result" type="button" data-id="${item.id}" data-label="${item.label}">${item.label}</button>`
+            )
+            .join("");
+        }
+        bicycleResults.classList.add("is-open");
+      };
+
+      const syncBicycle = () => {
+        const match = optionMap.get(bicycleInput.value.trim());
+        bicycleSelect.value = match || "";
+      };
+
+      bicycleInput.addEventListener("input", () => {
+        const query = bicycleInput.value.trim().toLowerCase();
+        if (query.length < minChars) {
+          closeResults();
+          syncBicycle();
+          return;
+        }
+        const matches = bicycleOptions.filter((option) =>
+          option.label.toLowerCase().includes(query)
+        );
+        openResults(matches.slice(0, 20));
+      });
+
+      bicycleInput.addEventListener("blur", () => {
+        setTimeout(() => {
+          closeResults();
+          syncBicycle();
+        }, 150);
+      });
+
+      bicycleResults.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+      });
+
+      bicycleResults.addEventListener("click", (event) => {
+        const button = event.target.closest(".search-result");
+        if (!button) {
+          return;
+        }
+        bicycleInput.value = button.dataset.label || "";
+        bicycleSelect.value = button.dataset.id || "";
+        closeResults();
+        updateState();
+      });
+
+      const submitButton = document.querySelector("button[type=\"submit\"]");
+      const statusSelect = document.querySelector("select[name=\"status\"]");
+      const deliveryInput = document.querySelector("input[name=\"estimated_delivery_at\"]");
+      const serviceCheckboxes = Array.from(document.querySelectorAll("input[name=\"service_type_ids\"]"));
+
+      const updateState = () => {
+        const hasBicycle = bicycleSelect.value.trim().length > 0;
+        const hasStatus = statusSelect ? statusSelect.value.trim().length > 0 : false;
+        const hasDelivery = deliveryInput ? deliveryInput.value.trim().length > 0 : false;
+        const hasService = serviceCheckboxes.some((checkbox) => checkbox.checked);
+        if (submitButton) {
+          submitButton.disabled = !(hasBicycle && hasStatus && hasDelivery && hasService);
+        }
+      };
+
+      bicycleInput.addEventListener("input", updateState);
+      if (statusSelect) {
+        statusSelect.addEventListener("change", updateState);
+      }
+      if (deliveryInput) {
+        deliveryInput.addEventListener("change", updateState);
+      }
+      serviceCheckboxes.forEach((checkbox) => {
+        checkbox.addEventListener("change", updateState);
+      });
+      updateState();
+      syncBicycle();
+    }
+
+    const formatCurrency = (value) => {
+      if (!value) {
+        return "";
+      }
+      const cleaned = value.replace(/[^\d,]/g, "");
+      const parts = cleaned.split(",");
+      const intPart = parts[0] || "";
+      const decRaw = parts[1] || "";
+      const decPart = decRaw.slice(0, 2);
+      const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      if (cleaned.includes(",")) {
+        return `${intFormatted},${decPart}`;
+      }
+      return intFormatted;
+    };
+
+    const partsList = document.querySelector("#partsList");
+    const addPartButton = document.querySelector("#addPart");
+
+    const attachPartEvents = (row) => {
+      const removeButton = row.querySelector(".part-remove");
+      const priceInput = row.querySelector(".js-money");
+      if (removeButton) {
+        removeButton.addEventListener("click", () => {
+          row.remove();
+        });
+      }
+      if (priceInput) {
+        priceInput.value = formatCurrency(priceInput.value);
+        priceInput.addEventListener("input", () => {
+          priceInput.value = formatCurrency(priceInput.value);
+        });
+        priceInput.addEventListener("blur", () => {
+          priceInput.value = formatCurrency(priceInput.value);
+        });
+      }
+    };
+
+    document.querySelectorAll(".part-row").forEach(attachPartEvents);
+
+    if (addPartButton && partsList) {
+      addPartButton.addEventListener("click", () => {
+        const row = document.createElement("div");
+        row.className = "part-row";
+        row.innerHTML = `
+          <input class="input" name="part_description" type="text" placeholder="Descripcion">
+          <input class="input input-compact" name="part_quantity" type="number" min="1" placeholder="1" value="1">
+          <input class="input input-compact js-money" name="part_unit_price" type="text" inputmode="decimal" placeholder="0,00">
+          <select class="input input-compact" name="part_kind">
+            <option value="part">Repuesto</option>
+            <option value="supply">Insumo</option>
+            <option value="other">Otro</option>
+          </select>
+          <button class="button button-ghost icon-button part-remove" type="button" aria-label="Quitar">X</button>
+        `;
+        partsList.appendChild(row);
+        attachPartEvents(row);
+      });
+    }
+  </script>
 {% endblock %}

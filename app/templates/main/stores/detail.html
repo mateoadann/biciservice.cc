@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block page_title %}Detalle de sucursal{% endblock %}
+
+{% block page_actions %}
+  <a class="button" href="{{ url_for('main.stores_edit', store_id=store.id) }}">Editar sucursal</a>
+{% endblock %}
+
+{% block content %}
+  <div class="detail-stack">
+    <section class="panel panel-scroll">
+      <div class="panel-header">
+        <div>
+          <h2>{{ store.name }}</h2>
+          <p class="muted">Detalle de la sucursal</p>
+        </div>
+        <a class="button button-ghost button-compact" href="{{ url_for('main.stores') }}">Volver a sucursales</a>
+      </div>
+      <div class="panel-body">
+        <div class="form-grid">
+          <div>
+            <div class="field-label">Usuarios</div>
+            <div>{{ users_count }}</div>
+          </div>
+          <div>
+            <div class="field-label">Trabajos</div>
+            <div>{{ jobs_count }}</div>
+          </div>
+          <div>
+            <div class="field-label">Creada</div>
+            <div>{{ store.created_at.strftime('%Y-%m-%d') if store.created_at else '-' }}</div>
+          </div>
+          <div>
+            <div class="field-label">Estado</div>
+            <div>
+              {% if active_store and active_store.id == store.id %}
+                <span class="status success">Activa</span>
+              {% else %}
+                <span class="status muted">Disponible</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <details class="panel panel-collapsible">
+      <summary class="panel-header panel-toggle">
+        <h2>Auditoria</h2>
+        <span class="panel-toggle-icon" aria-hidden="true"></span>
+      </summary>
+      <div class="panel-body">
+        <div class="form-grid">
+          <div>
+            <div class="field-label">Creado en</div>
+            <div>{{ created_at.strftime('%Y-%m-%d %H:%M') if created_at else '-' }}</div>
+          </div>
+          <div>
+            <div class="field-label">Creado por</div>
+            <div>{{ created_by or '-' }}</div>
+          </div>
+          <div>
+            <div class="field-label">Actualizado en</div>
+            <div>{{ updated_at.strftime('%Y-%m-%d %H:%M') if updated_at else '-' }}</div>
+          </div>
+          <div>
+            <div class="field-label">Actualizado por</div>
+            <div>{{ updated_by or '-' }}</div>
+          </div>
+        </div>
+        <p class="muted">Estos datos son generados por el sistema y no se pueden editar.</p>
+      </div>
+    </details>
+  </div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block page_title %}Panel global{% endblock %}
+
+{% block page_actions %}
+  <a class="button button-ghost" href="{{ url_for('main.super_admin_owners') }}">Ver owners</a>
+{% endblock %}
+
+{% block content %}
+  <section class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Owners</div>
+      <div class="stat-value">{{ metrics.owners }}</div>
+      <div class="stat-meta">Registrados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Talleres</div>
+      <div class="stat-value">{{ metrics.workshops }}</div>
+      <div class="stat-meta">Workshops activos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Sucursales</div>
+      <div class="stat-value">{{ metrics.stores }}</div>
+      <div class="stat-meta">Stores creadas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Trabajos</div>
+      <div class="stat-value">{{ metrics.jobs }}</div>
+      <div class="stat-meta">Registrados</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Ingresos estimados</h2>
+    </div>
+    <div class="panel-body">
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">Ingresos</div>
+          <div class="summary-value">$ {{ revenue|currency }}</div>
+        </div>
+      </div>
+      {% if revenue == 0 %}
+        <div class="panel-note">Aun no hay ingresos registrados.</div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

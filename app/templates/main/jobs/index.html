@@ -7,10 +7,10 @@
 {% endblock %}
 
 {% block content %}
-  <section class="panel">
+  <section class="panel panel-table">
     <div class="panel-header">
       <h2>Trabajos en taller</h2>
-      <span class="pill">{{ jobs|length }} total</span>
+      <span class="pill">{{ pagination.total }} total</span>
     </div>
     <div class="panel-body">
       {% if jobs %}
@@ -29,18 +29,35 @@
               <option value="closed">Cerrado</option>
             </select>
           </label>
+          {% if pagination.pages > 1 %}
+            <div class="pagination pagination-top">
+              <div class="pagination-info">Mostrando {{ pagination.start }}-{{ pagination.end }} de {{ pagination.total }}</div>
+              <div class="pagination-actions">
+                {% if pagination.has_prev %}
+                  <a class="button button-ghost button-compact" href="{{ url_for('main.jobs', page=pagination.prev_num) }}">Anterior</a>
+                {% else %}
+                  <span class="button button-ghost button-compact is-disabled" aria-disabled="true">Anterior</span>
+                {% endif %}
+                {% if pagination.has_next %}
+                  <a class="button button-ghost button-compact" href="{{ url_for('main.jobs', page=pagination.next_num) }}">Siguiente</a>
+                {% else %}
+                  <span class="button button-ghost button-compact is-disabled" aria-disabled="true">Siguiente</span>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
         </div>
         <div class="table-wrap">
           <table class="table">
             <thead>
               <tr>
+                <th class="hide-mobile">Codigo</th>
                 <th>Bicicleta</th>
                 <th class="show-mobile">Ver</th>
-                <th class="hide-mobile">Codigo</th>
                 <th class="hide-mobile">Service</th>
                 <th class="hide-mobile">Estado</th>
-                <th class="hide-mobile">Actualizar estado</th>
-                <th class="hide-mobile">Fecha</th>
+                <th class="hide-mobile">Ingreso</th>
+                <th class="hide-mobile">Entrega estimada</th>
                 <th class="hide-mobile"></th>
               </tr>
             </thead>
@@ -50,6 +67,9 @@
                   data-status="{{ job.status }}"
                   data-search="{{ job.code or '' }} {{ job.bicycle.client.full_name }} {{ job.bicycle.brand or '' }} {{ job.bicycle.model or '' }} {% for item in job.items %}{{ item.service_type.name }} {% endfor %}"
                 >
+                  <td class="hide-mobile">
+                    <span class="job-code">{{ job.code or "-" }}</span>
+                  </td>
                   <td>
                     <div class="table-title">{{ job.bicycle.client.full_name }}</div>
                     <div class="muted">{{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}</div>
@@ -58,31 +78,20 @@
                     <button class="button button-ghost button-compact job-modal-trigger" type="button" data-target="job-details-{{ job.id }}">Ver</button>
                   </td>
                   <td class="hide-mobile">
-                    <span class="job-code">{{ job.code or "-" }}</span>
-                  </td>
-                  <td class="hide-mobile">
                     {% if job.items %}
-                      <div class="chip-list">
-                        {% for item in job.items %}
-                          <span class="chip">{{ item.service_type.name }}</span>
-                        {% endfor %}
-                      </div>
+                      {% if job.items|length > 1 %}
+                        <span class="chip">{{ job.items|length }}</span>
+                      {% else %}
+                        <span class="chip">{{ job.items[0].service_type.name }}</span>
+                      {% endif %}
                     {% else %}
                       Sin service
                     {% endif %}
                   </td>
                   <td class="hide-mobile">
-                    <span class="status {{ job.status }}">
-                      {% if job.status == "open" %}Abierto{% endif %}
-                      {% if job.status == "in_progress" %}En progreso{% endif %}
-                      {% if job.status == "ready" %}Listo{% endif %}
-                      {% if job.status == "closed" %}Cerrado{% endif %}
-                    </span>
-                  </td>
-                  <td class="hide-mobile">
                     <form method="post" action="{{ url_for('main.jobs_status', job_id=job.id) }}" class="inline-form status-form">
                       {{ status_form.csrf_token }}
-                      <select name="status" class="input input-compact status-select">
+                      <select name="status" class="input input-compact status-select status-{{ job.status }}">
                         <option value="open" {% if job.status == "open" %}selected{% endif %}>Abierto</option>
                         <option value="in_progress" {% if job.status == "in_progress" %}selected{% endif %}>En progreso</option>
                         <option value="ready" {% if job.status == "ready" %}selected{% endif %}>Listo</option>
@@ -91,20 +100,9 @@
                     </form>
                   </td>
                   <td class="hide-mobile">{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "" }}</td>
+                  <td class="hide-mobile">{{ job.estimated_delivery_at.strftime("%d/%m/%Y") if job.estimated_delivery_at else "" }}</td>
                   <td class="table-actions hide-mobile">
-                    <button
-                      class="button button-ghost button-compact job-modal-trigger"
-                      type="button"
-                      data-target="job-details-{{ job.id }}"
-                    >
-                      Ver
-                    </button>
-                    <a class="button button-ghost icon-button" href="{{ url_for('main.jobs_edit', job_id=job.id) }}" aria-label="Editar">
-                      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 20h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </a>
+                    <a class="button button-ghost button-compact" href="{{ url_for('main.jobs_detail', job_id=job.id) }}">Detalle</a>
                     {% if job.status != "in_progress" %}
                       <form
                         method="post"
@@ -113,6 +111,7 @@
                         data-confirm-title="Eliminar trabajo"
                         data-confirm-message="Vas a eliminar este trabajo. ¿Continuar?"
                         data-confirm-final="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?"
+                        data-confirm-final-accept="Eliminar"
                       >
                         {{ delete_form.hidden_tag() }}
                         <button class="button button-danger icon-button" type="submit" aria-label="Eliminar">
@@ -147,12 +146,12 @@
                   </div>
                   <div class="modal-section">
                     <div class="modal-title">Services</div>
+                    {% set totals = namespace(service=0, parts=0) %}
                     {% if job.items %}
                       <div class="modal-list">
-                        {% set total = namespace(value=0) %}
                         {% for item in job.items %}
                           {% set item_total = (item.unit_price or 0) * item.quantity %}
-                          {% set total.value = total.value + item_total %}
+                          {% set totals.service = totals.service + item_total %}
                           <div class="modal-row">
                             <span>{{ item.service_type.name }}</span>
                             <span>$ {{ item.unit_price|currency }}</span>
@@ -160,16 +159,48 @@
                         {% endfor %}
                       </div>
                       <div class="modal-total">
-                        <span>Total</span>
-                        <span>$ {{ total.value|currency }}</span>
+                        <span>Total servicios</span>
+                        <span>$ {{ totals.service|currency }}</span>
                       </div>
                     {% else %}
                       <div class="muted">Sin services asignados.</div>
                     {% endif %}
                   </div>
                   <div class="modal-section">
-                    <div class="modal-title">Fecha</div>
+                    <div class="modal-title">Repuestos y gastos</div>
+                    {% if job.parts %}
+                      <div class="modal-list">
+                        {% for part in job.parts %}
+                          {% set part_total = (part.unit_price or 0) * part.quantity %}
+                          {% set totals.parts = totals.parts + part_total %}
+                          <div class="modal-row">
+                            <span>{{ part.description }}</span>
+                            <span>$ {{ part.unit_price|currency }}</span>
+                          </div>
+                        {% endfor %}
+                      </div>
+                      <div class="modal-total">
+                        <span>Total repuestos</span>
+                        <span>$ {{ totals.parts|currency }}</span>
+                      </div>
+                    {% else %}
+                      <div class="muted">Sin repuestos cargados.</div>
+                    {% endif %}
+                  </div>
+                  <div class="modal-section">
+                    <div class="modal-title">Total</div>
+                    <div class="modal-total">
+                      <span>Total del trabajo</span>
+                      <span>$ {{ (totals.service + totals.parts)|currency }}</span>
+                    </div>
+                  </div>
+                  <div class="modal-section">
+                    <div class="modal-title">Ingreso al taller</div>
                     <div>{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "" }}</div>
+                  </div>
+                  <div class="modal-section">
+                    <div class="modal-title">Entrega estimada</div>
+                    <div>{{ job.estimated_delivery_at.strftime("%d/%m/%Y") if job.estimated_delivery_at else "" }}</div>
                   </div>
                   {% if job.notes %}
                     <div class="modal-section">
@@ -181,7 +212,7 @@
               {% endfor %}
             </tbody>
           </table>
-        </div>
+                </div>
       {% else %}
         <div class="empty-state">
           <h3>No hay trabajos aun</h3>
@@ -224,8 +255,24 @@
       });
     });
 
+    const statusClasses = [
+      "status-open",
+      "status-in_progress",
+      "status-ready",
+      "status-closed",
+    ];
+
+    const applyStatusClass = (select) => {
+      statusClasses.forEach((statusClass) => select.classList.remove(statusClass));
+      if (select.value) {
+        select.classList.add(`status-${select.value}`);
+      }
+    };
+
     document.querySelectorAll(".status-select").forEach((select) => {
+      applyStatusClass(select);
       select.addEventListener("change", () => {
+        applyStatusClass(select);
         const form = select.closest("form");
         if (form) {
           form.submit();

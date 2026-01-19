@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block page_title %}Detalle de trabajo{% endblock %}
+
+{% block page_actions %}
+  <a class="button" href="{{ url_for('main.jobs_edit', job_id=job.id) }}">Editar trabajo</a>
+{% endblock %}
+
+{% block content %}
+  <div class="detail-stack">
+    <section class="panel panel-scroll">
+      <div class="panel-header">
+        <div>
+          <h2>Trabajo {{ job.code }}</h2>
+          <p class="muted">Detalle del trabajo</p>
+        </div>
+        <a class="button button-ghost button-compact" href="{{ url_for('main.jobs') }}">Volver a trabajos</a>
+      </div>
+      <div class="panel-body">
+        <div class="form-grid">
+          <div>
+            <div class="field-label">Cliente</div>
+            <div>{{ job.bicycle.client.full_name }}</div>
+          </div>
+          <div>
+            <div class="field-label">Bicicleta</div>
+            <div>{{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}</div>
+          </div>
+          <div>
+            <div class="field-label">Estado</div>
+            <div>
+              <span class="status {{ job.status }}">
+                {% if job.status == "open" %}Abierto{% endif %}
+                {% if job.status == "in_progress" %}En progreso{% endif %}
+                {% if job.status == "ready" %}Listo{% endif %}
+                {% if job.status == "closed" %}Cerrado{% endif %}
+              </span>
+            </div>
+          </div>
+          <div>
+            <div class="field-label">Ingreso al taller</div>
+            <div>{{ job.created_at.strftime('%d/%m/%Y') if job.created_at else '-' }}</div>
+          </div>
+          <div>
+            <div class="field-label">Entrega estimada</div>
+            <div>{{ job.estimated_delivery_at.strftime('%d/%m/%Y') if job.estimated_delivery_at else '-' }}</div>
+          </div>
+        </div>
+        <div class="panel-note">
+          <div class="field-label">Servicios</div>
+          {% if job.items %}
+            <div class="modal-list">
+              {% for item in job.items %}
+                <div class="modal-row">
+                  <span>{{ item.service_type.name }}</span>
+                  <span>{{ item.quantity }} x $ {{ item.unit_price|currency }}</span>
+                </div>
+              {% endfor %}
+              <div class="modal-total">
+                <span>Total servicios</span>
+                <span>$ {{ service_total|currency }}</span>
+              </div>
+            </div>
+          {% else %}
+            <div class="muted">Sin services asignados.</div>
+          {% endif %}
+        </div>
+        <div class="panel-note">
+          <div class="field-label">Repuestos y gastos</div>
+          {% if job.parts %}
+            <div class="modal-list">
+              {% for part in job.parts %}
+                <div class="modal-row">
+                  <span>{{ part.description }}
+                    {% if part.kind == "supply" %}(Insumo){% elif part.kind == "other" %}(Otro){% else %}(Repuesto){% endif %}
+                  </span>
+                  <span>{{ part.quantity }} x $ {{ part.unit_price|currency }}</span>
+                </div>
+              {% endfor %}
+              <div class="modal-total">
+                <span>Total repuestos</span>
+                <span>$ {{ parts_total|currency }}</span>
+              </div>
+            </div>
+          {% else %}
+            <div class="muted">Sin repuestos cargados.</div>
+          {% endif %}
+        </div>
+        <div class="panel-note">
+          <div class="field-label">Total del trabajo</div>
+          <div class="modal-total">
+            <span>Total</span>
+            <span>$ {{ total|currency }}</span>
+          </div>
+        </div>
+        {% if job.notes %}
+          <div class="panel-note">
+            <div class="field-label">Notas</div>
+            <div>{{ job.notes }}</div>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <details class="panel panel-collapsible">
+      <summary class="panel-header panel-toggle">
+        <h2>Auditoria</h2>
+        <span class="panel-toggle-icon" aria-hidden="true"></span>
+      </summary>
+      <div class="panel-body">
+        <div class="form-grid">
+          <div>
+            <div class="field-label">Creado en</div>
+            <div>{{ created_at.strftime('%Y-%m-%d %H:%M') if created_at else '-' }}</div>
+          </div>
+          <div>
+            <div class="field-label">Creado por</div>
+            <div>{{ created_by or '-' }}</div>
+          </div>
+          <div>
+            <div class="field-label">Actualizado en</div>
+            <div>{{ updated_at.strftime('%Y-%m-%d %H:%M') if updated_at else '-' }}</div>
+          </div>
+          <div>
+            <div class="field-label">Actualizado por</div>
+            <div>{{ updated_by or '-' }}</div>
+          </div>
+        </div>
+        <p class="muted">Estos datos son generados por el sistema y no se pueden editar.</p>
+      </div>
+    </details>
+  </div>
+{% endblock %}

@@ -1,98 +1,108 @@
 {% extends "base.html" %}
 
 {% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Vista general del taller{% endblock %}
 
 {% block content %}
-  <section class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-label">Clientes</div>
-      <div class="stat-value">{{ counts.clients }}</div>
-      <div class="stat-meta">Activos en el taller</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Bicicletas</div>
-      <div class="stat-value">{{ counts.bicycles }}</div>
-      <div class="stat-meta">Registradas</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Services</div>
-      <div class="stat-value">{{ counts.services }}</div>
-      <div class="stat-meta">Tipos disponibles</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Trabajos</div>
-      <div class="stat-value">{{ counts.jobs }}</div>
-      <div class="stat-meta">En proceso</div>
-    </div>
-  </section>
+<section class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Clientes</div>
+    <div class="stat-value">{{ counts.clients }}</div>
+    <div class="stat-meta">Activos en el taller</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Bicicletas</div>
+    <div class="stat-value">{{ counts.bicycles }}</div>
+    <div class="stat-meta">Registradas</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Servicios</div>
+    <div class="stat-value">{{ counts.services }}</div>
+    <div class="stat-meta">Tipos disponibles</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Trabajos</div>
+    <div class="stat-value">{{ counts.jobs }}</div>
+    <div class="stat-meta">En proceso ({{ summary.in_progress }})</div>
+  </div>
+</section>
 
-  <section class="panel-grid">
-    <div class="panel">
-      <div class="panel-header">
-        <h2>Agenda de trabajo</h2>
-      </div>
-      <div class="panel-body">
-        {% if agenda_jobs %}
-          <div class="timeline">
-            {% for job in agenda_jobs %}
-              <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div>
-                  <div class="timeline-title">{{ job.bicycle.client.full_name }}</div>
-                  <div class="muted">
-                    {{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}
-                    {% if job.items %}
-                      · {{ job.items[0].service_type.name }}
-                    {% endif %}
-                  </div>
-                </div>
-                <span class="chip {{ job.status }}">
-                  {% if job.status == "open" %}Abierto{% endif %}
-                  {% if job.status == "in_progress" %}En progreso{% endif %}
-                  {% if job.status == "ready" %}Listo{% endif %}
-                  {% if job.status == "closed" %}Cerrado{% endif %}
-                </span>
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="empty-state">
-            <h3>Sin trabajos cargados</h3>
-            <p class="muted">Cuando registres trabajos apareceran aca.</p>
-            <a class="button" href="{{ url_for('main.jobs_create') }}">Crear trabajo</a>
-          </div>
-        {% endif %}
-      </div>
+<section class="panel-grid">
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Agenda de trabajo</h2>
+      <a class="button button-ghost button-compact" href="{{ url_for('main.jobs') }}">Ver todos</a>
     </div>
-    <div class="panel">
-      <div class="panel-header">
-        <h2>Resumen del taller</h2>
-      </div>
-      <div class="panel-body">
-        <div class="summary-grid">
-          <div class="summary-card">
-            <div class="summary-label">Ingresos</div>
-            <div class="summary-value">$ {{ summary.revenue|currency }}</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-label">Trabajos abiertos</div>
-            <div class="summary-value">{{ summary.open + summary.in_progress }}</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-label">Trabajos listos</div>
-            <div class="summary-value">{{ summary.ready }}</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-label">Services activos</div>
-            <div class="summary-value">{{ summary.services_active }}</div>
+
+    {% if agenda_jobs %}
+    <div class="timeline">
+      {% for job in agenda_jobs %}
+      <div class="timeline-item">
+        <span class="timeline-dot"></span>
+        <div>
+          <div class="timeline-title">{{ job.bicycle.client.full_name }}</div>
+          <div class="muted">
+            {{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}
+            {% if job.items %}
+            <span> • </span>
+            <span>{{ job.items[0].service_type.name }}</span>
+            {% endif %}
           </div>
         </div>
-        {% if summary.revenue == 0 and counts.jobs == 0 %}
-          <div class="panel-note">
-            Crea services y trabajos para ver ingresos y rendimiento.
-          </div>
-        {% endif %}
+        <span class="chip {{ job.status }}">
+          {% if job.status == "open" %}Abierto{% endif %}
+          {% if job.status == "in_progress" %}En progreso{% endif %}
+          {% if job.status == "ready" %}Listo{% endif %}
+          {% if job.status == "closed" %}Cerrado{% endif %}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <h3>Sin trabajos activos</h3>
+      <p class="muted">No hay trabajos en la agenda. Comienza creando un nuevo trabajo.</p>
+      <a class="button" href="{{ url_for('main.jobs_create') }}">Crear trabajo</a>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Resumen del taller</h2>
+    </div>
+
+    <div class="metric">
+      <div class="metric-label">Ingresos estimados</div>
+      <div class="metric-value">$ {{ summary.revenue|currency }}</div>
+    </div>
+
+    <div class="metric">
+      <div class="metric-label">Trabajos abiertos</div>
+      <div class="metric-value">{{ summary.open + summary.in_progress }}</div>
+      <div class="metric-bar">
+        <div class="metric-fill"
+          style="width: {{ ((summary.open + summary.in_progress) / ((summary.open + summary.in_progress + summary.ready + summary.closed) or 1) * 100)|round }}%">
+        </div>
       </div>
     </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-label">Trabajos listos</div>
+        <div class="summary-value">{{ summary.ready }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Servicios activos</div>
+        <div class="summary-value">{{ summary.services_active }}</div>
+      </div>
+    </div>
+
+    {% if summary.revenue == 0 and counts.jobs == 0 %}
+    <div class="panel-note">
+      Tip: Completa trabajos y marca como "Cerrado" para ver tus ingresos reflejados aqui.
+    </div>
+    {% endif %}
   </section>
+</section>
 {% endblock %}

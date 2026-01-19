@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block page_actions %}
+  <a class="button button-ghost" href="{{ url_for('main.users') }}">Volver</a>
+{% endblock %}
+
+{% block content %}
+  <section class="panel panel-scroll">
+    <div class="panel-header">
+      <h2>{{ title }}</h2>
+      <span class="pill">Usuarios</span>
+    </div>
+    <div class="panel-body">
+      <form method="post" class="form-stack">
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+          <label>
+            Nombre
+            {{ form.full_name(class_="input") }}
+            {% if form.full_name.errors %}
+              <span class="field-error">{{ form.full_name.errors[0] }}</span>
+            {% endif %}
+          </label>
+          <label>
+            Email
+            {{ form.email(class_="input") }}
+            {% if form.email.errors %}
+              <span class="field-error">{{ form.email.errors[0] }}</span>
+            {% endif %}
+          </label>
+          <label>
+            Rol
+            {{ form.role(class_="input") }}
+            {% if form.role.errors %}
+              <span class="field-error">{{ form.role.errors[0] }}</span>
+            {% endif %}
+          </label>
+          <label>
+            Sucursal
+            {{ form.store_id(class_="input") }}
+            {% if form.store_id.errors %}
+              <span class="field-error">{{ form.store_id.errors[0] }}</span>
+            {% endif %}
+          </label>
+          <label>
+            Password
+            {{ form.password(class_="input") }}
+            {% if form.password.errors %}
+              <span class="field-error">{{ form.password.errors[0] }}</span>
+            {% endif %}
+          </label>
+          <label>
+            Confirmar password
+            {{ form.confirm(class_="input") }}
+            {% if form.confirm.errors %}
+              <span class="field-error">{{ form.confirm.errors[0] }}</span>
+            {% endif %}
+          </label>
+        </div>
+        {% if submit_label != "Crear usuario" %}
+        <p class="muted">Deja el password en blanco para mantener la clave actual.</p>
+        {% endif %}
+        <div class="form-actions">
+          <button class="button" type="submit">{{ submit_label }}</button>
+          <a class="button button-ghost" href="{{ url_for('main.users') }}">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}

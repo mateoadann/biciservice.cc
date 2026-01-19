@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block page_title %}Perfil super admin{% endblock %}
+
+{% block page_actions %}
+  <a class="button button-ghost" href="{{ url_for('main.super_admin_owners') }}">Ver owners</a>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <div class="panel-header">
+    <h2>Perfil super admin</h2>
+    <span class="pill">Super admin</span>
+  </div>
+  <div class="panel-body">
+    <form method="post" class="form-stack">
+      {{ form.hidden_tag() }}
+      <div class="form-grid">
+        <label>
+          Nombre
+          {{ form.full_name(class_="input") }}
+          {% if form.full_name.errors %}
+            <span class="field-error">{{ form.full_name.errors[0] }}</span>
+          {% endif %}
+        </label>
+        <label>
+          Email
+          {{ form.email(class_="input") }}
+          {% if form.email.errors %}
+            <span class="field-error">{{ form.email.errors[0] }}</span>
+          {% endif %}
+        </label>
+        <label>
+          Password
+          {{ form.password(class_="input") }}
+          {% if form.password.errors %}
+            <span class="field-error">{{ form.password.errors[0] }}</span>
+          {% endif %}
+        </label>
+        <label>
+          Confirmar password
+          {{ form.confirm(class_="input") }}
+          {% if form.confirm.errors %}
+            <span class="field-error">{{ form.confirm.errors[0] }}</span>
+          {% endif %}
+        </label>
+      </div>
+      <p class="muted">Deja el password en blanco para mantener la clave actual.</p>
+      <div class="form-actions">
+        <button class="button" type="submit">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

@@ -18,7 +18,7 @@
         <div class="form-grid">
           <label>
             Nombre
-            {{ form.name(class_="input") }}
+            {{ form.name(class_="input", required=True) }}
           </label>
           <label>
             Precio base
@@ -26,7 +26,7 @@
             {% if not base_value and initial_base_price is not none %}
               {% set base_value = initial_base_price|currency %}
             {% endif %}
-            {{ form.base_price(class_="input", inputmode="decimal", value=base_value) }}
+            {{ form.base_price(class_="input", inputmode="decimal", value=base_value, required=True) }}
           </label>
           <label>
             Descripcion
@@ -45,6 +45,17 @@
       <script>
         const priceInput = document.querySelector('input[name="base_price"]');
 
+        const serviceForm = priceInput.closest("form");
+        const submitButton = serviceForm ? serviceForm.querySelector("button[type=\"submit\"]") : null;
+        const nameInput = serviceForm ? serviceForm.querySelector("input[name=\"name\"]") : null;
+
+        const updateState = () => {
+          const hasName = nameInput ? nameInput.value.trim().length > 0 : false;
+          const hasPrice = priceInput.value.trim().length > 0;
+          if (submitButton) {
+            submitButton.disabled = !(hasName && hasPrice);
+          }
+        };
         const formatCurrency = (value) => {
           if (!value) {
             return "";
@@ -65,10 +76,16 @@
           priceInput.value = formatCurrency(priceInput.value);
           priceInput.addEventListener("input", () => {
             priceInput.value = formatCurrency(priceInput.value);
+            updateState();
           });
           priceInput.addEventListener("blur", () => {
             priceInput.value = formatCurrency(priceInput.value);
+            updateState();
           });
+          if (nameInput) {
+            nameInput.addEventListener("input", updateState);
+          }
+          updateState();
         }
       </script>
     </div>
