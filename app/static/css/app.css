@@ -456,6 +456,11 @@ html[data-theme="dark"] .topbar .muted {
   color: var(--color-primary);
 }
 
+html[data-theme="dark"] .nav-group-toggle:hover {
+  background: rgba(250, 204, 21, 0.12);
+  color: var(--color-accent);
+}
+
 .nav-group-menu {
   display: none;
   flex-direction: column;
@@ -512,6 +517,11 @@ html[data-theme="dark"] .topbar .muted {
 .nav-link:hover {
   background: rgba(31, 76, 255, 0.08);
   color: var(--color-primary);
+}
+
+html[data-theme="dark"] .nav-link:hover {
+  background: rgba(250, 204, 21, 0.12);
+  color: var(--color-accent);
 }
 
 .nav-icon {
@@ -740,6 +750,10 @@ a.button {
   animation: fadeIn 0.6s ease both;
 }
 
+.panel + .panel.panel-collapsible {
+  margin-top: 24px;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -883,6 +897,61 @@ a.button {
   font-size: 1.2rem;
 }
 
+.panel-toggle {
+  cursor: pointer;
+}
+
+.panel-collapsible > summary {
+  list-style: none;
+}
+
+.panel-collapsible > summary::-webkit-details-marker {
+  display: none;
+}
+
+.panel-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.panel-toggle-icon svg {
+  width: 20px;
+  height: 20px;
+  display: none;
+}
+
+.panel-toggle-icon .icon-light-closed {
+  display: inline-block;
+}
+
+details[open] .panel-toggle-icon .icon-light-closed {
+  display: none;
+}
+
+details[open] .panel-toggle-icon .icon-light-open {
+  display: inline-block;
+}
+
+html[data-theme="dark"] .panel-toggle-icon .icon-light-closed,
+html[data-theme="dark"] .panel-toggle-icon .icon-light-open {
+  display: none;
+}
+
+html[data-theme="dark"] .panel-toggle-icon .icon-dark-closed {
+  display: inline-block;
+}
+
+html[data-theme="dark"] details[open] .panel-toggle-icon .icon-dark-closed {
+  display: none;
+}
+
+html[data-theme="dark"] details[open] .panel-toggle-icon .icon-dark-open {
+  display: inline-block;
+}
+
 .pill {
   padding: 6px 12px;
   border-radius: 999px;
@@ -890,6 +959,11 @@ a.button {
   color: var(--color-secondary);
   font-weight: 600;
   font-size: 0.75rem;
+}
+
+html[data-theme="dark"] .pill {
+  background: rgba(34, 197, 94, 0.25);
+  color: #22c55e;
 }
 
 .timeline {
@@ -1002,6 +1076,31 @@ a.button {
   color: var(--color-muted);
 }
 
+.panel-note-divider {
+  border-top: 2px solid var(--color-border);
+  padding-top: 16px;
+  margin-top: 22px;
+}
+
+.panel-note-title {
+  font-weight: 700;
+  color: var(--color-ink);
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+
+.panel-note-total {
+  font-weight: 700;
+  color: #22c55e;
+  font-size: 1.05rem;
+}
+
+.panel-note-amount {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #22c55e;
+}
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1039,6 +1138,7 @@ a.button {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+  font-size: 0.9rem;
 }
 
 label {
@@ -1166,6 +1266,51 @@ label {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.status-select {
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.status-select.status-open {
+  background: rgba(37, 99, 235, 0.18);
+  color: #1d4ed8;
+}
+
+.status-select.status-in_progress {
+  background: rgba(255, 140, 43, 0.2);
+  color: #9a3412;
+}
+
+.status-select.status-ready {
+  background: rgba(34, 197, 94, 0.2);
+  color: #166534;
+}
+
+.status-select.status-closed {
+  background: rgba(148, 163, 184, 0.3);
+  color: #475569;
+}
+
+html[data-theme="dark"] .status-select.status-open {
+  background: rgba(59, 130, 246, 0.28);
+  color: #93c5fd;
+}
+
+html[data-theme="dark"] .status-select.status-in_progress {
+  background: rgba(249, 115, 22, 0.28);
+  color: #fdba74;
+}
+
+html[data-theme="dark"] .status-select.status-ready {
+  background: rgba(34, 197, 94, 0.28);
+  color: #86efac;
+}
+
+html[data-theme="dark"] .status-select.status-closed {
+  background: rgba(148, 163, 184, 0.35);
+  color: #e2e8f0;
 }
 
 textarea.input {
@@ -1300,7 +1445,7 @@ select[multiple].input {
 
 .modal-list {
   display: grid;
-  gap: 6px;
+  gap: 10px;
 }
 
 .modal-row {
@@ -1308,6 +1453,11 @@ select[multiple].input {
   justify-content: space-between;
   gap: 12px;
   font-size: 0.9rem;
+  padding: 6px 0;
+}
+
+.modal-row + .modal-row {
+  border-top: 1px dashed var(--color-border);
 }
 
 .modal-total {
@@ -1315,7 +1465,7 @@ select[multiple].input {
   justify-content: space-between;
   gap: 12px;
   font-weight: 600;
-  margin-top: 6px;
+  margin-top: 10px;
 }
 
 .theme-presets {

@@ -60,10 +60,11 @@
             </thead>
             <tbody>
               {% for bicycle in bicycles %}
+                {% set description = bicycle.description or "-" %}
                 <tr data-brand="{{ bicycle.brand or '' }}" data-search="{{ bicycle.brand or '' }} {{ bicycle.model or '' }} {{ bicycle.description or '' }} {{ bicycle.client.full_name }}">
                   <td>{{ bicycle.brand or "-" }}</td>
                   <td>{{ bicycle.model or "-" }}</td>
-                  <td><span class="truncate" title="{{ bicycle.description or "-" }}">{{ bicycle.description or "-" }}</span></td>
+                  <td><span class="truncate" title="{{ description }}">{{ description|truncate(45, True, '...') }}</span></td>
                   <td>{{ bicycle.client.full_name }}</td>
                   <td class="table-actions">
                     <a class="button button-ghost" href="{{ url_for('main.bicycles_detail', bicycle_id=bicycle.id) }}">Ver</a>

@@ -47,7 +47,7 @@
           </div>
         </div>
         <div class="panel-note">
-          <div class="field-label">Servicios</div>
+          <div class="field-label panel-note-title">Servicios</div>
           {% if job.items %}
             <div class="modal-list">
               {% for item in job.items %}
@@ -57,16 +57,16 @@
                 </div>
               {% endfor %}
               <div class="modal-total">
-                <span>Total servicios</span>
-                <span>$ {{ service_total|currency }}</span>
+                <span class="panel-note-total">Total servicios</span>
+                <span class="panel-note-amount">$ {{ service_total|currency }}</span>
               </div>
             </div>
           {% else %}
             <div class="muted">Sin services asignados.</div>
           {% endif %}
         </div>
-        <div class="panel-note">
-          <div class="field-label">Repuestos y gastos</div>
+        <div class="panel-note panel-note-divider">
+          <div class="field-label panel-note-title">Repuestos y gastos</div>
           {% if job.parts %}
             <div class="modal-list">
               {% for part in job.parts %}
@@ -78,19 +78,18 @@
                 </div>
               {% endfor %}
               <div class="modal-total">
-                <span>Total repuestos</span>
-                <span>$ {{ parts_total|currency }}</span>
+                <span class="panel-note-total">Total repuestos</span>
+                <span class="panel-note-amount">$ {{ parts_total|currency }}</span>
               </div>
             </div>
           {% else %}
             <div class="muted">Sin repuestos cargados.</div>
           {% endif %}
         </div>
-        <div class="panel-note">
-          <div class="field-label">Total del trabajo</div>
+        <div class="panel-note panel-note-divider">
           <div class="modal-total">
-            <span>Total</span>
-            <span>$ {{ total|currency }}</span>
+            <span class="panel-note-title">Total del trabajo</span>
+            <span class="panel-note-amount">$ {{ total|currency }}</span>
           </div>
         </div>
         {% if job.notes %}
@@ -105,7 +104,36 @@
     <details class="panel panel-collapsible">
       <summary class="panel-header panel-toggle">
         <h2>Auditoria</h2>
-        <span class="panel-toggle-icon" aria-hidden="true"></span>
+        <span class="panel-toggle-icon" aria-hidden="true">
+          <svg class="icon-light-closed" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+            <g id="SVGRepo_iconCarrier">
+              <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </g>
+          </svg>
+          <svg class="icon-light-open" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(180)">
+            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+            <g id="SVGRepo_iconCarrier">
+              <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </g>
+          </svg>
+          <svg class="icon-dark-closed" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(0)">
+            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+            <g id="SVGRepo_iconCarrier">
+              <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </g>
+          </svg>
+          <svg class="icon-dark-open" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(180)">
+            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+            <g id="SVGRepo_iconCarrier">
+              <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </g>
+          </svg>
+        </span>
       </summary>
       <div class="panel-body">
         <div class="form-grid">
