@@ -98,7 +98,20 @@
 
       <nav class="nav">
         {% if current_user.role != "super_admin" %}
-        <a href="{{ url_for('main.dashboard') }}" class="nav-link" title="Dashboard">
+        {% set endpoint = request.endpoint or '' %}
+        {% set is_dashboard = endpoint == 'main.dashboard' %}
+        {% set is_clients = endpoint.startswith('main.clients') %}
+        {% set is_bicycles = endpoint.startswith('main.bicycles') %}
+        {% set is_services = endpoint.startswith('main.services') %}
+        {% set is_jobs = endpoint.startswith('main.jobs') %}
+        {% set is_settings = endpoint.startswith('main.settings') %}
+        {% set is_stores = endpoint.startswith('main.stores') %}
+        {% set is_users = endpoint.startswith('main.users') %}
+        {% set is_security = endpoint.startswith('main.security') %}
+        {% set is_onboarding = endpoint.startswith('main.onboarding') %}
+        {% set is_owner_config = is_settings or is_stores or is_users or is_security or is_onboarding %}
+
+        <a href="{{ url_for('main.dashboard') }}" class="nav-link{% if is_dashboard %} active{% endif %}" title="Dashboard" {% if is_dashboard %}aria-current="page"{% endif %}>
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
               stroke-linecap="round" stroke-linejoin="round">
@@ -110,7 +123,7 @@
           </span>
           <span class="nav-label">Dashboard</span>
         </a>
-        <a href="{{ url_for('main.clients') }}" class="nav-link" title="Clientes">
+        <a href="{{ url_for('main.clients') }}" class="nav-link{% if is_clients %} active{% endif %}" title="Clientes" {% if is_clients %}aria-current="page"{% endif %}>
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
               stroke-linecap="round" stroke-linejoin="round">
@@ -120,7 +133,7 @@
           </span>
           <span class="nav-label">Clientes</span>
         </a>
-        <a href="{{ url_for('main.bicycles') }}" class="nav-link" title="Bicicletas">
+        <a href="{{ url_for('main.bicycles') }}" class="nav-link{% if is_bicycles %} active{% endif %}" title="Bicicletas" {% if is_bicycles %}aria-current="page"{% endif %}>
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M7 12.5L8.5 9.5M8.5 9.5H16M8.5 9.5L10.5 16.5L16 9.5M8.5 9.5L7.5 7M16 9.5L17 12.5M16 9.5L15.5 8.5L18.5 8V9.5M9 15.5C9 17.433 7.433 19 5.5 19C3.567 19 2 17.433 2 15.5C2 13.567 3.567 12 5.5 12C7.433 12 9 13.567 9 15.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"></path>
@@ -130,7 +143,7 @@
           </span>
           <span class="nav-label">Bicicletas</span>
         </a>
-        <a href="{{ url_for('main.services') }}" class="nav-link" title="Service">
+        <a href="{{ url_for('main.services') }}" class="nav-link{% if is_services %} active{% endif %}" title="Service" {% if is_services %}aria-current="page"{% endif %}>
           <span class="nav-icon" aria-hidden="true">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75a4.5 4.5 0 0 1-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 1 1-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 0 1 6.336-4.486l-3.276 3.276a3.004 3.004 0 0 0 2.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852Z" />
@@ -139,7 +152,7 @@
           </span>
           <span class="nav-label">Service</span>
         </a>
-        <a href="{{ url_for('main.jobs') }}" class="nav-link" title="Trabajos">
+        <a href="{{ url_for('main.jobs') }}" class="nav-link{% if is_jobs %} active{% endif %}" title="Trabajos" {% if is_jobs %}aria-current="page"{% endif %}>
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
               stroke-linecap="round" stroke-linejoin="round">
@@ -153,7 +166,7 @@
         </a>
         {% if current_user.role == "owner" %}
         <div class="nav-group">
-          <button type="button" class="nav-group-toggle" aria-expanded="false" aria-controls="ownerConfigMenu">
+          <button type="button" class="nav-group-toggle{% if is_owner_config %} active{% endif %}" aria-expanded="{{ 'true' if is_owner_config else 'false' }}" aria-controls="ownerConfigMenu">
             <span class="nav-group-content">
               <span class="nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
@@ -174,23 +187,26 @@
               </svg>
             </span>
           </button>
-          <div id="ownerConfigMenu" class="nav-group-menu">
-            <a href="{{ url_for('main.settings') }}" class="nav-link">Personalizacion</a>
-            <a href="{{ url_for('main.stores') }}" class="nav-link">Sucursales</a>
-            <a href="{{ url_for('main.users') }}" class="nav-link">Usuarios</a>
-            <a href="{{ url_for('main.security') }}" class="nav-link">Seguridad</a>
-            <a href="{{ url_for('main.onboarding') }}" class="nav-link">Onboarding</a>
-            <a href="{{ url_for('main.audit') }}" class="nav-link">Auditoria</a>
+          <div id="ownerConfigMenu" class="nav-group-menu{% if is_owner_config %} is-open{% endif %}">
+            <a href="{{ url_for('main.settings') }}" class="nav-link{% if is_settings %} active{% endif %}" {% if is_settings %}aria-current="page"{% endif %}>Personalizacion</a>
+            <a href="{{ url_for('main.stores') }}" class="nav-link{% if is_stores %} active{% endif %}" {% if is_stores %}aria-current="page"{% endif %}>Sucursales</a>
+            <a href="{{ url_for('main.users') }}" class="nav-link{% if is_users %} active{% endif %}" {% if is_users %}aria-current="page"{% endif %}>Usuarios</a>
+            <a href="{{ url_for('main.security') }}" class="nav-link{% if is_security %} active{% endif %}" {% if is_security %}aria-current="page"{% endif %}>Seguridad</a>
+            <a href="{{ url_for('main.onboarding') }}" class="nav-link{% if is_onboarding %} active{% endif %}" {% if is_onboarding %}aria-current="page"{% endif %}>Onboarding</a>
           </div>
         </div>
         {% endif %}
         {% endif %}
 
         {% if current_user.role == "super_admin" %}
+        {% set endpoint = request.endpoint or '' %}
+        {% set is_super_dashboard = endpoint.startswith('main.super_admin_dashboard') %}
+        {% set is_super_owners = endpoint.startswith('main.super_admin_owners') %}
+        {% set is_super_audit = endpoint.startswith('main.super_admin_audit') %}
         <div class="muted">Super Admin</div>
-        <a href="{{ url_for('main.super_admin_dashboard') }}" class="nav-link">Panel Global</a>
-        <a href="{{ url_for('main.super_admin_owners') }}" class="nav-link">Owners</a>
-        <a href="{{ url_for('main.super_admin_audit') }}" class="nav-link">Auditoria Global</a>
+        <a href="{{ url_for('main.super_admin_dashboard') }}" class="nav-link{% if is_super_dashboard %} active{% endif %}" {% if is_super_dashboard %}aria-current="page"{% endif %}>Panel Global</a>
+        <a href="{{ url_for('main.super_admin_owners') }}" class="nav-link{% if is_super_owners %} active{% endif %}" {% if is_super_owners %}aria-current="page"{% endif %}>Owners</a>
+        <a href="{{ url_for('main.super_admin_audit') }}" class="nav-link{% if is_super_audit %} active{% endif %}" {% if is_super_audit %}aria-current="page"{% endif %}>Auditoria Global</a>
         {% endif %}
 
       </nav>
@@ -277,6 +293,7 @@
     const sidebar = document.querySelector('.sidebar');
     const collapseToggle = document.querySelector('.sidebar-collapse-toggle');
     const sidebarStateKey = 'sidebarCollapsed';
+    const sidebarMobileMedia = window.matchMedia('(max-width: 980px)');
     const confirmOverlay = document.getElementById('confirmOverlay');
     const confirmTitle = document.getElementById('confirmTitle');
     const confirmMessage = document.getElementById('confirmMessage');
@@ -286,16 +303,27 @@
     let confirmForm = null;
     let confirmStep = 1;
 
+    const isMobileSidebar = () => sidebarMobileMedia.matches;
+
     const setSidebarState = (collapsed, persist = true) => {
       if (!sidebar) return;
-      sidebar.classList.toggle('sidebar-collapsed', collapsed);
-      collapseToggle?.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
-      if (!persist) return;
+      const shouldCollapse = !isMobileSidebar() && collapsed;
+      sidebar.classList.toggle('sidebar-collapsed', shouldCollapse);
+      collapseToggle?.setAttribute('aria-pressed', shouldCollapse ? 'true' : 'false');
+      if (!persist || isMobileSidebar()) return;
       try {
-        localStorage.setItem(sidebarStateKey, String(collapsed));
+        localStorage.setItem(sidebarStateKey, String(shouldCollapse));
       } catch (error) {
         console.warn('No se pudo almacenar el estado del sidebar', error);
       }
+    };
+
+    const setMobileMenuState = (open) => {
+      if (!sidebar || !nav) return;
+      const isOpen = Boolean(open) && isMobileSidebar();
+      nav.classList.toggle('is-open', isOpen);
+      sidebar.classList.toggle('mobile-menu-open', isOpen);
+      collapseToggle?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     };
 
     const persisted = (() => {
@@ -305,32 +333,106 @@
         return null;
       }
     })();
-    if (persisted === 'true') {
-      setSidebarState(true, false);
+    let desktopCollapsedPreference = persisted === 'true';
+
+    const syncSidebarWithViewport = () => {
+      if (!sidebar) return;
+      if (isMobileSidebar()) {
+        setSidebarState(false, false);
+        setMobileMenuState(false);
+      } else {
+        setMobileMenuState(false);
+        setSidebarState(desktopCollapsedPreference, false);
+      }
+    };
+
+    syncSidebarWithViewport();
+    if (typeof sidebarMobileMedia.addEventListener === 'function') {
+      sidebarMobileMedia.addEventListener('change', syncSidebarWithViewport);
+    } else if (typeof sidebarMobileMedia.addListener === 'function') {
+      sidebarMobileMedia.addListener(syncSidebarWithViewport);
     }
 
     navToggle?.addEventListener('click', () => {
+      if (isMobileSidebar()) {
+        setMobileMenuState(!nav?.classList.contains('is-open'));
+        return;
+      }
       nav?.classList.toggle('is-open');
     });
 
+    const closeNavGroupMenus = (exceptToggle = null) => {
+      document.querySelectorAll('.nav-group-toggle').forEach((toggle) => {
+        if (exceptToggle && toggle === exceptToggle) {
+          return;
+        }
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.nextElementSibling?.classList.remove('is-open');
+      });
+    };
+
     document.querySelectorAll('.nav-group-toggle').forEach((toggle) => {
       const menu = toggle.nextElementSibling;
+      const navGroup = toggle.closest('.nav-group');
+
       toggle.addEventListener('click', () => {
         const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-        toggle.setAttribute('aria-expanded', String(!isExpanded));
-        menu?.classList.toggle('is-open', !isExpanded);
+        const shouldOpen = !isExpanded;
+        closeNavGroupMenus(shouldOpen ? toggle : null);
+        toggle.setAttribute('aria-expanded', String(shouldOpen));
+        menu?.classList.toggle('is-open', shouldOpen);
+      });
+
+      navGroup?.addEventListener('focusout', () => {
+        setTimeout(() => {
+          if (!navGroup.contains(document.activeElement)) {
+            closeNavGroupMenus();
+          }
+        }, 0);
+      });
+
+      navGroup?.addEventListener('mouseleave', () => {
+        if (!isMobileSidebar() && sidebar?.classList.contains('sidebar-collapsed')) {
+          closeNavGroupMenus();
+        }
       });
     });
 
-    const openConfirmModal = (form, step = 1) => {
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('.nav-group')) {
+        closeNavGroupMenus();
+      }
+
+      if (
+        isMobileSidebar() &&
+        sidebar &&
+        nav?.classList.contains('is-open') &&
+        !sidebar.contains(event.target)
+      ) {
+        setMobileMenuState(false);
+      }
+    });
+
+    nav?.querySelectorAll('a.nav-link')?.forEach((link) => {
+      link.addEventListener('click', () => {
+        closeNavGroupMenus();
+        if (isMobileSidebar()) {
+          setMobileMenuState(false);
+        }
+      });
+    });
+
+    const openConfirmModal = (form) => {
       if (!confirmOverlay || !confirmTitle || !confirmMessage || !confirmAccept) return;
       confirmForm = form;
-      confirmStep = step;
+      confirmStep = 1;
       const title = form.dataset.confirmTitle || 'Confirmar accion';
       const firstMessage = form.dataset.confirmMessage || 'Confirmar accion?';
+      const finalMessage = form.dataset.confirmFinal;
+      const finalAccept = form.dataset.confirmFinalAccept || 'Confirmar';
       confirmTitle.textContent = title;
       confirmMessage.textContent = firstMessage;
-      confirmAccept.textContent = 'Continuar';
+      confirmAccept.textContent = finalMessage ? 'Continuar' : finalAccept;
       confirmOverlay.classList.add('is-open');
       confirmOverlay.setAttribute('aria-hidden', 'false');
     };
@@ -352,12 +454,21 @@
     });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
+        closeNavGroupMenus();
+        setMobileMenuState(false);
         closeConfirmModal();
       }
     });
 
     confirmAccept?.addEventListener('click', () => {
       if (!confirmForm) return;
+      const finalMessage = confirmForm.dataset.confirmFinal;
+      if (confirmStep === 1 && finalMessage) {
+        confirmStep = 2;
+        confirmMessage.textContent = finalMessage;
+        confirmAccept.textContent = confirmForm.dataset.confirmFinalAccept || 'Confirmar';
+        return;
+      }
       confirmForm.dataset.confirmed = 'true';
       closeConfirmModal();
       confirmForm.submit();
@@ -369,13 +480,18 @@
           return;
         }
         event.preventDefault();
-        openConfirmModal(form, 1);
+        openConfirmModal(form);
       });
     });
 
     collapseToggle?.addEventListener('click', () => {
+      if (isMobileSidebar()) {
+        setMobileMenuState(!nav?.classList.contains('is-open'));
+        return;
+      }
       const collapsed = !sidebar?.classList.contains('sidebar-collapsed');
-      setSidebarState(Boolean(collapsed));
+      desktopCollapsedPreference = Boolean(collapsed);
+      setSidebarState(desktopCollapsedPreference);
     });
 
     const themeToggle = document.getElementById('themeToggle');

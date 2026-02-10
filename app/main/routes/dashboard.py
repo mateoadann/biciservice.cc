@@ -1,9 +1,9 @@
-from flask import render_template, redirect, url_for, g
+from flask import render_template, redirect, url_for, g, flash
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from app.main import main_bp
 from app.extensions import db
-from app.models import Client, Bicycle, ServiceType, Job, JobItem, JobPart, Store, AuditLog
+from app.models import Client, Bicycle, ServiceType, Job, JobItem, JobPart, Store
 from app.main.helpers import (
     get_workshop_or_redirect,
     owner_or_redirect
@@ -101,11 +101,8 @@ def audit():
     _, owner_redirect = owner_or_redirect()
     if owner_redirect:
         return owner_redirect
-    workshop = g.active_workshop
-    logs = (
-        AuditLog.query.filter_by(workshop_id=workshop.id)
-        .order_by(AuditLog.created_at.desc())
-        .limit(200)
-        .all()
+    flash(
+        "La auditoria global ya no esta disponible. Revisa la auditoria dentro de cada entidad.",
+        "info",
     )
-    return render_template("main/audit/index.html", logs=logs)
+    return redirect(url_for("main.dashboard"))
