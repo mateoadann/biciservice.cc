@@ -26,6 +26,11 @@
                 type="search"
                 placeholder="Buscar cliente" required
                 autocomplete="off"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded="false"
+                aria-controls="clientSearchResults"
+                aria-activedescendant=""
                 value="{{ selected_client_label }}"
               >
               <div class="search-results" id="clientSearchResults" role="listbox" aria-label="Resultados"></div>
@@ -62,68 +67,15 @@
     const clientOptions = {{ client_options|tojson }};
 
     if (clientInput && clientSelect && clientResults) {
+      const searchSelect = clientInput.closest(".search-select");
+      clientInput.setAttribute("aria-expanded", "false");
+      clientInput.setAttribute("aria-controls", "clientSearchResults");
       const optionMap = new Map(
         clientOptions.map((option) => [option.label, option.id])
       );
       const minChars = 1;
-
-      const closeResults = () => {
-        clientResults.classList.remove("is-open");
-        clientResults.innerHTML = "";
-      };
-
-      const openResults = (items) => {
-        if (!items.length) {
-          clientResults.innerHTML = '<div class="search-empty">Sin resultados</div>';
-        } else {
-          clientResults.innerHTML = items
-            .map(
-              (item) =>
-                `<button class="search-result" type="button" data-id="${item.id}" data-label="${item.label}">${item.label}</button>`
-            )
-            .join("");
-        }
-        clientResults.classList.add("is-open");
-      };
-
-      const syncClient = () => {
-        const match = optionMap.get(clientInput.value.trim());
-        clientSelect.value = match || "";
-      };
-
-      clientInput.addEventListener("input", () => {
-        const query = clientInput.value.trim().toLowerCase();
-        if (query.length < minChars) {
-          closeResults();
-          syncClient();
-          return;
-        }
-        const matches = clientOptions.filter((option) =>
-          option.label.toLowerCase().includes(query)
-        );
-        openResults(matches.slice(0, 20));
-      });
-
-      clientInput.addEventListener("blur", () => {
-        setTimeout(() => {
-          closeResults();
-          syncClient();
-        }, 150);
-      });
-
-      clientResults.addEventListener("mousedown", (event) => {
-        event.preventDefault();
-      });
-
-      clientResults.addEventListener("click", (event) => {
-        const button = event.target.closest(".search-result");
-        if (!button) {
-          return;
-        }
-        clientInput.value = button.dataset.label || "";
-        clientSelect.value = button.dataset.id || "";
-        closeResults();
-      });
+      let visibleOptions = [];
+      let activeIndex = -1;
 
       const submitButton = document.querySelector("button[type=\"submit\"]");
       const brandSelect = document.querySelector("select[name=\"brand_select\"]");
@@ -137,6 +89,158 @@
           submitButton.disabled = !(hasClient && hasBrand && hasModel);
         }
       };
+
+      const syncClient = () => {
+        const match = optionMap.get(clientInput.value.trim());
+        clientSelect.value = match || "";
+      };
+
+      const closeResults = () => {
+        searchSelect?.classList.remove("is-open");
+        clientResults.classList.remove("is-open");
+        clientInput.setAttribute("aria-expanded", "false");
+        clientInput.setAttribute("aria-activedescendant", "");
+        clientResults.innerHTML = "";
+        visibleOptions = [];
+        activeIndex = -1;
+      };
+
+      const setActiveResult = (nextIndex) => {
+        const buttons = Array.from(clientResults.querySelectorAll(".search-result"));
+        if (!buttons.length) {
+          activeIndex = -1;
+          clientInput.setAttribute("aria-activedescendant", "");
+          return;
+        }
+        activeIndex = Math.max(0, Math.min(nextIndex, buttons.length - 1));
+        buttons.forEach((button, index) => {
+          const isActive = index === activeIndex;
+          button.classList.toggle("is-active", isActive);
+          button.setAttribute("aria-selected", isActive ? "true" : "false");
+        });
+        clientInput.setAttribute("aria-activedescendant", buttons[activeIndex].id);
+        buttons[activeIndex].scrollIntoView({ block: "nearest" });
+      };
+
+      const applySelection = (option) => {
+        if (!option) {
+          return;
+        }
+        clientInput.value = option.label;
+        clientSelect.value = String(option.id);
+        closeResults();
+        updateState();
+      };
+
+      const openResults = (items) => {
+        visibleOptions = items.slice(0, 20);
+        if (!visibleOptions.length) {
+          clientResults.innerHTML = '<div class="search-empty">Sin resultados</div>';
+          searchSelect?.classList.add("is-open");
+          clientResults.classList.add("is-open");
+          clientInput.setAttribute("aria-expanded", "true");
+          activeIndex = -1;
+        } else {
+          clientResults.innerHTML = visibleOptions
+            .map(
+              (item, index) =>
+                `<button id="client-result-${index}" class="search-result${index === 0 ? " is-active" : ""}" type="button" role="option" aria-selected="${index === 0 ? "true" : "false"}" data-id="${item.id}" data-label="${item.label}">${item.label}</button>`
+            )
+            .join("");
+          activeIndex = 0;
+        }
+        searchSelect?.classList.add("is-open");
+        clientResults.classList.add("is-open");
+        clientInput.setAttribute("aria-expanded", "true");
+      };
+
+      clientInput.addEventListener("input", () => {
+        const query = clientInput.value.trim().toLowerCase();
+        if (query.length < minChars) {
+          closeResults();
+          syncClient();
+          return;
+        }
+        const matches = clientOptions.filter((option) =>
+          option.label.toLowerCase().includes(query)
+        );
+        openResults(matches);
+        syncClient();
+        updateState();
+      });
+
+      clientInput.addEventListener("focus", () => {
+        const query = clientInput.value.trim().toLowerCase();
+        if (query.length < minChars) {
+          openResults(clientOptions);
+          return;
+        }
+        const matches = clientOptions.filter((option) =>
+          option.label.toLowerCase().includes(query)
+        );
+        openResults(matches);
+      });
+
+      clientInput.addEventListener("keydown", (event) => {
+        if (!clientResults.classList.contains("is-open")) {
+          if (event.key === "ArrowDown" && clientInput.value.trim().length >= minChars) {
+            event.preventDefault();
+            const matches = clientOptions.filter((option) =>
+              option.label.toLowerCase().includes(clientInput.value.trim().toLowerCase())
+            );
+            openResults(matches);
+          }
+          return;
+        }
+
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          setActiveResult(activeIndex + 1);
+          return;
+        }
+
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+          setActiveResult(activeIndex - 1);
+          return;
+        }
+
+        if (event.key === "Enter") {
+          if (activeIndex >= 0 && visibleOptions[activeIndex]) {
+            event.preventDefault();
+            applySelection(visibleOptions[activeIndex]);
+          }
+          return;
+        }
+
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeResults();
+        }
+      });
+
+      clientInput.addEventListener("blur", () => {
+        setTimeout(() => {
+          closeResults();
+          syncClient();
+          updateState();
+        }, 150);
+      });
+
+      clientResults.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+      });
+
+      clientResults.addEventListener("click", (event) => {
+        const button = event.target.closest(".search-result");
+        if (!button) {
+          return;
+        }
+        applySelection({
+          id: button.dataset.id || "",
+          label: button.dataset.label || "",
+        });
+      });
 
       if (brandSelect) {
         brandSelect.addEventListener("change", updateState);

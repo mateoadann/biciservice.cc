@@ -26,7 +26,8 @@
             {% if not base_value and initial_base_price is not none %}
               {% set base_value = initial_base_price|currency %}
             {% endif %}
-            {{ form.base_price(class_="input", inputmode="decimal", value=base_value, required=True) }}
+            {{ form.base_price(class_="input js-money", inputmode="decimal", value=base_value, required=True) }}
+            <span class="input-feedback" id="basePriceFeedback">Formato: 0,00</span>
           </label>
           <label>
             Descripcion
@@ -44,42 +45,85 @@
       </form>
       <script>
         const priceInput = document.querySelector('input[name="base_price"]');
-
-        const serviceForm = priceInput.closest("form");
-        const submitButton = serviceForm ? serviceForm.querySelector("button[type=\"submit\"]") : null;
-        const nameInput = serviceForm ? serviceForm.querySelector("input[name=\"name\"]") : null;
-
-        const updateState = () => {
-          const hasName = nameInput ? nameInput.value.trim().length > 0 : false;
-          const hasPrice = priceInput.value.trim().length > 0;
-          if (submitButton) {
-            submitButton.disabled = !(hasName && hasPrice);
-          }
-        };
-        const formatCurrency = (value) => {
-          if (!value) {
-            return "";
-          }
-          const cleaned = value.replace(/[^\d,]/g, "");
-          const parts = cleaned.split(",");
-          const intPart = parts[0] || "";
-          const decRaw = parts[1] || "";
-          const decPart = decRaw.slice(0, 2);
-          const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-          if (cleaned.includes(",")) {
-            return `${intFormatted},${decPart}`;
-          }
-          return intFormatted;
-        };
+        const priceFeedback = document.querySelector("#basePriceFeedback");
 
         if (priceInput) {
+          const serviceForm = priceInput.closest("form");
+          const submitButton = serviceForm ? serviceForm.querySelector("button[type=\"submit\"]") : null;
+          const nameInput = serviceForm ? serviceForm.querySelector("input[name=\"name\"]") : null;
+
+          const updateState = () => {
+            const hasName = nameInput ? nameInput.value.trim().length > 0 : false;
+            const hasPrice = priceInput.value.trim().length > 0;
+            if (submitButton) {
+              submitButton.disabled = !(hasName && hasPrice);
+            }
+          };
+
+          const updatePriceFeedback = (numericValue) => {
+            if (!priceFeedback) {
+              return;
+            }
+            const hasValue = priceInput.value.trim().length > 0;
+            if (!hasValue) {
+              priceFeedback.textContent = "Formato: 0,00";
+              priceFeedback.classList.remove("error");
+              priceInput.classList.remove("input-invalid");
+              return;
+            }
+            if (numericValue <= 0) {
+              priceFeedback.textContent = "Ingresa un monto mayor a 0";
+              priceFeedback.classList.add("error");
+              priceInput.classList.add("input-invalid");
+              return;
+            }
+            priceFeedback.textContent = `Valor interpretado: $ ${numericValue
+              .toFixed(2)
+              .replace(".", ",")
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+            priceFeedback.classList.remove("error");
+            priceInput.classList.remove("input-invalid");
+          };
+
+          const parseCurrency = (value) => {
+            if (!value) {
+              return 0;
+            }
+            const normalized = String(value)
+              .replace(/\s/g, "")
+              .replace(/\./g, "")
+              .replace(",", ".")
+              .replace(/[^\d.]/g, "");
+            const parsed = Number(normalized);
+            return Number.isFinite(parsed) ? parsed : 0;
+          };
+
+          const formatCurrency = (value) => {
+            if (!value) {
+              return "";
+            }
+            const cleaned = String(value).replace(/[^\d,]/g, "");
+            const parts = cleaned.split(",");
+            const intPart = parts[0] || "";
+            const decRaw = parts[1] || "";
+            const decPart = decRaw.slice(0, 2);
+            const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            if (cleaned.includes(",")) {
+              return `${intFormatted},${decPart}`;
+            }
+            return intFormatted;
+          };
+
           priceInput.value = formatCurrency(priceInput.value);
+          updatePriceFeedback(parseCurrency(priceInput.value));
           priceInput.addEventListener("input", () => {
             priceInput.value = formatCurrency(priceInput.value);
+            updatePriceFeedback(parseCurrency(priceInput.value));
             updateState();
           });
           priceInput.addEventListener("blur", () => {
             priceInput.value = formatCurrency(priceInput.value);
+            updatePriceFeedback(parseCurrency(priceInput.value));
             updateState();
           });
           if (nameInput) {

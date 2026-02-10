@@ -33,6 +33,7 @@
           {% if pagination.pages > 1 %}
             <div class="pagination pagination-top">
               <div class="pagination-info">Mostrando {{ pagination.start }}-{{ pagination.end }} de {{ pagination.total }}</div>
+              <span class="pagination-page">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
               <div class="pagination-actions">
                 {% if pagination.has_prev %}
                   <a class="button button-ghost button-compact" href="{{ url_for('main.jobs', page=pagination.prev_num) }}">Anterior</a>
@@ -48,7 +49,7 @@
             </div>
           {% endif %}
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap table-scroll">
           <table class="table">
             <thead>
               <tr>
@@ -72,8 +73,8 @@
                     <span class="job-code">{{ job.code or "-" }}</span>
                   </td>
                   <td>
-                    <div class="table-title">{{ job.bicycle.client.full_name }}</div>
-                    <div class="muted">{{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}</div>
+                    <div class="table-title"><span class="truncate" title="{{ job.bicycle.client.full_name }}">{{ job.bicycle.client.full_name }}</span></div>
+                    <div class="muted"><span class="truncate" title="{{ job.bicycle.brand or 'Bicicleta' }} {{ job.bicycle.model or '' }}">{{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}</span></div>
                   </td>
                   <td class="show-mobile">
                     <button class="button button-ghost button-compact job-modal-trigger" type="button" data-target="job-details-{{ job.id }}">Ver</button>
@@ -103,7 +104,8 @@
                   <td class="hide-mobile">{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "" }}</td>
                   <td class="hide-mobile">{{ job.estimated_delivery_at.strftime("%d/%m/%Y") if job.estimated_delivery_at else "" }}</td>
                   <td class="table-actions hide-mobile">
-                    <a class="button button-ghost button-compact" href="{{ url_for('main.jobs_detail', job_id=job.id) }}">Detalle</a>
+                    <a class="button button-ghost button-compact" href="{{ url_for('main.jobs_detail', job_id=job.id) }}">Ver</a>
+                    <a class="button button-ghost button-compact" href="{{ url_for('main.jobs_edit', job_id=job.id) }}">Editar</a>
                     {% if job.status != "in_progress" %}
                       <form
                         method="post"
@@ -115,7 +117,7 @@
                         data-confirm-final-accept="Eliminar"
                       >
                         {{ delete_form.hidden_tag() }}
-                        <button class="button button-danger icon-button" type="submit" aria-label="Eliminar">
+                        <button class="button button-danger icon-button button-compact" type="submit" aria-label="Eliminar">
                           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M8 6V4h8v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -213,7 +215,11 @@
               {% endfor %}
             </tbody>
           </table>
-                </div>
+        </div>
+        <div class="empty-state empty-state-inline table-empty-results is-hidden" id="jobNoResults">
+          <h3>Sin resultados</h3>
+          <p class="muted">No hay trabajos que coincidan con la busqueda o estado seleccionado.</p>
+        </div>
       {% else %}
         <div class="empty-state">
           <h3>No hay trabajos aun</h3>
@@ -283,19 +289,29 @@
 
     const jobSearch = document.querySelector("#jobSearch");
     const jobStatusFilter = document.querySelector("#jobStatusFilter");
-    const jobRows = document.querySelectorAll("tbody tr");
+    const jobRows = document.querySelectorAll("tbody tr[data-status]");
+    const jobNoResults = document.querySelector("#jobNoResults");
 
     const filterJobs = () => {
       const query = (jobSearch?.value || "").toLowerCase().trim();
       const status = jobStatusFilter?.value || "all";
+      let visibleCount = 0;
 
       jobRows.forEach((row) => {
         const haystack = (row.dataset.search || "").toLowerCase();
         const rowStatus = row.dataset.status || "";
         const matchesQuery = !query || haystack.includes(query);
         const matchesStatus = status === "all" || rowStatus === status;
-        row.style.display = matchesQuery && matchesStatus ? "" : "none";
+        const isVisible = matchesQuery && matchesStatus;
+        row.style.display = isVisible ? "" : "none";
+        if (isVisible) {
+          visibleCount += 1;
+        }
       });
+
+      if (jobNoResults) {
+        jobNoResults.classList.toggle("is-hidden", visibleCount > 0);
+      }
     };
 
     if (jobSearch) {
@@ -304,6 +320,7 @@
     if (jobStatusFilter) {
       jobStatusFilter.addEventListener("change", filterJobs);
     }
+    filterJobs();
 
     if (modalClose) {
       modalClose.addEventListener("click", closeModal);

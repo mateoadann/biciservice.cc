@@ -31,6 +31,7 @@
           {% if pagination.pages > 1 %}
             <div class="pagination pagination-top">
               <div class="pagination-info">Mostrando {{ pagination.start }}-{{ pagination.end }} de {{ pagination.total }}</div>
+              <span class="pagination-page">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
               <div class="pagination-actions">
                 {% if pagination.has_prev %}
                   <a class="button button-ghost button-compact" href="{{ url_for('main.clients', page=pagination.prev_num) }}">Anterior</a>
@@ -46,7 +47,7 @@
             </div>
           {% endif %}
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap table-scroll">
           <table class="table">
             <thead>
               <tr>
@@ -60,12 +61,12 @@
             <tbody>
               {% for client in clients %}
                 <tr data-bikes="{{ client.bicycles|length }}" data-search="{{ client.full_name }} {{ client.email or '' }} {{ client.phone or '' }}">
-                  <td>{{ client.full_name }}</td>
-                  <td>{{ client.email or "-" }}</td>
+                  <td><span class="truncate" title="{{ client.full_name }}">{{ client.full_name }}</span></td>
+                  <td><span class="truncate" title="{{ client.email or '-' }}">{{ client.email or "-" }}</span></td>
                   <td>{{ client.phone or "-" }}</td>
                   <td>{{ client.bicycles|length }}</td>
                   <td class="table-actions">
-                    <a class="button button-ghost" href="{{ url_for('main.clients_detail', client_id=client.id) }}">Ver</a>
+                    <a class="button button-ghost button-compact" href="{{ url_for('main.clients_detail', client_id=client.id) }}">Ver</a>
                     <form
                       method="post"
                       action="{{ url_for('main.clients_delete', client_id=client.id) }}"
@@ -76,7 +77,7 @@
                         data-confirm-final-accept="Eliminar"
                     >
                       {{ delete_form.hidden_tag() }}
-                      <button class="button button-danger icon-button" type="submit" aria-label="Eliminar">
+                      <button class="button button-danger icon-button button-compact" type="submit" aria-label="Eliminar">
                         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                           <path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                           <path d="M8 6V4h8v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -89,7 +90,11 @@
               {% endfor %}
             </tbody>
           </table>
-                </div>
+        </div>
+        <div class="empty-state empty-state-inline table-empty-results is-hidden" id="clientNoResults">
+          <h3>Sin resultados</h3>
+          <p class="muted">No hay clientes que coincidan con la busqueda o filtro aplicado.</p>
+        </div>
       {% else %}
         <div class="empty-state">
           <h3>No hay clientes aun</h3>
@@ -103,10 +108,12 @@
     const clientSearch = document.querySelector("#clientSearch");
     const clientFilter = document.querySelector("#clientFilter");
     const clientRows = document.querySelectorAll("tbody tr");
+    const clientNoResults = document.querySelector("#clientNoResults");
 
     const filterClients = () => {
       const query = (clientSearch?.value || "").toLowerCase().trim();
       const filter = clientFilter?.value || "all";
+      let visibleCount = 0;
 
       clientRows.forEach((row) => {
         const haystack = (row.dataset.search || "").toLowerCase();
@@ -114,8 +121,16 @@
         const matchesQuery = !query || haystack.includes(query);
         const matchesFilter =
           filter === "all" || (filter === "with" && bikes > 0) || (filter === "without" && bikes === 0);
-        row.style.display = matchesQuery && matchesFilter ? "" : "none";
+        const isVisible = matchesQuery && matchesFilter;
+        row.style.display = isVisible ? "" : "none";
+        if (isVisible) {
+          visibleCount += 1;
+        }
       });
+
+      if (clientNoResults) {
+        clientNoResults.classList.toggle("is-hidden", visibleCount > 0);
+      }
     };
 
     if (clientSearch) {
@@ -124,5 +139,6 @@
     if (clientFilter) {
       clientFilter.addEventListener("change", filterClients);
     }
+    filterClients();
   </script>
 {% endblock %}

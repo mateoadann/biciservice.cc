@@ -25,10 +25,16 @@
                 type="search"
                 placeholder="Buscar bicicleta o cliente"
                 autocomplete="off"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded="false"
+                aria-controls="bicycleSearchResults"
+                aria-activedescendant=""
                 value="{{ selected_bicycle_label }}"
               >
               <div class="search-results" id="bicycleSearchResults" role="listbox" aria-label="Resultados"></div>
             </div>
+            {{ form.bicycle_id(id="bicycleSelect", class_="input visually-hidden") }}
             {% if form.bicycle_id.errors %}
               <span class="field-error">{{ form.bicycle_id.errors[0] }}</span>
             {% endif %}
@@ -55,7 +61,7 @@
             {% if services %}
               {% for service in services %}
                 <label class="service-option">
-                  <input type="checkbox" name="service_type_ids" value="{{ service.id }}"
+                  <input type="checkbox" name="service_type_ids" value="{{ service.id }}" data-price="{{ service.base_price or 0 }}"
                     {% if service.id in selected_ids %}checked{% endif %}>
                   <span>
                     <span class="service-name">{{ service.name }}</span>
@@ -73,6 +79,14 @@
         </div>
         <div class="panel-note">
           <div class="field-label">Repuestos y gastos</div>
+          <div class="parts-head" aria-hidden="true">
+            <span>Descripcion</span>
+            <span>Cantidad</span>
+            <span>Unitario</span>
+            <span>Tipo</span>
+            <span>Total</span>
+            <span></span>
+          </div>
           <div class="parts-list" id="partsList">
             {% for part in parts_data %}
               <div class="part-row">
@@ -84,7 +98,7 @@
                   value="{{ part.description }}"
                 >
                 <input
-                  class="input input-compact"
+                  class="input input-compact js-quantity"
                   name="part_quantity"
                   type="number"
                   min="1"
@@ -104,12 +118,27 @@
                   <option value="supply" {% if part.kind == "supply" %}selected{% endif %}>Insumo</option>
                   <option value="other" {% if part.kind == "other" %}selected{% endif %}>Otro</option>
                 </select>
+                <output class="part-total" data-role="line-total">$ 0,00</output>
                 <button class="button button-ghost icon-button part-remove" type="button" aria-label="Quitar">X</button>
               </div>
             {% endfor %}
           </div>
           <button class="button button-ghost button-compact" type="button" id="addPart">Agregar repuesto</button>
           <p class="muted">Los repuestos se suman al total del trabajo.</p>
+        </div>
+        <div class="parts-summary" id="jobSummary">
+          <div class="parts-summary-row">
+            <span>Total services</span>
+            <strong id="servicesTotal">$ 0,00</strong>
+          </div>
+          <div class="parts-summary-row">
+            <span>Total repuestos y gastos</span>
+            <strong id="partsTotal">$ 0,00</strong>
+          </div>
+          <div class="parts-summary-row total">
+            <span>Total estimado del trabajo</span>
+            <strong id="estimatedTotal">$ 0,00</strong>
+          </div>
         </div>
         <div class="panel-note">Puedes seleccionar multiples services. Cada item se agrega con cantidad 1.</div>
         <div class="form-actions">
@@ -124,35 +153,139 @@
     const bicycleSelect = document.querySelector("#bicycleSelect");
     const bicycleResults = document.querySelector("#bicycleSearchResults");
     const bicycleOptions = {{ bicycle_options|tojson }};
+    const serviceCheckboxes = Array.from(document.querySelectorAll("input[name=\"service_type_ids\"]"));
+
+    const formatCurrency = (value) => {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) {
+        return "0,00";
+      }
+      return parsed
+        .toFixed(2)
+        .replace(".", ",")
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+
+    const parseCurrencyInput = (value) => {
+      if (!value) {
+        return 0;
+      }
+      const normalized = String(value)
+        .replace(/\s/g, "")
+        .replace(/\./g, "")
+        .replace(",", ".")
+        .replace(/[^\d.]/g, "");
+      const parsed = Number(normalized);
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
+
+    const sanitizeCurrencyInput = (value) => {
+      if (!value) {
+        return "";
+      }
+      const cleaned = String(value).replace(/[^\d,]/g, "");
+      const [intRaw = "", decRaw = ""] = cleaned.split(",");
+      const intDigits = intRaw.replace(/^0+(?=\d)/, "");
+      const intPart = intDigits || "0";
+      const decPart = decRaw.slice(0, 2);
+      const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      return cleaned.includes(",") ? `${intFormatted},${decPart}` : intFormatted;
+    };
+
+    const getQuantityValue = (input) => {
+      const parsed = Number.parseInt(input?.value || "0", 10);
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+    };
+
+    let updateState = () => {};
 
     if (bicycleInput && bicycleSelect && bicycleResults) {
+      const searchSelect = bicycleInput.closest(".search-select");
+      bicycleInput.setAttribute("aria-expanded", "false");
+      bicycleInput.setAttribute("aria-controls", "bicycleSearchResults");
       const optionMap = new Map(
         bicycleOptions.map((option) => [option.label, option.id])
       );
       const minChars = 1;
+      let visibleOptions = [];
+      let activeIndex = -1;
 
-      const closeResults = () => {
-        bicycleResults.classList.remove("is-open");
-        bicycleResults.innerHTML = "";
-      };
+      const submitButton = document.querySelector("button[type=\"submit\"]");
+      const statusSelect = document.querySelector("select[name=\"status\"]");
+      const deliveryInput = document.querySelector("input[name=\"estimated_delivery_at\"]");
 
-      const openResults = (items) => {
-        if (!items.length) {
-          bicycleResults.innerHTML = '<div class="search-empty">Sin resultados</div>';
-        } else {
-          bicycleResults.innerHTML = items
-            .map(
-              (item) =>
-                `<button class="search-result" type="button" data-id="${item.id}" data-label="${item.label}">${item.label}</button>`
-            )
-            .join("");
+      updateState = () => {
+        const hasBicycle = bicycleSelect.value.trim().length > 0;
+        const hasStatus = statusSelect ? statusSelect.value.trim().length > 0 : false;
+        const hasDelivery = deliveryInput ? deliveryInput.value.trim().length > 0 : false;
+        const hasService = serviceCheckboxes.some((checkbox) => checkbox.checked);
+        if (submitButton) {
+          submitButton.disabled = !(hasBicycle && hasStatus && hasDelivery && hasService);
         }
-        bicycleResults.classList.add("is-open");
       };
 
       const syncBicycle = () => {
         const match = optionMap.get(bicycleInput.value.trim());
         bicycleSelect.value = match || "";
+      };
+
+      const closeResults = () => {
+        searchSelect?.classList.remove("is-open");
+        bicycleResults.classList.remove("is-open");
+        bicycleInput.setAttribute("aria-expanded", "false");
+        bicycleInput.setAttribute("aria-activedescendant", "");
+        bicycleResults.innerHTML = "";
+        visibleOptions = [];
+        activeIndex = -1;
+      };
+
+      const setActiveResult = (nextIndex) => {
+        const buttons = Array.from(bicycleResults.querySelectorAll(".search-result"));
+        if (!buttons.length) {
+          activeIndex = -1;
+          bicycleInput.setAttribute("aria-activedescendant", "");
+          return;
+        }
+        activeIndex = Math.max(0, Math.min(nextIndex, buttons.length - 1));
+        buttons.forEach((button, index) => {
+          const isActive = index === activeIndex;
+          button.classList.toggle("is-active", isActive);
+          button.setAttribute("aria-selected", isActive ? "true" : "false");
+        });
+        bicycleInput.setAttribute("aria-activedescendant", buttons[activeIndex].id);
+        buttons[activeIndex].scrollIntoView({ block: "nearest" });
+      };
+
+      const applySelection = (option) => {
+        if (!option) {
+          return;
+        }
+        bicycleInput.value = option.label;
+        bicycleSelect.value = String(option.id);
+        closeResults();
+        updateState();
+      };
+
+      const openResults = (items) => {
+        visibleOptions = items.slice(0, 20);
+        if (!visibleOptions.length) {
+          bicycleResults.innerHTML = '<div class="search-empty">Sin resultados</div>';
+          searchSelect?.classList.add("is-open");
+          bicycleResults.classList.add("is-open");
+          bicycleInput.setAttribute("aria-expanded", "true");
+          activeIndex = -1;
+        } else {
+          bicycleResults.innerHTML = visibleOptions
+            .map(
+              (item, index) =>
+                `<button id="bicycle-result-${index}" class="search-result${index === 0 ? " is-active" : ""}" type="button" role="option" aria-selected="${index === 0 ? "true" : "false"}" data-id="${item.id}" data-label="${item.label}">${item.label}</button>`
+            )
+            .join("");
+          activeIndex = 0;
+        }
+        searchSelect?.classList.add("is-open");
+        bicycleResults.classList.add("is-open");
+        bicycleInput.setAttribute("aria-expanded", "true");
       };
 
       bicycleInput.addEventListener("input", () => {
@@ -165,13 +298,66 @@
         const matches = bicycleOptions.filter((option) =>
           option.label.toLowerCase().includes(query)
         );
-        openResults(matches.slice(0, 20));
+        openResults(matches);
+        syncBicycle();
+        updateState();
+      });
+
+      bicycleInput.addEventListener("focus", () => {
+        const query = bicycleInput.value.trim().toLowerCase();
+        if (query.length < minChars) {
+          openResults(bicycleOptions);
+          return;
+        }
+        const matches = bicycleOptions.filter((option) =>
+          option.label.toLowerCase().includes(query)
+        );
+        openResults(matches);
+      });
+
+      bicycleInput.addEventListener("keydown", (event) => {
+        if (!bicycleResults.classList.contains("is-open")) {
+          if (event.key === "ArrowDown" && bicycleInput.value.trim().length >= minChars) {
+            event.preventDefault();
+            const matches = bicycleOptions.filter((option) =>
+              option.label.toLowerCase().includes(bicycleInput.value.trim().toLowerCase())
+            );
+            openResults(matches);
+          }
+          return;
+        }
+
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          setActiveResult(activeIndex + 1);
+          return;
+        }
+
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+          setActiveResult(activeIndex - 1);
+          return;
+        }
+
+        if (event.key === "Enter") {
+          if (activeIndex >= 0 && visibleOptions[activeIndex]) {
+            event.preventDefault();
+            applySelection(visibleOptions[activeIndex]);
+          }
+          return;
+        }
+
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeResults();
+        }
       });
 
       bicycleInput.addEventListener("blur", () => {
         setTimeout(() => {
           closeResults();
           syncBicycle();
+          updateState();
         }, 150);
       });
 
@@ -184,26 +370,11 @@
         if (!button) {
           return;
         }
-        bicycleInput.value = button.dataset.label || "";
-        bicycleSelect.value = button.dataset.id || "";
-        closeResults();
-        updateState();
+        applySelection({
+          id: button.dataset.id || "",
+          label: button.dataset.label || "",
+        });
       });
-
-      const submitButton = document.querySelector("button[type=\"submit\"]");
-      const statusSelect = document.querySelector("select[name=\"status\"]");
-      const deliveryInput = document.querySelector("input[name=\"estimated_delivery_at\"]");
-      const serviceCheckboxes = Array.from(document.querySelectorAll("input[name=\"service_type_ids\"]"));
-
-      const updateState = () => {
-        const hasBicycle = bicycleSelect.value.trim().length > 0;
-        const hasStatus = statusSelect ? statusSelect.value.trim().length > 0 : false;
-        const hasDelivery = deliveryInput ? deliveryInput.value.trim().length > 0 : false;
-        const hasService = serviceCheckboxes.some((checkbox) => checkbox.checked);
-        if (submitButton) {
-          submitButton.disabled = !(hasBicycle && hasStatus && hasDelivery && hasService);
-        }
-      };
 
       bicycleInput.addEventListener("input", updateState);
       if (statusSelect) {
@@ -212,52 +383,95 @@
       if (deliveryInput) {
         deliveryInput.addEventListener("change", updateState);
       }
-      serviceCheckboxes.forEach((checkbox) => {
-        checkbox.addEventListener("change", updateState);
-      });
       updateState();
       syncBicycle();
     }
 
-    const formatCurrency = (value) => {
-      if (!value) {
-        return "";
-      }
-      const cleaned = value.replace(/[^\d,]/g, "");
-      const parts = cleaned.split(",");
-      const intPart = parts[0] || "";
-      const decRaw = parts[1] || "";
-      const decPart = decRaw.slice(0, 2);
-      const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-      if (cleaned.includes(",")) {
-        return `${intFormatted},${decPart}`;
-      }
-      return intFormatted;
-    };
-
     const partsList = document.querySelector("#partsList");
     const addPartButton = document.querySelector("#addPart");
+    const servicesTotalElement = document.querySelector("#servicesTotal");
+    const partsTotalElement = document.querySelector("#partsTotal");
+    const estimatedTotalElement = document.querySelector("#estimatedTotal");
+
+    const updateTotals = () => {
+      const servicesTotal = serviceCheckboxes.reduce((total, checkbox) => {
+        if (!checkbox.checked) {
+          return total;
+        }
+        const rawPrice = String(checkbox.dataset.price || "0").replace(",", ".");
+        const parsedPrice = Number.parseFloat(rawPrice);
+        return total + (Number.isFinite(parsedPrice) ? parsedPrice : 0);
+      }, 0);
+
+      let partsTotal = 0;
+      document.querySelectorAll(".part-row").forEach((row) => {
+        const quantityInput = row.querySelector(".js-quantity");
+        const priceInput = row.querySelector(".js-money");
+        const lineTotalOutput = row.querySelector('[data-role="line-total"]');
+        const quantity = getQuantityValue(quantityInput);
+        const price = parseCurrencyInput(priceInput?.value || "");
+        const lineTotal = quantity * price;
+        if (lineTotalOutput) {
+          lineTotalOutput.textContent = `$ ${formatCurrency(lineTotal)}`;
+        }
+        partsTotal += lineTotal;
+      });
+
+      const estimatedTotal = servicesTotal + partsTotal;
+      if (servicesTotalElement) {
+        servicesTotalElement.textContent = `$ ${formatCurrency(servicesTotal)}`;
+      }
+      if (partsTotalElement) {
+        partsTotalElement.textContent = `$ ${formatCurrency(partsTotal)}`;
+      }
+      if (estimatedTotalElement) {
+        estimatedTotalElement.textContent = `$ ${formatCurrency(estimatedTotal)}`;
+      }
+    };
 
     const attachPartEvents = (row) => {
       const removeButton = row.querySelector(".part-remove");
       const priceInput = row.querySelector(".js-money");
+      const quantityInput = row.querySelector(".js-quantity");
       if (removeButton) {
         removeButton.addEventListener("click", () => {
           row.remove();
+          updateTotals();
         });
       }
       if (priceInput) {
-        priceInput.value = formatCurrency(priceInput.value);
+        priceInput.value = sanitizeCurrencyInput(priceInput.value);
         priceInput.addEventListener("input", () => {
-          priceInput.value = formatCurrency(priceInput.value);
+          priceInput.value = sanitizeCurrencyInput(priceInput.value);
+          updateTotals();
         });
         priceInput.addEventListener("blur", () => {
-          priceInput.value = formatCurrency(priceInput.value);
+          priceInput.value = sanitizeCurrencyInput(priceInput.value);
+          updateTotals();
+        });
+      }
+      if (quantityInput) {
+        quantityInput.addEventListener("input", () => {
+          quantityInput.value = quantityInput.value.replace(/[^\d]/g, "");
+          updateTotals();
+        });
+        quantityInput.addEventListener("blur", () => {
+          const quantity = getQuantityValue(quantityInput);
+          quantityInput.value = String(quantity || 1);
+          updateTotals();
         });
       }
     };
 
     document.querySelectorAll(".part-row").forEach(attachPartEvents);
+    serviceCheckboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", () => {
+        updateState();
+        updateTotals();
+      });
+    });
+
+    updateTotals();
 
     if (addPartButton && partsList) {
       addPartButton.addEventListener("click", () => {
@@ -265,17 +479,19 @@
         row.className = "part-row";
         row.innerHTML = `
           <input class="input" name="part_description" type="text" placeholder="Descripcion">
-          <input class="input input-compact" name="part_quantity" type="number" min="1" placeholder="1" value="1">
+          <input class="input input-compact js-quantity" name="part_quantity" type="number" min="1" placeholder="1" value="1">
           <input class="input input-compact js-money" name="part_unit_price" type="text" inputmode="decimal" placeholder="0,00">
           <select class="input input-compact" name="part_kind">
             <option value="part">Repuesto</option>
             <option value="supply">Insumo</option>
             <option value="other">Otro</option>
           </select>
+          <output class="part-total" data-role="line-total">$ 0,00</output>
           <button class="button button-ghost icon-button part-remove" type="button" aria-label="Quitar">X</button>
         `;
         partsList.appendChild(row);
         attachPartEvents(row);
+        updateTotals();
       });
     }
   </script>

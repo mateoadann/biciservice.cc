@@ -32,6 +32,7 @@
           {% if pagination.pages > 1 %}
             <div class="pagination pagination-top">
               <div class="pagination-info">Mostrando {{ pagination.start }}-{{ pagination.end }} de {{ pagination.total }}</div>
+              <span class="pagination-page">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
               <div class="pagination-actions">
                 {% if pagination.has_prev %}
                   <a class="button button-ghost button-compact" href="{{ url_for('main.bicycles', page=pagination.prev_num) }}">Anterior</a>
@@ -47,7 +48,7 @@
             </div>
           {% endif %}
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap table-scroll">
           <table class="table">
             <thead>
               <tr>
@@ -62,12 +63,12 @@
               {% for bicycle in bicycles %}
                 {% set description = bicycle.description or "-" %}
                 <tr data-brand="{{ bicycle.brand or '' }}" data-search="{{ bicycle.brand or '' }} {{ bicycle.model or '' }} {{ bicycle.description or '' }} {{ bicycle.client.full_name }}">
-                  <td>{{ bicycle.brand or "-" }}</td>
-                  <td>{{ bicycle.model or "-" }}</td>
+                  <td><span class="truncate" title="{{ bicycle.brand or '-' }}">{{ bicycle.brand or "-" }}</span></td>
+                  <td><span class="truncate" title="{{ bicycle.model or '-' }}">{{ bicycle.model or "-" }}</span></td>
                   <td><span class="truncate" title="{{ description }}">{{ description|truncate(45, True, '...') }}</span></td>
-                  <td>{{ bicycle.client.full_name }}</td>
+                  <td><span class="truncate" title="{{ bicycle.client.full_name }}">{{ bicycle.client.full_name }}</span></td>
                   <td class="table-actions">
-                    <a class="button button-ghost" href="{{ url_for('main.bicycles_detail', bicycle_id=bicycle.id) }}">Ver</a>
+                    <a class="button button-ghost button-compact" href="{{ url_for('main.bicycles_detail', bicycle_id=bicycle.id) }}">Ver</a>
                     <form
                       method="post"
                       action="{{ url_for('main.bicycles_delete', bicycle_id=bicycle.id) }}"
@@ -78,7 +79,7 @@
                         data-confirm-final-accept="Eliminar"
                     >
                       {{ delete_form.hidden_tag() }}
-                      <button class="button button-danger icon-button" type="submit" aria-label="Eliminar">
+                      <button class="button button-danger icon-button button-compact" type="submit" aria-label="Eliminar">
                         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                           <path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                           <path d="M8 6V4h8v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -91,7 +92,11 @@
               {% endfor %}
             </tbody>
           </table>
-                </div>
+        </div>
+        <div class="empty-state empty-state-inline table-empty-results is-hidden" id="bicycleNoResults">
+          <h3>Sin resultados</h3>
+          <p class="muted">No hay bicicletas que coincidan con la busqueda o marca seleccionada.</p>
+        </div>
       {% else %}
         <div class="empty-state">
           <h3>No hay bicicletas aun</h3>
@@ -105,18 +110,28 @@
     const bicycleSearch = document.querySelector("#bicycleSearch");
     const bicycleBrandFilter = document.querySelector("#bicycleBrandFilter");
     const bicycleRows = document.querySelectorAll("tbody tr");
+    const bicycleNoResults = document.querySelector("#bicycleNoResults");
 
     const filterBicycles = () => {
       const query = (bicycleSearch?.value || "").toLowerCase().trim();
       const brand = bicycleBrandFilter?.value || "all";
+      let visibleCount = 0;
 
       bicycleRows.forEach((row) => {
         const haystack = (row.dataset.search || "").toLowerCase();
         const rowBrand = (row.dataset.brand || "").toLowerCase();
         const matchesQuery = !query || haystack.includes(query);
         const matchesBrand = brand === "all" || rowBrand === brand.toLowerCase();
-        row.style.display = matchesQuery && matchesBrand ? "" : "none";
+        const isVisible = matchesQuery && matchesBrand;
+        row.style.display = isVisible ? "" : "none";
+        if (isVisible) {
+          visibleCount += 1;
+        }
       });
+
+      if (bicycleNoResults) {
+        bicycleNoResults.classList.toggle("is-hidden", visibleCount > 0);
+      }
     };
 
     if (bicycleSearch) {
@@ -125,5 +140,6 @@
     if (bicycleBrandFilter) {
       bicycleBrandFilter.addEventListener("change", filterBicycles);
     }
+    filterBicycles();
   </script>
 {% endblock %}

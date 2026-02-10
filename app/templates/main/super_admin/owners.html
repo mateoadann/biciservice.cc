@@ -16,14 +16,14 @@
   </div>
   {% if owners %}
     <div class="table-scroll">
-      <table class="table">
+      <table class="table table-compact">
         <thead>
           <tr>
             <th>Nombre</th>
             <th>Email</th>
             <th>Talleres</th>
             <th>Estado</th>
-            <th>Confirmacion</th>
+            <th>Email</th>
             <th>Creado</th>
             <th>Acciones</th>
           </tr>
@@ -31,13 +31,13 @@
         <tbody>
           {% for owner in owners %}
             <tr>
-              <td>{{ owner.full_name }}</td>
-              <td>{{ owner.email }}</td>
+              <td class="table-title">{{ owner.full_name }}</td>
+              <td><span class="truncate" title="{{ owner.email }}">{{ owner.email }}</span></td>
               <td>
                 {% if owner.workshops %}
-                  {{ owner.workshops | map(attribute='name') | join(', ') }}
+                  <span class="truncate" title="{{ owner.workshops | map(attribute='name') | join(', ') }}">{{ owner.workshops | map(attribute='name') | join(', ') }}</span>
                 {% else %}
-                  -
+                  <span class="muted">-</span>
                 {% endif %}
               </td>
               <td>
@@ -47,25 +47,25 @@
               </td>
               <td>
                 <span class="status {{ 'success' if owner.email_confirmed else 'in_progress' }}">
-                  {{ 'Confirmado' if owner.email_confirmed else 'Pendiente' }}
+                  {{ 'OK' if owner.email_confirmed else 'Pendiente' }}
                 </span>
               </td>
-              <td>{{ owner.created_at.strftime('%Y-%m-%d') if owner.created_at else '-' }}</td>
+              <td style="white-space:nowrap">{{ owner.created_at.strftime('%Y-%m-%d') if owner.created_at else '-' }}</td>
               <td>
                 <div class="table-actions">
                   <form method="post" class="inline-form js-confirm" action="{{ url_for('main.super_admin_owner_toggle', user_id=owner.id) }}" data-confirm-title="Cambiar estado" data-confirm-message="Cambiar el estado de este owner?" data-confirm-final="Confirmar cambio de estado" data-confirm-final-accept="Confirmar">
                     {{ form.hidden_tag() }}
-                    <button class="button button-ghost" type="submit">
+                    <button class="button button-ghost button-compact" type="submit">
                       {{ 'Desactivar' if owner.is_active else 'Activar' }}
                     </button>
                   </form>
                   <form method="post" class="inline-form js-confirm" action="{{ url_for('main.super_admin_owner_reset_password', user_id=owner.id) }}" data-confirm-title="Reset de contrasena" data-confirm-message="Generar una nueva contrasena temporal?" data-confirm-final="Confirmar reset" data-confirm-final-accept="Generar">
                     {{ form.hidden_tag() }}
-                    <button class="button button-ghost" type="submit">Resetear password</button>
+                    <button class="button button-ghost button-compact" type="submit">Reset pass</button>
                   </form>
                   <form method="post" class="inline-form js-confirm" action="{{ url_for('main.super_admin_owner_force_confirmation', user_id=owner.id) }}" data-confirm-title="Revalidar email" data-confirm-message="Forzar revalidacion de email?" data-confirm-final="Confirmar revalidacion" data-confirm-final-accept="Enviar">
                     {{ form.hidden_tag() }}
-                    <button class="button button-ghost" type="submit">Forzar email</button>
+                    <button class="button button-ghost button-compact" type="submit">Forzar email</button>
                   </form>
                 </div>
               </td>
