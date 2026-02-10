@@ -7,8 +7,45 @@ cd "$ROOT_DIR"
 echo "[pre-push] Ejecutando validaciones locales..."
 python3 -m compileall app >/dev/null
 
-if command -v make >/dev/null 2>&1; then
+has_docker_compose() {
+  command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1
+}
+
+docker_web_running() {
+  docker compose ps --services --filter status=running 2>/dev/null | grep -q '^web$'
+}
+
+run_docker_tests() {
+  echo "[pre-push] Ejecutando tests en Docker..."
+  make test
+}
+
+run_local_tests() {
+  echo "[pre-push] Ejecutando tests locales..."
   make test-local
+}
+
+TEST_MODE="${PRE_PUSH_TEST_MODE:-auto}"
+
+if command -v make >/dev/null 2>&1; then
+  if [ "$TEST_MODE" = "docker" ]; then
+    run_docker_tests
+  elif [ "$TEST_MODE" = "local" ]; then
+    run_local_tests
+  else
+    if has_docker_compose && docker_web_running; then
+      run_docker_tests
+    else
+      if ! run_local_tests; then
+        if has_docker_compose; then
+          echo "[pre-push] Fallback: tests locales fallaron. Probando en Docker..."
+          run_docker_tests
+        else
+          exit 1
+        fi
+      fi
+    fi
+  fi
 else
   pytest
 fi

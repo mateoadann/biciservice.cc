@@ -52,8 +52,12 @@ El repositorio incluye un hook `pre-push` versionado para ejecutar validaciones 
 1. Instalar hook:
    `make hooks-install`
 2. Flujo:
-   - compila modulos Python de `app/`
-   - ejecuta `make test-local` (o `pytest` si `make` no esta disponible)
+    - compila modulos Python de `app/`
+    - en modo `auto` usa `make test` si el contenedor `web` esta corriendo, y si no intenta `make test-local`
+
+Modo de ejecucion opcional del hook:
+- `PRE_PUSH_TEST_MODE=docker git push`
+- `PRE_PUSH_TEST_MODE=local git push`
 
 ### GitHub Actions
 Se ejecuta workflow de tests en cada `push` y `pull_request` desde `.github/workflows/tests.yml`.
