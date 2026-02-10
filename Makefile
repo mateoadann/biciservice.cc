@@ -9,7 +9,7 @@ WEB_SERVICE ?= web
 DB_SERVICE ?= db
 
 .PHONY: help \
-	venv install env run test test-local \
+	venv install env run test test-local hooks-install \
 	db-upgrade db-migrate db-downgrade \
 	docker-build docker-up docker-up-build docker-down docker-restart docker-ps docker-logs \
 	docker-db-upgrade docker-db-migrate docker-db-downgrade docker-test \
@@ -32,6 +32,9 @@ run: ## Levantar app local (Flask)
 
 test-local: ## Ejecutar tests locales
 	pytest
+
+hooks-install: ## Instalar hooks locales versionados
+	bash scripts/install-hooks.sh
 
 db-upgrade: ## Ejecutar migraciones locales (upgrade)
 	$(FLASK) db upgrade
