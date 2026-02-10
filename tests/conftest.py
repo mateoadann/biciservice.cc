@@ -12,6 +12,7 @@ from sqlalchemy.pool import StaticPool
 from app import create_app
 from app.config import Config
 from app.extensions import db
+from app.models import Store, User, Workshop
 
 
 class TestingConfig(Config):
@@ -40,3 +41,82 @@ def app():
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+
+@pytest.fixture
+def create_owner_user(app):
+    def _create(
+        *,
+        email="owner@example.com",
+        full_name="Owner Test",
+        password="Password1",
+        email_confirmed=True,
+        is_active=True,
+        workshop_name="Taller Test",
+        store_name="Sucursal principal",
+    ):
+        workshop = Workshop()
+        workshop.name = workshop_name
+        db.session.add(workshop)
+        db.session.flush()
+
+        store = Store()
+        store.name = store_name
+        store.workshop_id = workshop.id
+        db.session.add(store)
+        db.session.flush()
+
+        user = User()
+        user.full_name = full_name
+        user.email = email
+        user.role = "owner"
+        user.store_id = store.id
+        user.email_confirmed = email_confirmed
+        setattr(user, "is_active", is_active)
+        user.set_password(password)
+        user.workshops.append(workshop)
+        db.session.add(user)
+        db.session.commit()
+        return user
+
+    return _create
+
+
+@pytest.fixture
+def owner_user(create_owner_user):
+    return create_owner_user()
+
+
+@pytest.fixture
+def create_super_admin_user(app):
+    def _create(
+        *,
+        email="superadmin@example.com",
+        full_name="Super Admin",
+        password="Password1",
+        is_active=True,
+    ):
+        user = User()
+        user.full_name = full_name
+        user.email = email
+        user.role = "super_admin"
+        user.email_confirmed = True
+        setattr(user, "is_active", is_active)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        return user
+
+    return _create
+
+
+@pytest.fixture
+def login(client):
+    def _login(email, password, *, follow_redirects=True):
+        return client.post(
+            "/login",
+            data={"email": email, "password": password},
+            follow_redirects=follow_redirects,
+        )
+
+    return _login

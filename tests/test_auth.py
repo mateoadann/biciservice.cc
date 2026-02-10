@@ -1,22 +1,4 @@
 from app.extensions import db
-from app.models import Store, User, Workshop
-
-
-def _create_owner_user():
-    workshop = Workshop(name="Taller Test")
-    store = Store(name="Sucursal principal", workshop=workshop)
-    user = User(
-        full_name="Owner Test",
-        email="owner@example.com",
-        role="owner",
-        store=store,
-        email_confirmed=True,
-    )
-    user.set_password("Password1")
-    user.workshops.append(workshop)
-    db.session.add_all([workshop, store, user])
-    db.session.commit()
-    return user
 
 
 def test_login_page_loads(client):
@@ -30,12 +12,32 @@ def test_dashboard_requires_login(client):
     assert "/login" in response.headers.get("Location", "")
 
 
-def test_login_success_redirects(client):
-    _create_owner_user()
-    response = client.post(
-        "/login",
-        data={"email": "owner@example.com", "password": "Password1"},
-        follow_redirects=True,
-    )
+def test_owner_login_success_redirects_dashboard(owner_user, login):
+    response = login(owner_user.email, "Password1")
     assert response.status_code == 200
     assert b"Dashboard" in response.data
+
+
+def test_super_admin_login_redirects_to_admin_dashboard(create_super_admin_user, login):
+    super_admin = create_super_admin_user(email="root@example.com")
+    response = login(super_admin.email, "Password1", follow_redirects=False)
+    assert response.status_code == 302
+    assert "/admin/dashboard" in response.headers.get("Location", "")
+
+
+def test_login_rejects_unconfirmed_owner(owner_user, login):
+    owner_user.email_confirmed = False
+    db.session.commit()
+
+    response = login(owner_user.email, "Password1")
+    assert response.status_code == 200
+    assert b"Email sin confirmar" in response.data
+
+
+def test_login_rejects_inactive_user(owner_user, login):
+    setattr(owner_user, "is_active", False)
+    db.session.commit()
+
+    response = login(owner_user.email, "Password1")
+    assert response.status_code == 200
+    assert b"Cuenta desactivada" in response.data
