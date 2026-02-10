@@ -12,9 +12,37 @@
       <div class="panel-header">
         <div>
           <h2>Trabajo {{ job.code }}</h2>
-          <p class="muted">Detalle del trabajo</p>
+          <div class="detail-summary">
+            <span class="job-code">{{ job.code }}</span>
+            <span class="status {{ job.status }}">
+              {% if job.status == "open" %}Abierto{% endif %}
+              {% if job.status == "in_progress" %}En progreso{% endif %}
+              {% if job.status == "ready" %}Listo{% endif %}
+              {% if job.status == "closed" %}Cerrado{% endif %}
+            </span>
+            <span class="muted" style="font-size:0.85rem">{{ job.bicycle.client.full_name }}</span>
+          </div>
         </div>
-        <a class="button button-ghost button-compact" href="{{ url_for('main.jobs') }}">Volver a trabajos</a>
+        <div class="panel-header-actions">
+          {% if job.status in ["ready", "closed"] %}
+            <a class="button button-ghost button-compact btn-pdf"
+               href="{{ url_for('main.jobs_pdf', job_id=job.id) }}"
+               id="btnPdf">
+              <svg class="icon pdf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              <svg class="icon pdf-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                <path d="M12 2a10 10 0 0 1 10 10"></path>
+              </svg>
+              PDF
+            </a>
+          {% endif %}
+          <a class="button button-ghost button-compact" href="{{ url_for('main.jobs') }}">Volver a trabajos</a>
+        </div>
       </div>
       <div class="panel-body">
         <div class="form-grid">
@@ -101,61 +129,21 @@
       </div>
     </section>
 
-    <details class="panel panel-collapsible">
-      <summary class="panel-header panel-toggle">
-        <h2>Auditoria</h2>
-        <span class="panel-toggle-icon" aria-hidden="true">
-          <svg class="icon-light-closed" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-              <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-            </g>
-          </svg>
-          <svg class="icon-light-open" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(180)">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-              <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-            </g>
-          </svg>
-          <svg class="icon-dark-closed" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(0)">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-              <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-            </g>
-          </svg>
-          <svg class="icon-dark-open" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(180)">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-              <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-            </g>
-          </svg>
-        </span>
-      </summary>
-      <div class="panel-body">
-        <div class="form-grid">
-          <div>
-            <div class="field-label">Creado en</div>
-            <div>{{ created_at.strftime('%Y-%m-%d %H:%M') if created_at else '-' }}</div>
-          </div>
-          <div>
-            <div class="field-label">Creado por</div>
-            <div>{{ created_by or '-' }}</div>
-          </div>
-          <div>
-            <div class="field-label">Actualizado en</div>
-            <div>{{ updated_at.strftime('%Y-%m-%d %H:%M') if updated_at else '-' }}</div>
-          </div>
-          <div>
-            <div class="field-label">Actualizado por</div>
-            <div>{{ updated_by or '-' }}</div>
-          </div>
-        </div>
-        <p class="muted">Estos datos son generados por el sistema y no se pueden editar.</p>
-      </div>
-    </details>
+    {% include "main/_audit_block.html" %}
   </div>
+
+  {% if job.status in ["ready", "closed"] %}
+  <script>
+  (function() {
+    var btn = document.getElementById('btnPdf');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+      btn.classList.add('is-loading');
+      setTimeout(function() {
+        btn.classList.remove('is-loading');
+      }, 3000);
+    });
+  })();
+  </script>
+  {% endif %}
 {% endblock %}

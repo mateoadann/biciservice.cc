@@ -12,7 +12,14 @@
       <div class="panel-header">
         <div>
           <h2>{{ service.name }}</h2>
-          <p class="muted">Detalle del service</p>
+          <div class="detail-summary">
+            {% if service.is_active %}
+              <span class="status success">Activo</span>
+            {% else %}
+              <span class="status muted">Pausado</span>
+            {% endif %}
+            <span class="muted" style="font-size:0.85rem">$ {{ service.base_price|currency }}</span>
+          </div>
         </div>
         <a class="button button-ghost button-compact" href="{{ url_for('main.services') }}">Volver a services</a>
       </div>
@@ -40,61 +47,6 @@
       </div>
     </section>
 
-    <details class="panel panel-collapsible">
-      <summary class="panel-header panel-toggle">
-        <h2>Auditoria</h2>
-        <span class="panel-toggle-icon" aria-hidden="true">
-          <svg class="icon-light-closed" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-              <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-            </g>
-          </svg>
-          <svg class="icon-light-open" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(180)">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-              <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-            </g>
-          </svg>
-          <svg class="icon-dark-closed" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(0)">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-              <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-            </g>
-          </svg>
-          <svg class="icon-dark-open" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(180)">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-              <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-            </g>
-          </svg>
-        </span>
-      </summary>
-      <div class="panel-body">
-        <div class="form-grid">
-          <div>
-            <div class="field-label">Creado en</div>
-            <div>{{ created_at.strftime('%Y-%m-%d %H:%M') if created_at else '-' }}</div>
-          </div>
-          <div>
-            <div class="field-label">Creado por</div>
-            <div>{{ created_by or '-' }}</div>
-          </div>
-          <div>
-            <div class="field-label">Actualizado en</div>
-            <div>{{ updated_at.strftime('%Y-%m-%d %H:%M') if updated_at else '-' }}</div>
-          </div>
-          <div>
-            <div class="field-label">Actualizado por</div>
-            <div>{{ updated_by or '-' }}</div>
-          </div>
-        </div>
-        <p class="muted">Estos datos son generados por el sistema y no se pueden editar.</p>
-      </div>
-    </details>
+    {% include "main/_audit_block.html" %}
   </div>
 {% endblock %}

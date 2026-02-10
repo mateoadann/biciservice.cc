@@ -35,8 +35,8 @@
                   <td>{{ "Owner" if user.role == "owner" else "Staff" }}</td>
                   <td>{{ user.store.name if user.store else "-" }}</td>
                   <td class="table-actions">
-                    <a class="button button-ghost" href="{{ url_for('main.users_detail', user_id=user.id) }}">Ver</a>
-                    <a class="button button-ghost" href="{{ url_for('main.users_edit', user_id=user.id) }}">Editar</a>
+                    <a class="button button-ghost button-compact" href="{{ url_for('main.users_detail', user_id=user.id) }}">Ver</a>
+                    <a class="button button-ghost button-compact" href="{{ url_for('main.users_edit', user_id=user.id) }}">Editar</a>
                     {% if current_user.id != user.id %}
                       <form
                         method="post"
@@ -48,7 +48,7 @@
                         data-confirm-final-accept="Eliminar"
                       >
                         {{ delete_form.hidden_tag() }}
-                        <button class="button button-danger icon-button" type="submit" aria-label="Eliminar">
+                        <button class="button button-danger icon-button button-compact" type="submit" aria-label="Eliminar">
                           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M8 6V4h8v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
