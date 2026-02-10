@@ -17,7 +17,7 @@ docker_web_running() {
 
 run_docker_tests() {
   echo "[pre-push] Ejecutando tests en Docker..."
-  make test
+  docker compose exec -T web pytest
 }
 
 run_local_tests() {
