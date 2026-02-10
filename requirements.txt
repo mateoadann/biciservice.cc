@@ -10,3 +10,4 @@ psycopg[binary]==3.3.2
 python-dotenv==1.0.1
 pytest==8.2.2
 pyotp==2.9.0
+reportlab==4.4.0

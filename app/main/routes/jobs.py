@@ -1,10 +1,11 @@
-from flask import render_template, request, redirect, url_for, flash, g
+from flask import render_template, request, redirect, url_for, flash, g, send_file
 from flask_login import login_required, current_user
 from app.main import main_bp
 from app.extensions import db
 from app.models import Job
 from app.services.job_service import JobService
 from app.services.audit_service import AuditService
+from app.services.pdf_service import generate_job_pdf, build_pdf_filename
 from app.main.forms import JobForm, JobStatusForm, DeleteForm
 from app.main.helpers import (
     get_workshop_or_redirect,
@@ -307,6 +308,44 @@ def jobs_status(job_id):
     db.session.commit()
     flash("Estado actualizado correctamente", "success")
     return redirect(url_for("main.jobs"))
+
+
+@main_bp.route("/jobs/<int:job_id>/pdf")
+@login_required
+def jobs_pdf(job_id):
+    workshop, redirect_response = get_workshop_or_redirect()
+    if redirect_response:
+        return redirect_response
+
+    store, store_redirect = get_store_or_redirect()
+    if store_redirect:
+        return store_redirect
+
+    job = Job.query.filter_by(
+        id=job_id, workshop_id=workshop.id, store_id=store.id
+    ).first_or_404()
+
+    if job.status not in ("ready", "closed"):
+        flash("Solo se puede generar PDF para trabajos listos o cerrados", "error")
+        return redirect(url_for("main.jobs_detail", job_id=job.id))
+
+    service_total = sum(
+        (item.unit_price or 0) * (item.quantity or 0) for item in job.items
+    )
+    parts_total = sum(
+        (part.unit_price or 0) * (part.quantity or 0) for part in job.parts
+    )
+    total = service_total + parts_total
+
+    buf = generate_job_pdf(job, service_total, parts_total, total)
+    filename = build_pdf_filename(job)
+
+    return send_file(
+        buf,
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=filename,
+    )
 
 
 @main_bp.route("/jobs/<int:job_id>/delete", methods=["POST"])
