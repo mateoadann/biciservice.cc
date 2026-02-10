@@ -42,6 +42,22 @@ personalizar logo, nombre del taller, favicon y paleta de colores.
 3. Abrir la app en el navegador:
    `http://localhost:5000`
 
+## Tests y automatizacion
+- Tests locales: `make test-local`
+- Tests en Docker: `make test`
+
+### Hook pre-push
+El repositorio incluye un hook `pre-push` versionado para ejecutar validaciones antes de subir cambios.
+
+1. Instalar hook:
+   `make hooks-install`
+2. Flujo:
+   - compila modulos Python de `app/`
+   - ejecuta `make test-local` (o `pytest` si `make` no esta disponible)
+
+### GitHub Actions
+Se ejecuta workflow de tests en cada `push` y `pull_request` desde `.github/workflows/tests.yml`.
+
 ## Variables de entorno
 - `SECRET_KEY`: clave de sesion
 - `DATABASE_URL`: URL de Postgres (`postgresql+psycopg://...`)
