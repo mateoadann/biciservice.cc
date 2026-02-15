@@ -13,6 +13,7 @@
         <div>
           <h2>{{ client.full_name }}</h2>
           <div class="detail-summary">
+            <span class="detail-summary .job-code" style="font-size:0.85rem">#{{ client.client_code }}</span>
             <span class="muted" style="font-size:0.85rem">{{ client.bicycles|length }} bicicleta{{ 's' if client.bicycles|length != 1 else '' }}</span>
             {% if client.email %}<span class="muted" style="font-size:0.85rem">{{ client.email }}</span>{% endif %}
           </div>

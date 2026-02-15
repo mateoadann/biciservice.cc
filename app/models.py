@@ -115,10 +115,15 @@ class Client(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     workshop_id = db.Column(db.Integer, db.ForeignKey("workshops.id"), nullable=False)
+    client_code = db.Column(db.String(10), nullable=False)
     full_name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(255))
     phone = db.Column(db.String(40))
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        db.UniqueConstraint("workshop_id", "client_code", name="uq_client_workshop_code"),
+    )
 
     bicycles = db.relationship("Bicycle", backref="client", lazy=True)
 

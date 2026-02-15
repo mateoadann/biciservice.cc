@@ -11,6 +11,7 @@ def _create_job(owner_user, *, code, status="ready", notes=""):
 
     client = Client()
     client.workshop_id = workshop.id
+    client.client_code = "100"
     client.full_name = "Cliente PDF"
     client.email = "cliente-pdf@example.com"
 

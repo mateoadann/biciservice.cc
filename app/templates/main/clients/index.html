@@ -51,6 +51,7 @@
           <table class="table">
             <thead>
               <tr>
+                <th>Codigo</th>
                 <th>Nombre</th>
                 <th>Email</th>
                 <th>Telefono</th>
@@ -60,7 +61,8 @@
             </thead>
             <tbody>
               {% for client in clients %}
-                <tr data-bikes="{{ client.bicycles|length }}" data-search="{{ client.full_name }} {{ client.email or '' }} {{ client.phone or '' }}">
+                <tr data-bikes="{{ client.bicycles|length }}" data-search="{{ client.client_code }} {{ client.full_name }} {{ client.email or '' }} {{ client.phone or '' }}">
+                  <td><strong>#{{ client.client_code }}</strong></td>
                   <td><span class="truncate" title="{{ client.full_name }}">{{ client.full_name }}</span></td>
                   <td><span class="truncate" title="{{ client.email or '-' }}">{{ client.email or "-" }}</span></td>
                   <td>{{ client.phone or "-" }}</td>

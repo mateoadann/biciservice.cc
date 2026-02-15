@@ -8,6 +8,7 @@ def test_paginate_query_caps_out_of_range_page(owner_user):
     for idx in range(12):
         client = Client()
         client.workshop_id = workshop.id
+        client.client_code = str(100 + idx)
         client.full_name = f"Cliente {idx}"
         client.email = f"cliente{idx}@example.com"
         db.session.add(client)

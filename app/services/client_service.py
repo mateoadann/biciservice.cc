@@ -1,5 +1,6 @@
 import csv
 from io import StringIO
+from sqlalchemy import func
 from ..extensions import db
 from ..models import Client, Bicycle, User
 from .audit_service import AuditService
@@ -7,9 +8,20 @@ from ..main.forms import BRAND_CHOICES
 
 class ClientService:
     @staticmethod
+    def generate_client_code(workshop_id):
+        max_code = db.session.query(func.max(
+            db.cast(Client.client_code, db.Integer)
+        )).filter(
+            Client.workshop_id == workshop_id
+        ).scalar()
+        return str((max_code or 99) + 1)
+
+    @staticmethod
     def create_client(workshop_id, full_name, email, phone):
+        code = ClientService.generate_client_code(workshop_id)
         client = Client(
             workshop_id=workshop_id,
+            client_code=code,
             full_name=full_name,
             email=email,
             phone=phone,
@@ -20,7 +32,7 @@ class ClientService:
             "create",
             "client",
             client.id,
-            f"Cliente {client.full_name}",
+            f"Cliente {client.full_name} (#{code})",
             workshop_id=workshop_id,
         )
         db.session.commit()
@@ -144,8 +156,10 @@ class ClientService:
                     skipped += 1
                     continue
 
+            code = ClientService.generate_client_code(workshop_id)
             client = Client(
                 workshop_id=workshop_id,
+                client_code=code,
                 full_name=full_name,
                 email=email or None,
                 phone=phone or None,
@@ -156,7 +170,7 @@ class ClientService:
                 "create",
                 "client",
                 client.id,
-                f"Cliente {client.full_name}",
+                f"Cliente {client.full_name} (#{code})",
                 workshop_id=workshop_id,
             )
             created += 1
@@ -180,28 +194,28 @@ class ClientService:
             name.strip().lower(): name for name in reader.fieldnames if name and name.strip()
         }
         
-        email_key = (
-            headers.get("client_email")
-            or headers.get("email_cliente")
-            or headers.get("email")
+        code_key = (
+            headers.get("client_code")
+            or headers.get("codigo_cliente")
+            or headers.get("codigo")
         )
         brand_key = headers.get("brand") or headers.get("marca")
         model_key = headers.get("model") or headers.get("modelo")
         desc_key = headers.get("description") or headers.get("descripcion")
 
-        if not email_key:
-            return 0, 0, "El CSV de bicicletas necesita la columna client_email"
+        if not code_key:
+            return 0, 0, "El CSV de bicicletas necesita la columna client_code"
 
         created = 0
         skipped = 0
         for row in reader:
-            client_email = (row.get(email_key) or "").strip()
-            if not client_email:
+            client_code = (row.get(code_key) or "").strip()
+            if not client_code:
                 skipped += 1
                 continue
 
             client = Client.query.filter_by(
-                workshop_id=workshop_id, email=client_email
+                workshop_id=workshop_id, client_code=client_code
             ).first()
             if not client:
                 skipped += 1
