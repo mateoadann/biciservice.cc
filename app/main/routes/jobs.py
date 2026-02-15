@@ -106,6 +106,12 @@ def jobs_create():
         if part_error:
             flash(part_error, "error")
         else:
+            service_prices = {}
+            for sid in (form.service_type_ids.data or []):
+                raw = request.form.get(f"service_price_{sid}", "")
+                parsed = JobService.parse_decimal(raw)
+                if parsed is not None:
+                    service_prices[sid] = parsed
             JobService.create_job(
                 workshop_id=workshop.id,
                 store_id=store.id,
@@ -114,7 +120,8 @@ def jobs_create():
                 notes=form.notes.data,
                 estimated_delivery_at=form.estimated_delivery_at.data,
                 service_type_ids=form.service_type_ids.data,
-                parts_data=parts
+                parts_data=parts,
+                service_prices=service_prices,
             )
             flash("Trabajo creado", "success")
             return redirect(url_for("main.jobs"))
@@ -138,10 +145,7 @@ def jobs_create():
         # I'll implement a simple one here locally or use the one from helper if I kept it (I didn't).
         pass
 
-    # Quick inline reconstruction for parts data if needed or use empty default
-    # If POST and error, we want to show what user typed.
-    # But `parts` might be None if validation failed early or error returned.
-    parts_data = [{"description": "", "quantity": "1", "unit_price": "", "kind": "part"}]
+    parts_data = []
     if request.method == "POST":
          # Extract raw list
         descriptions = request.form.getlist("part_description")
@@ -170,6 +174,7 @@ def jobs_create():
         bicycle_options=bicycle_options,
         selected_bicycle_label="",
         parts_data=parts_data,
+        service_prices={},
         title="Nuevo trabajo",
         submit_label="Crear trabajo",
     )
@@ -209,6 +214,12 @@ def jobs_edit(job_id):
         if part_error:
             flash(part_error, "error")
         else:
+            service_prices = {}
+            for sid in (form.service_type_ids.data or []):
+                raw = request.form.get(f"service_price_{sid}", "")
+                parsed = JobService.parse_decimal(raw)
+                if parsed is not None:
+                    service_prices[sid] = parsed
             JobService.update_job_full(
                 job,
                 bicycle_id=form.bicycle_id.data,
@@ -216,7 +227,8 @@ def jobs_edit(job_id):
                 notes=form.notes.data,
                 estimated_delivery_at=form.estimated_delivery_at.data,
                 service_type_ids=form.service_type_ids.data,
-                parts_data=parts
+                parts_data=parts,
+                service_prices=service_prices,
             )
             flash("Trabajo actualizado", "success")
             return redirect(url_for("main.jobs"))
@@ -262,7 +274,9 @@ def jobs_edit(job_id):
             for part in job.parts
         ]
         if not parts_data:
-            parts_data = [{"description": "", "quantity": "1", "unit_price": "", "kind": "part"}]
+            parts_data = []
+
+    service_prices = {item.service_type_id: item.unit_price for item in job.items}
 
     return render_template(
         "main/jobs/form.html",
@@ -272,6 +286,7 @@ def jobs_edit(job_id):
         bicycle_options=bicycle_options,
         selected_bicycle_label=selected_bicycle_label,
         parts_data=parts_data,
+        service_prices=service_prices,
         title="Editar trabajo",
         submit_label="Guardar cambios",
     )

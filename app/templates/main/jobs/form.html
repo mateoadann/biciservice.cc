@@ -60,16 +60,22 @@
           <div class="service-options">
             {% if services %}
               {% for service in services %}
+                {% set custom_price = service_prices.get(service.id) %}
                 <label class="service-option">
-                  <input type="checkbox" name="service_type_ids" value="{{ service.id }}" data-price="{{ service.base_price or 0 }}"
+                  <input type="checkbox" name="service_type_ids" value="{{ service.id }}" data-base-price="{{ service.base_price or 0 }}"
                     {% if service.id in selected_ids %}checked{% endif %}>
-                  <span>
+                  <span class="service-info">
                     <span class="service-name">{{ service.name }}</span>
-                    <span class="service-price">$ {{ service.base_price|currency }}</span>
                     {% if service.description %}
                       <span class="service-desc">{{ service.description }}</span>
                     {% endif %}
                   </span>
+                  <input type="text" name="service_price_{{ service.id }}"
+                    class="input input-compact js-service-price"
+                    inputmode="decimal"
+                    placeholder="{{ service.base_price|currency }}"
+                    value="{% if custom_price is not none %}{{ custom_price|currency }}{% else %}{{ service.base_price|currency }}{% endif %}"
+                    {% if service.id not in selected_ids %}disabled{% endif %}>
                 </label>
               {% endfor %}
             {% else %}
@@ -398,7 +404,11 @@
         if (!checkbox.checked) {
           return total;
         }
-        const rawPrice = String(checkbox.dataset.price || "0").replace(",", ".");
+        const priceInput = checkbox.closest(".service-option")?.querySelector(".js-service-price");
+        if (priceInput) {
+          return total + parseCurrencyInput(priceInput.value);
+        }
+        const rawPrice = String(checkbox.dataset.basePrice || "0").replace(",", ".");
         const parsedPrice = Number.parseFloat(rawPrice);
         return total + (Number.isFinite(parsedPrice) ? parsedPrice : 0);
       }, 0);
@@ -465,10 +475,25 @@
 
     document.querySelectorAll(".part-row").forEach(attachPartEvents);
     serviceCheckboxes.forEach((checkbox) => {
+      const priceInput = checkbox.closest(".service-option")?.querySelector(".js-service-price");
       checkbox.addEventListener("change", () => {
+        if (priceInput) {
+          priceInput.disabled = !checkbox.checked;
+        }
         updateState();
         updateTotals();
       });
+      if (priceInput) {
+        priceInput.value = sanitizeCurrencyInput(priceInput.value);
+        priceInput.addEventListener("input", () => {
+          priceInput.value = sanitizeCurrencyInput(priceInput.value);
+          updateTotals();
+        });
+        priceInput.addEventListener("blur", () => {
+          priceInput.value = sanitizeCurrencyInput(priceInput.value);
+          updateTotals();
+        });
+      }
     });
 
     updateTotals();

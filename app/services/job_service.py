@@ -69,7 +69,7 @@ class JobService:
         return parts, None
 
     @staticmethod
-    def create_job(workshop_id, store_id, bicycle_id, status, notes, estimated_delivery_at, service_type_ids, parts_data):
+    def create_job(workshop_id, store_id, bicycle_id, status, notes, estimated_delivery_at, service_type_ids, parts_data, service_prices=None):
         code = JobService.generate_job_code()
         job = Job(
             workshop_id=workshop_id,
@@ -91,11 +91,12 @@ class JobService:
                 ServiceType.id.in_(selected_ids),
             ).all()
             for service in services:
+                price = service_prices.get(service.id, service.base_price) if service_prices else service.base_price
                 job_item = JobItem(
                     job_id=job.id,
                     service_type_id=service.id,
                     quantity=1,
-                    unit_price=service.base_price,
+                    unit_price=price,
                 )
                 db.session.add(job_item)
 
@@ -134,7 +135,7 @@ class JobService:
         pass
 
     @staticmethod
-    def update_job_full(job, bicycle_id, status, notes, estimated_delivery_at, service_type_ids, parts_data):
+    def update_job_full(job, bicycle_id, status, notes, estimated_delivery_at, service_type_ids, parts_data, service_prices=None):
         job.bicycle_id = bicycle_id
         job.status = status
         job.notes = notes
@@ -143,25 +144,32 @@ class JobService:
         # Update Services
         existing_items = {item.service_type_id: item for item in job.items}
         selected_ids = {sid for sid in service_type_ids if sid}
-        
+
         # Delete removed items
         for service_id, item in existing_items.items():
             if service_id not in selected_ids:
                 db.session.delete(item)
+
+        # Update prices on existing items
+        if service_prices:
+            for service_id, item in existing_items.items():
+                if service_id in selected_ids and service_id in service_prices:
+                    item.unit_price = service_prices[service_id]
 
         # Add new items
         services_to_add = ServiceType.query.filter(
             ServiceType.workshop_id == job.workshop_id,
             ServiceType.id.in_(selected_ids - existing_items.keys()),
         ).all()
-        
+
         for service in services_to_add:
+            price = service_prices.get(service.id, service.base_price) if service_prices else service.base_price
             db.session.add(
                 JobItem(
                     job_id=job.id,
                     service_type_id=service.id,
                     quantity=1,
-                    unit_price=service.base_price,
+                    unit_price=price,
                 )
             )
 
