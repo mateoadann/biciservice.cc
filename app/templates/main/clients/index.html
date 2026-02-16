@@ -48,7 +48,7 @@
           {% endif %}
         </div>
         <div class="table-wrap table-scroll">
-          <table class="table">
+          <table class="table table-mobile-cards">
             <thead>
               <tr>
                 <th>Codigo</th>
@@ -62,12 +62,12 @@
             <tbody>
               {% for client in clients %}
                 <tr data-bikes="{{ client.bicycles|length }}" data-search="{{ client.client_code }} {{ client.full_name }} {{ client.email or '' }} {{ client.phone or '' }}">
-                  <td><strong>#{{ client.client_code }}</strong></td>
-                  <td><span class="truncate" title="{{ client.full_name }}">{{ client.full_name }}</span></td>
-                  <td><span class="truncate" title="{{ client.email or '-' }}">{{ client.email or "-" }}</span></td>
-                  <td>{{ client.phone or "-" }}</td>
-                  <td>{{ client.bicycles|length }}</td>
-                  <td class="table-actions">
+                  <td data-label="Codigo"><strong>#{{ client.client_code }}</strong></td>
+                  <td data-label="Nombre"><span class="truncate" title="{{ client.full_name }}">{{ client.full_name }}</span></td>
+                  <td data-label="Email"><span class="truncate" title="{{ client.email or '-' }}">{{ client.email or "-" }}</span></td>
+                  <td data-label="Telefono">{{ client.phone or "-" }}</td>
+                  <td data-label="Bicicletas">{{ client.bicycles|length }}</td>
+                  <td class="table-actions table-actions-cell" data-label="Acciones">
                     <a class="button button-ghost button-compact" href="{{ url_for('main.clients_detail', client_id=client.id) }}">Ver</a>
                     <form
                       method="post"

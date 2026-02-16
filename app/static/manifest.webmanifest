@@ -1,0 +1,32 @@
+{
+  "name": "Service Bicycle CRM",
+  "short_name": "ServiceCRM",
+  "description": "Gestion diaria para talleres de reparacion con clientes, trabajos e inventario.",
+  "lang": "es",
+  "id": "/",
+  "start_url": "/login",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f7fb",
+  "theme_color": "#1f4cff",
+  "icons": [
+    {
+      "src": "/static/icons/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/apple-touch-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

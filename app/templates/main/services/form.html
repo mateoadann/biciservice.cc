@@ -18,7 +18,10 @@
         <div class="form-grid">
           <label>
             Nombre
-            {{ form.name(class_="input", required=True) }}
+            {{ form.name(class_="input", required=True, autocomplete="off", autocapitalize="sentences", spellcheck="false") }}
+            {% if form.name.errors %}
+              <span class="field-error">{{ form.name.errors[0] }}</span>
+            {% endif %}
           </label>
           <label>
             Precio base
@@ -28,12 +31,18 @@
             {% endif %}
             {{ form.base_price(class_="input js-money", inputmode="decimal", value=base_value, required=True) }}
             <span class="input-feedback" id="basePriceFeedback">Formato: 0,00</span>
+            {% if form.base_price.errors %}
+              <span class="field-error">{{ form.base_price.errors[0] }}</span>
+            {% endif %}
           </label>
-          <label>
+          <label class="field-span-2">
             Descripcion
-            {{ form.description(class_="input") }}
+            {{ form.description(class_="input", rows="3", maxlength="500") }}
+            {% if form.description.errors %}
+              <span class="field-error">{{ form.description.errors[0] }}</span>
+            {% endif %}
           </label>
-          <label class="checkbox">
+          <label class="checkbox field-span-2">
             {{ form.is_active() }}
             Activo
           </label>

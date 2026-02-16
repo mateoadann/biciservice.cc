@@ -8,15 +8,15 @@
 {% endblock %}
 
 {% block content %}
-  <section class="panel">
+  <section class="panel panel-table">
     <div class="panel-header">
       <h2>Services disponibles</h2>
       <span class="pill">{{ services|length }} total</span>
     </div>
     <div class="panel-body">
       {% if services %}
-        <div class="table-wrap">
-          <table class="table">
+        <div class="table-wrap table-scroll">
+          <table class="table table-mobile-cards">
             <thead>
               <tr>
                 <th>Nombre</th>
@@ -28,21 +28,21 @@
             <tbody>
               {% for service in services %}
                 <tr>
-                  <td>
+                  <td data-label="Nombre">
                     <div class="table-title">{{ service.name }}</div>
                     <div class="muted">
                       {{ service.description|default("Sin descripcion")|truncate(50, True, "...") }}
                     </div>
                   </td>
-                  <td>$ {{ service.base_price|currency }}</td>
-                  <td>
+                  <td data-label="Precio base">$ {{ service.base_price|currency }}</td>
+                  <td data-label="Estado">
                     {% if service.is_active %}
                       <span class="status success">Activo</span>
                     {% else %}
                       <span class="status muted">Pausado</span>
                     {% endif %}
                   </td>
-                  <td class="table-actions">
+                  <td class="table-actions table-actions-cell" data-label="Acciones">
                     <a class="button button-ghost button-compact" href="{{ url_for('main.services_detail', service_id=service.id) }}">Ver</a>
                     <a class="button button-ghost button-compact" href="{{ url_for('main.services_edit', service_id=service.id) }}">Editar</a>
                     <form method="post" action="{{ url_for('main.services_delete', service_id=service.id) }}" class="inline-form js-confirm" data-confirm-title="Eliminar service" data-confirm-message="Vas a eliminar este service. ¿Continuar?" data-confirm-final="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?" data-confirm-final-accept="Eliminar">

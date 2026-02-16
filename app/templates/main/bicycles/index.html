@@ -49,7 +49,7 @@
           {% endif %}
         </div>
         <div class="table-wrap table-scroll">
-          <table class="table">
+          <table class="table table-mobile-cards">
             <thead>
               <tr>
                 <th>Marca</th>
@@ -63,11 +63,11 @@
               {% for bicycle in bicycles %}
                 {% set description = bicycle.description or "-" %}
                 <tr data-brand="{{ bicycle.brand or '' }}" data-search="{{ bicycle.brand or '' }} {{ bicycle.model or '' }} {{ bicycle.description or '' }} {{ bicycle.client.full_name }}">
-                  <td><span class="truncate" title="{{ bicycle.brand or '-' }}">{{ bicycle.brand or "-" }}</span></td>
-                  <td><span class="truncate" title="{{ bicycle.model or '-' }}">{{ bicycle.model or "-" }}</span></td>
-                  <td><span class="truncate" title="{{ description }}">{{ description|truncate(45, True, '...') }}</span></td>
-                  <td><span class="truncate" title="{{ bicycle.client.full_name }}">{{ bicycle.client.full_name }}</span></td>
-                  <td class="table-actions">
+                  <td data-label="Marca"><span class="truncate" title="{{ bicycle.brand or '-' }}">{{ bicycle.brand or "-" }}</span></td>
+                  <td data-label="Modelo"><span class="truncate" title="{{ bicycle.model or '-' }}">{{ bicycle.model or "-" }}</span></td>
+                  <td data-label="Descripcion"><span class="truncate" title="{{ description }}">{{ description|truncate(45, True, '...') }}</span></td>
+                  <td data-label="Cliente"><span class="truncate" title="{{ bicycle.client.full_name }}">{{ bicycle.client.full_name }}</span></td>
+                  <td class="table-actions table-actions-cell" data-label="Acciones">
                     <a class="button button-ghost button-compact" href="{{ url_for('main.bicycles_detail', bicycle_id=bicycle.id) }}">Ver</a>
                     <form
                       method="post"

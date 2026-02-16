@@ -4,6 +4,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="{{ theme.primary or '#1f4cff' }}">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="{{ theme.name }}">
   <title>{{ theme.name }}</title>
 
   <!-- Theme Persistence -->
@@ -23,6 +28,8 @@
   {% else %}
   <link rel="icon" href="{{ url_for('static', filename='css/favicon_bike1.png') }}">
   {% endif %}
+  <link rel="apple-touch-icon" href="{{ url_for('apple_touch_icon') }}">
+  <link rel="manifest" href="{{ url_for('manifest_file') }}">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,7 +71,6 @@
           {% endif %}
           <div>
             <div class="brand-title">{{ theme.name }}</div>
-            <div class="brand-subtitle">Service Bicycle</div>
           </div>
         </a>
         <div class="sidebar-header-actions">
@@ -92,11 +98,11 @@
               </span>
             </span>
           </button>
-          <button class="nav-toggle" type="button" aria-label="Abrir menu">Menu</button>
+          <button class="nav-toggle" type="button" aria-label="Abrir menu" aria-controls="mainNavigation" aria-expanded="false">Menu</button>
         </div>
       </div>
 
-      <nav class="nav">
+      <nav id="mainNavigation" class="nav">
         {% if current_user.role != "super_admin" %}
         {% set endpoint = request.endpoint or '' %}
         {% set is_dashboard = endpoint == 'main.dashboard' %}
@@ -201,18 +207,17 @@
         {% if current_user.role == "super_admin" %}
         {% set endpoint = request.endpoint or '' %}
         {% set is_super_dashboard = endpoint.startswith('main.super_admin_dashboard') %}
+        {% set is_super_pending = endpoint.startswith('main.super_admin_pending') %}
         {% set is_super_owners = endpoint.startswith('main.super_admin_owners') %}
         {% set is_super_audit = endpoint.startswith('main.super_admin_audit') %}
         <div class="muted">Super Admin</div>
         <a href="{{ url_for('main.super_admin_dashboard') }}" class="nav-link{% if is_super_dashboard %} active{% endif %}" {% if is_super_dashboard %}aria-current="page"{% endif %}>Panel Global</a>
+        <a href="{{ url_for('main.super_admin_pending') }}" class="nav-link{% if is_super_pending %} active{% endif %}" {% if is_super_pending %}aria-current="page"{% endif %}>Pendientes</a>
         <a href="{{ url_for('main.super_admin_owners') }}" class="nav-link{% if is_super_owners %} active{% endif %}" {% if is_super_owners %}aria-current="page"{% endif %}>Owners</a>
         <a href="{{ url_for('main.super_admin_audit') }}" class="nav-link{% if is_super_audit %} active{% endif %}" {% if is_super_audit %}aria-current="page"{% endif %}>Auditoria Global</a>
         {% endif %}
 
-      </nav>
-
-      <div class="sidebar-footer">
-        <a href="{{ url_for('auth.logout') }}" class="nav-link" title="Cerrar Sesion">
+        <a href="{{ url_for('auth.logout') }}" class="nav-link nav-link-logout" title="Cerrar Sesion">
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 12L2 12M2 12L5.5 9M2 12L5.5 15" stroke="currentColor" stroke-width="1.5"
@@ -223,7 +228,8 @@
           </span>
           <span class="nav-label">Cerrar Sesion</span>
         </a>
-      </div>
+
+      </nav>
     </aside>
     {% endif %}
 
@@ -259,7 +265,7 @@
 
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-      <div class="flash-stack">
+      <div class="flash-stack flash-stack-page">
         {% for category, message in messages %}
         <div class="flash {{ category }}">{{ message }}</div>
         {% endfor %}
@@ -287,6 +293,7 @@
     </div>
   </div>
 
+  <script src="{{ url_for('static', filename='js/pwa-register.js') }}" defer></script>
   <script>
     const navToggle = document.querySelector('.nav-toggle');
     const nav = document.querySelector('.nav');
@@ -323,6 +330,7 @@
       const isOpen = Boolean(open) && isMobileSidebar();
       nav.classList.toggle('is-open', isOpen);
       sidebar.classList.toggle('mobile-menu-open', isOpen);
+      navToggle?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
       collapseToggle?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     };
 

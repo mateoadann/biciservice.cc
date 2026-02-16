@@ -18,15 +18,24 @@
         <div class="form-grid">
           <label>
             Nombre completo
-            {{ form.full_name(class_="input", required=True) }}
+            {{ form.full_name(class_="input", required=True, autocomplete="name") }}
+            {% if form.full_name.errors %}
+              <span class="field-error">{{ form.full_name.errors[0] }}</span>
+            {% endif %}
           </label>
           <label>
             Email
-            {{ form.email(class_="input", required=True) }}
+            {{ form.email(class_="input", required=True, type="email", autocomplete="email", inputmode="email", autocapitalize="off", spellcheck="false") }}
+            {% if form.email.errors %}
+              <span class="field-error">{{ form.email.errors[0] }}</span>
+            {% endif %}
           </label>
           <label>
             Telefono
-            {{ form.phone(class_="input", required=True) }}
+            {{ form.phone(class_="input", required=True, type="tel", autocomplete="tel", inputmode="tel") }}
+            {% if form.phone.errors %}
+              <span class="field-error">{{ form.phone.errors[0] }}</span>
+            {% endif %}
           </label>
         </div>
         <div class="form-actions">

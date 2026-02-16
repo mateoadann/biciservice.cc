@@ -15,7 +15,7 @@
     <div class="panel-body">
       <form method="post" class="form-stack">
         {{ form.hidden_tag() }}
-        <div class="form-grid">
+        <div class="job-top-grid">
           <label>
             Bicicleta
             <div class="search-select">
@@ -39,20 +39,24 @@
               <span class="field-error">{{ form.bicycle_id.errors[0] }}</span>
             {% endif %}
           </label>
-          <label>
+          <label class="job-delivery-field">
             Entrega estimada
-            {{ form.estimated_delivery_at(class_="input", type="date", required=True) }}
+            {{ form.estimated_delivery_at(id="estimatedDeliveryValue", type="hidden") }}
+            <input
+              class="input js-delivery-picker"
+              id="estimatedDeliveryPicker"
+              type="text"
+              placeholder="dd/mm/aaaa"
+              autocomplete="off"
+              required
+            >
             {% if form.estimated_delivery_at.errors %}
               <span class="field-error">{{ form.estimated_delivery_at.errors[0] }}</span>
             {% endif %}
           </label>
-          <label>
+          <label class="job-status-field">
             Estado
             {{ form.status(class_="input", required=True) }}
-          </label>
-          <label>
-            Notas
-            {{ form.notes(class_="input") }}
           </label>
         </div>
         <div class="panel-note">
@@ -96,21 +100,26 @@
           <div class="parts-list" id="partsList">
             {% for part in parts_data %}
               <div class="part-row">
+                <span class="part-field-label">Descripcion</span>
                 <input
                   class="input"
                   name="part_description"
                   type="text"
                   placeholder="Descripcion"
+                  autocomplete="off"
                   value="{{ part.description }}"
                 >
+                <span class="part-field-label">Cantidad</span>
                 <input
                   class="input input-compact js-quantity"
                   name="part_quantity"
                   type="number"
+                  inputmode="numeric"
                   min="1"
                   placeholder="1"
                   value="{{ part.quantity }}"
                 >
+                <span class="part-field-label">Unitario</span>
                 <input
                   class="input input-compact js-money"
                   name="part_unit_price"
@@ -119,19 +128,22 @@
                   placeholder="0,00"
                   value="{{ part.unit_price }}"
                 >
+                <span class="part-field-label">Tipo</span>
                 <select class="input input-compact" name="part_kind">
                   <option value="part" {% if part.kind == "part" %}selected{% endif %}>Repuesto</option>
                   <option value="supply" {% if part.kind == "supply" %}selected{% endif %}>Insumo</option>
                   <option value="other" {% if part.kind == "other" %}selected{% endif %}>Otro</option>
                 </select>
+                <span class="part-field-label">Total</span>
                 <output class="part-total" data-role="line-total">$ 0,00</output>
                 <button class="button button-ghost icon-button part-remove" type="button" aria-label="Quitar">X</button>
               </div>
             {% endfor %}
           </div>
-          <button class="button button-ghost button-compact" type="button" id="addPart">Agregar repuesto</button>
-          <p class="muted">Los repuestos se suman al total del trabajo.</p>
+          <button class="button button-ghost button-compact parts-add-button" type="button" id="addPart">Agregar repuesto</button>
+          <p class="muted parts-note">Los repuestos se suman al total del trabajo.</p>
         </div>
+        <div class="panel-note">Puedes seleccionar multiples services. Cada item se agrega con cantidad 1.</div>
         <div class="parts-summary" id="jobSummary">
           <div class="parts-summary-row">
             <span>Total services</span>
@@ -146,7 +158,13 @@
             <strong id="estimatedTotal">$ 0,00</strong>
           </div>
         </div>
-        <div class="panel-note">Puedes seleccionar multiples services. Cada item se agrega con cantidad 1.</div>
+        <label class="job-notes-field">
+          Notas
+          {{ form.notes(class_="input", maxlength="1000", autocomplete="off", spellcheck="true") }}
+          {% if form.notes.errors %}
+            <span class="field-error">{{ form.notes.errors[0] }}</span>
+          {% endif %}
+        </label>
         <div class="form-actions">
           <button class="button" type="submit">{{ submit_label }}</button>
           <a class="button button-ghost" href="{{ url_for('main.jobs') }}">Cancelar</a>
@@ -154,6 +172,8 @@
       </form>
     </div>
   </section>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/air-datepicker/air-datepicker.min.css') }}">
+  <script src="{{ url_for('static', filename='vendor/air-datepicker/air-datepicker.min.js') }}"></script>
   <script>
     const bicycleInput = document.querySelector("#bicycleSearchInput");
     const bicycleSelect = document.querySelector("#bicycleSelect");
@@ -203,6 +223,70 @@
       return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
     };
 
+    const parseIsoDate = (value) => {
+      if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return null;
+      }
+      const [year, month, day] = value.split("-").map(Number);
+      const candidate = new Date(year, month - 1, day);
+      return Number.isNaN(candidate.getTime()) ? null : candidate;
+    };
+
+    const parseDisplayDate = (value) => {
+      if (!value || !/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+        return null;
+      }
+      const [day, month, year] = value.split("/").map(Number);
+      const candidate = new Date(year, month - 1, day);
+      return Number.isNaN(candidate.getTime()) ? null : candidate;
+    };
+
+    const formatIsoDate = (date) => {
+      if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return "";
+      }
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
+    const formatDisplayDate = (date) => {
+      if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return "";
+      }
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+
+    const airDatepickerLocaleEs = {
+      days: ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"],
+      daysShort: ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"],
+      daysMin: ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
+      months: [
+        "Enero",
+        "Febrero",
+        "Marzo",
+        "Abril",
+        "Mayo",
+        "Junio",
+        "Julio",
+        "Agosto",
+        "Septiembre",
+        "Octubre",
+        "Noviembre",
+        "Diciembre",
+      ],
+      monthsShort: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
+      today: "Hoy",
+      clear: "Limpiar",
+      dateFormat: "dd/MM/yyyy",
+      timeFormat: "HH:mm",
+      firstDay: 1,
+    };
+
     let updateState = () => {};
 
     if (bicycleInput && bicycleSelect && bicycleResults) {
@@ -218,17 +302,63 @@
 
       const submitButton = document.querySelector("button[type=\"submit\"]");
       const statusSelect = document.querySelector("select[name=\"status\"]");
-      const deliveryInput = document.querySelector("input[name=\"estimated_delivery_at\"]");
+      const deliveryValueInput = document.querySelector("#estimatedDeliveryValue");
+      const deliveryPickerInput = document.querySelector("#estimatedDeliveryPicker");
 
       updateState = () => {
         const hasBicycle = bicycleSelect.value.trim().length > 0;
         const hasStatus = statusSelect ? statusSelect.value.trim().length > 0 : false;
-        const hasDelivery = deliveryInput ? deliveryInput.value.trim().length > 0 : false;
+        const hasDelivery = deliveryValueInput ? deliveryValueInput.value.trim().length > 0 : false;
         const hasService = serviceCheckboxes.some((checkbox) => checkbox.checked);
         if (submitButton) {
           submitButton.disabled = !(hasBicycle && hasStatus && hasDelivery && hasService);
         }
       };
+
+      if (deliveryPickerInput && deliveryValueInput && typeof AirDatepicker !== "undefined") {
+        deliveryPickerInput.readOnly = true;
+        const initialDate = parseIsoDate(deliveryValueInput.value);
+        const picker = new AirDatepicker(deliveryPickerInput, {
+          locale: airDatepickerLocaleEs,
+          autoClose: true,
+          showEvent: "click",
+          toggleSelected: false,
+          dateFormat: "dd/MM/yyyy",
+          selectedDates: initialDate ? [initialDate] : [],
+          onSelect: ({ date }) => {
+            const selectedDate = Array.isArray(date) ? date[0] : date;
+            deliveryValueInput.value = formatIsoDate(selectedDate);
+            updateState();
+          },
+        });
+
+        if (initialDate) {
+          picker.selectDate(initialDate);
+        }
+
+        deliveryPickerInput.addEventListener("focus", () => {
+          picker.show();
+        });
+
+        deliveryPickerInput.addEventListener("click", () => {
+          picker.show();
+        });
+      } else if (deliveryPickerInput && deliveryValueInput) {
+        const initialDate = parseIsoDate(deliveryValueInput.value);
+        if (initialDate) {
+          deliveryPickerInput.value = formatDisplayDate(initialDate);
+        }
+
+        const syncManualDate = () => {
+          const rawValue = deliveryPickerInput.value.trim();
+          const typedDate = parseDisplayDate(rawValue) || parseIsoDate(rawValue);
+          deliveryValueInput.value = typedDate ? formatIsoDate(typedDate) : "";
+          updateState();
+        };
+
+        deliveryPickerInput.addEventListener("blur", syncManualDate);
+        deliveryPickerInput.addEventListener("change", syncManualDate);
+      }
 
       const syncBicycle = () => {
         const match = optionMap.get(bicycleInput.value.trim());
@@ -386,8 +516,8 @@
       if (statusSelect) {
         statusSelect.addEventListener("change", updateState);
       }
-      if (deliveryInput) {
-        deliveryInput.addEventListener("change", updateState);
+      if (deliveryValueInput) {
+        deliveryValueInput.addEventListener("change", updateState);
       }
       updateState();
       syncBicycle();
@@ -503,14 +633,19 @@
         const row = document.createElement("div");
         row.className = "part-row";
         row.innerHTML = `
-          <input class="input" name="part_description" type="text" placeholder="Descripcion">
-          <input class="input input-compact js-quantity" name="part_quantity" type="number" min="1" placeholder="1" value="1">
+          <span class="part-field-label">Descripcion</span>
+          <input class="input" name="part_description" type="text" placeholder="Descripcion" autocomplete="off">
+          <span class="part-field-label">Cantidad</span>
+          <input class="input input-compact js-quantity" name="part_quantity" type="number" inputmode="numeric" min="1" placeholder="1" value="1">
+          <span class="part-field-label">Unitario</span>
           <input class="input input-compact js-money" name="part_unit_price" type="text" inputmode="decimal" placeholder="0,00">
+          <span class="part-field-label">Tipo</span>
           <select class="input input-compact" name="part_kind">
             <option value="part">Repuesto</option>
             <option value="supply">Insumo</option>
             <option value="other">Otro</option>
           </select>
+          <span class="part-field-label">Total</span>
           <output class="part-total" data-role="line-total">$ 0,00</output>
           <button class="button button-ghost icon-button part-remove" type="button" aria-label="Quitar">X</button>
         `;

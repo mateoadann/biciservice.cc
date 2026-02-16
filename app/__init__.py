@@ -1,8 +1,8 @@
-import os
 import click
+import os
 from decimal import Decimal, InvalidOperation
 from datetime import datetime, timezone
-from flask import Flask, g, request, session, url_for, flash, redirect
+from flask import Flask, g, request, session, url_for, flash, redirect, send_from_directory
 from flask_login import current_user
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
@@ -36,6 +36,34 @@ def create_app(config_class=Config):
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
+
+    @app.get("/manifest.webmanifest")
+    def manifest_file():
+        response = send_from_directory(
+            app.static_folder,
+            "manifest.webmanifest",
+            mimetype="application/manifest+json",
+        )
+        response.headers["Cache-Control"] = "no-cache"
+        return response
+
+    @app.get("/sw.js")
+    def service_worker_file():
+        response = send_from_directory(
+            app.static_folder,
+            "sw.js",
+            mimetype="application/javascript",
+        )
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        return response
+
+    @app.get("/apple-touch-icon.png")
+    def apple_touch_icon():
+        return send_from_directory(
+            app.static_folder,
+            "icons/apple-touch-icon-180.png",
+            mimetype="image/png",
+        )
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -173,6 +201,8 @@ def create_app(config_class=Config):
             email=email_value,
             role="super_admin",
             store_id=None,
+            is_approved=True,
+            approved_at=datetime.now(timezone.utc),
             email_confirmed=True,
             email_confirmed_at=datetime.now(timezone.utc),
         )

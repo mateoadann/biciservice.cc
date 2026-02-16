@@ -16,7 +16,7 @@
     <div class="panel-body">
       <form method="post" class="form-stack">
         {{ form.hidden_tag() }}
-        <div class="form-grid">
+        <div class="form-grid bicycle-form-grid">
           <label>
             Cliente
             <div class="search-select">
@@ -26,6 +26,7 @@
                 type="search"
                 placeholder="Buscar cliente" required
                 autocomplete="off"
+                inputmode="search"
                 role="combobox"
                 aria-autocomplete="list"
                 aria-expanded="false"
@@ -43,14 +44,23 @@
           <label>
             Marca
             {{ form.brand_select(class_="input", required=True) }}
+            {% if form.brand_select.errors %}
+              <span class="field-error">{{ form.brand_select.errors[0] }}</span>
+            {% endif %}
           </label>
           <label>
             Modelo
-            {{ form.model(class_="input", required=True) }}
+            {{ form.model(class_="input", required=True, autocomplete="off", autocapitalize="words", spellcheck="false") }}
+            {% if form.model.errors %}
+              <span class="field-error">{{ form.model.errors[0] }}</span>
+            {% endif %}
           </label>
           <label>
             Descripcion
-            {{ form.description(class_="input input-short") }}
+            {{ form.description(class_="input input-short", rows="3", maxlength="300") }}
+            {% if form.description.errors %}
+              <span class="field-error">{{ form.description.errors[0] }}</span>
+            {% endif %}
           </label>
         </div>
         <div class="form-actions">

@@ -1,0 +1,165 @@
+const CACHE_NAME_STATIC = "service-bicycle-static-v1";
+const STATIC_ASSETS = [
+  "/static/css/app.css",
+  "/static/css/favicon_bike1.png",
+  "/static/icons/pwa-192.png",
+  "/static/icons/pwa-512.png",
+  "/static/icons/apple-touch-icon-180.png",
+  "/static/offline.html",
+  "/manifest.webmanifest"
+];
+
+const SENSITIVE_PREFIXES = [
+  "/dashboard",
+  "/jobs",
+  "/clients",
+  "/bicycles",
+  "/services",
+  "/users",
+  "/stores",
+  "/settings",
+  "/security",
+  "/onboarding",
+  "/admin",
+  "/audit",
+  "/logout"
+];
+
+const SENSITIVE_PATHS = new Set([
+  "/login",
+  "/register",
+  "/resend-confirmation",
+  "/forgot-password",
+  "/login/2fa"
+]);
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches
+      .open(CACHE_NAME_STATIC)
+      .then((cache) => cache.addAll(STATIC_ASSETS))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME_STATIC)
+            .map((key) => caches.delete(key))
+        )
+      )
+      .then(() => self.clients.claim())
+  );
+});
+
+const isSensitivePath = (pathname) => {
+  if (SENSITIVE_PATHS.has(pathname)) {
+    return true;
+  }
+
+  return SENSITIVE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+};
+
+const isStaticAssetRequest = (url, request) => {
+  if (request.method !== "GET") {
+    return false;
+  }
+
+  if (url.origin !== self.location.origin) {
+    return false;
+  }
+
+  return url.pathname.startsWith("/static/") || url.pathname === "/manifest.webmanifest";
+};
+
+const staleWhileRevalidate = async (request) => {
+  const cache = await caches.open(CACHE_NAME_STATIC);
+  const cached = await cache.match(request);
+
+  const networkPromise = fetch(request)
+    .then((response) => {
+      if (response && response.ok) {
+        cache.put(request, response.clone());
+      }
+      return response;
+    })
+    .catch(() => null);
+
+  if (cached) {
+    return cached;
+  }
+
+  const networkResponse = await networkPromise;
+  if (networkResponse) {
+    return networkResponse;
+  }
+
+  return new Response("Sin conexion", {
+    status: 503,
+    headers: { "Content-Type": "text/plain; charset=UTF-8" }
+  });
+};
+
+const networkFirstForNavigation = async (request) => {
+  try {
+    return await fetch(request);
+  } catch (error) {
+    const cache = await caches.open(CACHE_NAME_STATIC);
+    const offline = await cache.match("/static/offline.html");
+    if (offline) {
+      return offline;
+    }
+
+    return new Response("Sin conexion", {
+      status: 503,
+      headers: { "Content-Type": "text/plain; charset=UTF-8" }
+    });
+  }
+};
+
+const networkOnlyWithOfflineFallback = async (request) => {
+  try {
+    return await fetch(request);
+  } catch (error) {
+    const cache = await caches.open(CACHE_NAME_STATIC);
+    const offline = await cache.match("/static/offline.html");
+    if (offline) {
+      return offline;
+    }
+
+    return new Response("Sin conexion", {
+      status: 503,
+      headers: { "Content-Type": "text/plain; charset=UTF-8" }
+    });
+  }
+};
+
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  if (request.method !== "GET") {
+    return;
+  }
+
+  if (request.mode === "navigate") {
+    if (url.origin !== self.location.origin || isSensitivePath(url.pathname)) {
+      event.respondWith(networkOnlyWithOfflineFallback(request));
+      return;
+    }
+
+    event.respondWith(networkFirstForNavigation(request));
+    return;
+  }
+
+  if (!isStaticAssetRequest(url, request)) {
+    return;
+  }
+
+  event.respondWith(staleWhileRevalidate(request));
+});

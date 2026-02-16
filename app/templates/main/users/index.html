@@ -16,8 +16,8 @@
     </div>
     <div class="panel-body">
       {% if users %}
-        <div class="table-wrap">
-          <table class="table">
+        <div class="table-wrap table-scroll">
+          <table class="table table-mobile-cards">
             <thead>
               <tr>
                 <th>Nombre</th>
@@ -30,11 +30,11 @@
             <tbody>
               {% for user in users %}
                 <tr>
-                  <td>{{ user.full_name }}</td>
-                  <td>{{ user.email }}</td>
-                  <td>{{ "Owner" if user.role == "owner" else "Staff" }}</td>
-                  <td>{{ user.store.name if user.store else "-" }}</td>
-                  <td class="table-actions">
+                  <td data-label="Nombre">{{ user.full_name }}</td>
+                  <td data-label="Email">{{ user.email }}</td>
+                  <td data-label="Rol">{{ "Owner" if user.role == "owner" else "Staff" }}</td>
+                  <td data-label="Sucursal">{{ user.store.name if user.store else "-" }}</td>
+                  <td class="table-actions table-actions-cell" data-label="Acciones">
                     <a class="button button-ghost button-compact" href="{{ url_for('main.users_detail', user_id=user.id) }}">Ver</a>
                     <a class="button button-ghost button-compact" href="{{ url_for('main.users_edit', user_id=user.id) }}">Editar</a>
                     {% if current_user.id != user.id %}

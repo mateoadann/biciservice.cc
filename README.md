@@ -40,6 +40,52 @@
 - Alias Docker tests: `make docker-test`
 - Tests locales (opcional): `make test-local`
 
+## Soporte mobile (mobile-first)
+- Breakpoints principales:
+  - Base: `360px-430px` (sin media query, prioridad mobile)
+  - Tablet: `>=641px`
+  - Desktop: `>=981px`
+- Objetivos UX:
+  - sin scroll horizontal en pantallas clave
+  - botones e inputs con tap target amplio
+  - tablas grandes con patron mobile tipo card en listados clave
+  - formularios con tipos de input y autocomplete para teclado movil
+
+## PWA (modo app en navegador)
+- Manifest: `GET /manifest.webmanifest`
+- Service worker: `GET /sw.js`
+- Icono iOS: `GET /apple-touch-icon.png`
+- Registro del service worker: `app/static/js/pwa-register.js`
+
+### Alcance de cache y seguridad
+- Se cachean solo assets estaticos (`/static/*`, manifest, offline page).
+- Navegacion a rutas sensibles/autenticadas usa red (sin cache persistente de HTML privado).
+- Rutas auth y privadas no se guardan en cache offline para evitar contenido stale o sensible.
+
+## Como probar mobile y PWA en dev
+1. Levantar app:
+   - Docker: `make up-build`
+   - Local: `make run`
+2. Abrir DevTools y probar viewports:
+   - iPhone 13 (`390x844`)
+   - Pixel 7 (`412x915`)
+3. Verificar:
+   - login, dashboard, jobs, clients, bicycles, services
+   - sin overflow horizontal
+   - acciones principales visibles y clickeables
+
+### Install / Add to Home Screen
+- Android (Chrome): menu del navegador -> `Install app` o `Agregar a pantalla principal`.
+- iOS (Safari): compartir -> `Agregar a pantalla de inicio`.
+- Nota: service worker requiere contexto seguro (`https`) o `localhost`.
+
+## Guia rapida de estilos/componentes
+- Layout principal: `app/templates/base.html` + `app/static/css/app.css`.
+- Tablas responsive: usar `table-mobile-cards` + `data-label` por `td`.
+- Formularios: usar `form-grid`/`form-actions` y mostrar `field-error` por campo.
+- Botones y acciones: mantener clases `button`, `button-ghost`, `button-danger`.
+- Confirmaciones destructivas: formularios con `js-confirm` y `data-confirm-*`.
+
 ### Hook pre-push
 El repositorio incluye un hook `pre-push` versionado para validar antes de hacer push.
 
