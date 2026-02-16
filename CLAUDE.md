@@ -16,10 +16,20 @@ make db-upgrade                   # Ejecutar migraciones
 make db-migrate MSG="descripcion" # Crear nueva migracion
 make db-downgrade                 # Revertir ultima migracion
 
-# Docker
+# Docker dev
 make up-build                     # Build + levantar (puerto 5001)
 make docker-db-upgrade            # Migraciones en contenedor
 make down                         # Bajar servicios
+
+# Docker produccion
+make prod-up                      # Build + levantar prod (NPM + landing + web + db)
+make prod-down                    # Bajar produccion
+make prod-logs                    # Logs prod (usar SERVICE=web)
+make prod-db-upgrade              # Migraciones en prod
+make prod-shell                   # Shell en contenedor web prod
+
+# Landing
+make landing-dev                  # Preview landing en localhost:8080
 
 # Test individual
 pytest tests/test_auth.py -v
@@ -40,7 +50,7 @@ pytest tests/test_auth.py::test_nombre -v
 Cada modulo en `app/main/routes/`: `dashboard.py`, `clients.py`, `bicycles.py`, `jobs.py`, `inventory.py`, `stores.py`, `users.py`, `settings.py`, `admin.py`, `onboarding.py`
 
 ### Capa de servicios
-`app/services/`: `audit_service.py`, `client_service.py`, `job_service.py`, `inventory_service.py`. Encapsulan reglas de negocio y auditoria. Preferir cambios aqui antes de agregar capas nuevas.
+`app/services/`: `audit_service.py`, `client_service.py`, `job_service.py`, `inventory_service.py`, `pdf_service.py` (ReportLab). Encapsulan reglas de negocio y auditoria. Preferir cambios aqui antes de agregar capas nuevas.
 
 ### Formularios
 `app/main/forms.py`: WTForms con `LocalizedDecimalField` para formato europeo (coma decimal). CSRF activo; usar `form.hidden_tag()` siempre.
@@ -55,7 +65,14 @@ Cada modulo en `app/main/routes/`: `dashboard.py`, `clients.py`, `bicycles.py`, 
 - Context processor `inject_theme()` provee colores, logo y stores a todos los templates
 
 ### Modelos clave (`app/models.py`)
-User (roles: `owner`, `staff`, `super_admin`) → Workshop (M2M via `user_workshops`) → Store, Client → Bicycle → Job → JobItem + JobPart. AuditLog registra cada operacion CRUD.
+User (roles: `owner`, `staff`, `super_admin`, campo `is_approved`) → Workshop (M2M via `user_workshops`) → Store, Client → Bicycle → Job → JobItem + JobPart. AuditLog registra cada operacion CRUD.
+
+### Docker dev/prod
+- Dev: `docker-compose.yml` + `Dockerfile` (Flask dev server, puerto 5001, hot reload via volumen `./app`)
+- Prod: `docker-compose.prod.yml` + `Dockerfile.prod` (Gunicorn, 4 workers)
+- Prod usa Nginx Proxy Manager (NPM) como reverse proxy — config via panel web en :81
+- `landing/` servida por nginx:alpine en prod; `make landing-dev` en dev
+- `remotion/` genera videos MP4 localmente (React → MP4, se commitean en `landing/videos/`)
 
 ## Reglas de negocio
 
@@ -65,6 +82,9 @@ User (roles: `owner`, `staff`, `super_admin`) → Workshop (M2M via `user_worksh
 - Job code: 4 caracteres unicos (A-Z, 0-9)
 - Precios: filtro `currency` con separador de miles y coma decimal
 - Marcas de bicicleta: solo desde lista predefinida; en CSV import, marcas fuera → "Otra"
+- Registro: usuario queda con `is_approved=False` hasta que super_admin apruebe desde panel admin
+- Login bloqueado si `is_approved=False` (muestra mensaje informativo)
+- Super admin puede aprobar, rechazar (soft-delete: `is_active=False`) o eliminar usuarios pendientes
 
 ## Seguridad
 
@@ -90,6 +110,8 @@ User (roles: `owner`, `staff`, `super_admin`) → Workshop (M2M via `user_worksh
 
 ## Variables de entorno
 
+- Un solo `.env` para dev y prod (en `.gitignore`, cada entorno tiene su copia)
+- Ambos compose files usan `env_file: .env`; `.env.example` es el template documentado
 - `SECRET_KEY`, `DATABASE_URL` (postgresql+psycopg://...), `UPLOAD_FOLDER`
 - `SESSION_COOKIE_SECURE`, `REMEMBER_COOKIE_SECURE`: "true" en produccion
 
