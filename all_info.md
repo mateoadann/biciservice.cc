@@ -1,4 +1,4 @@
-# Service Bicycle CRM — Guia completa de gestion
+# biciservice.cc — Guia completa de gestion
 
 Esta guia explica paso a paso como levantar, mantener, actualizar y gestionar
 la aplicacion tanto en desarrollo (tu maquina local) como en produccion (VPS).
@@ -70,14 +70,14 @@ Este archivo esta en `.gitignore`, asi que:
 
 ```env
 SECRET_KEY=cualquier-texto-para-dev
-DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/service_bicycle_crm
+DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/biciservice_cc
 UPLOAD_FOLDER=/app/app/static/uploads
 SESSION_COOKIE_SECURE=false
 REMEMBER_COOKIE_SECURE=false
 FLASK_DEBUG=1
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
-POSTGRES_DB=service_bicycle_crm
+POSTGRES_DB=biciservice_cc
 ```
 
 Notas:
@@ -90,14 +90,14 @@ Notas:
 
 ```env
 SECRET_KEY=una-clave-larga-y-aleatoria-de-al-menos-32-caracteres
-DATABASE_URL=postgresql+psycopg://postgres:tu-password-seguro@db:5432/service_bicycle_crm
+DATABASE_URL=postgresql+psycopg://postgres:tu-password-seguro@db:5432/biciservice_cc
 UPLOAD_FOLDER=/app/app/static/uploads
 SESSION_COOKIE_SECURE=true
 REMEMBER_COOKIE_SECURE=true
 FLASK_DEBUG=0
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=tu-password-seguro
-POSTGRES_DB=service_bicycle_crm
+POSTGRES_DB=biciservice_cc
 ```
 
 Diferencias clave:
@@ -124,7 +124,7 @@ Diferencias clave:
 ```bash
 # 1. Clonar el repositorio
 git clone <tu-repo-url>
-cd service_bicycle_crm
+cd biciservice_cc
 
 # 2. Crear archivo de configuracion
 cp .env.example .env
@@ -229,8 +229,8 @@ Estos son los pasos exactos para poner la app en produccion por primera vez.
 ```bash
 ssh usuario@IP-del-VPS
 cd /opt  # o donde prefieras poner la app
-git clone <tu-repo-url> service_bicycle_crm
-cd service_bicycle_crm
+git clone <tu-repo-url> biciservice_cc
+cd biciservice_cc
 ```
 
 ### Paso 2: Crear el .env de produccion
@@ -336,7 +336,7 @@ y quieras actualizar produccion:
 ```bash
 # En el VPS
 ssh usuario@IP-del-VPS
-cd /opt/service_bicycle_crm
+cd /opt/biciservice_cc
 
 # 1. Traer los cambios
 git pull
@@ -467,14 +467,14 @@ git commit -m "Update demo videos"
 ```bash
 # En el VPS
 docker compose -f docker-compose.prod.yml exec db \
-  pg_dump -U postgres service_bicycle_crm > backup_$(date +%Y%m%d_%H%M%S).sql
+  pg_dump -U postgres biciservice_cc > backup_$(date +%Y%m%d_%H%M%S).sql
 ```
 
 ### Restaurar un backup
 
 ```bash
 docker compose -f docker-compose.prod.yml exec -T db \
-  psql -U postgres service_bicycle_crm < backup_20260215_120000.sql
+  psql -U postgres biciservice_cc < backup_20260215_120000.sql
 ```
 
 ### Backup automatico (cron)
@@ -482,7 +482,7 @@ docker compose -f docker-compose.prod.yml exec -T db \
 Agrega esto al crontab del VPS (`crontab -e`):
 ```cron
 # Backup diario a las 3:00 AM
-0 3 * * * cd /opt/service_bicycle_crm && docker compose -f docker-compose.prod.yml exec -T db pg_dump -U postgres service_bicycle_crm > /opt/backups/db_$(date +\%Y\%m\%d).sql
+0 3 * * * cd /opt/biciservice_cc && docker compose -f docker-compose.prod.yml exec -T db pg_dump -U postgres biciservice_cc > /opt/backups/db_$(date +\%Y\%m\%d).sql
 ```
 
 Crea la carpeta de backups:
@@ -529,7 +529,7 @@ Deberias ver todos con estado "Up":
 NAME        IMAGE                             STATUS
 npm         jc21/nginx-proxy-manager:latest   Up
 landing     nginx:alpine                      Up
-web         service_bicycle_crm-web           Up
+web         biciservice_cc-web           Up
 db          postgres:16-alpine                Up
 ```
 
@@ -570,7 +570,7 @@ docker compose -f docker-compose.prod.yml exec web flask --app wsgi.py db upgrad
 
 # Si la BD esta corrupta, restaurar backup
 docker compose -f docker-compose.prod.yml exec -T db \
-  psql -U postgres service_bicycle_crm < backup_reciente.sql
+  psql -U postgres biciservice_cc < backup_reciente.sql
 ```
 
 ### Olvidaste la password del super admin

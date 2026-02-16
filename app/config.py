@@ -26,7 +26,7 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-change-me")
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "DATABASE_URL",
-        "postgresql+psycopg://postgres:postgres@localhost:5432/service_bicycle_crm",
+        "postgresql+psycopg://postgres:postgres@localhost:5432/biciservice_cc",
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = os.environ.get(
@@ -54,7 +54,7 @@ class Config:
     LOGIN_RATE_LIMIT_WINDOW = 300
     LOGIN_RATE_LIMIT_MAX = 5
     SECURITY_PASSWORD_RESET_EXPIRES = 60 * 60
-    SECURITY_TWO_FACTOR_ISSUER = "Service Bicycle CRM"
+    SECURITY_TWO_FACTOR_ISSUER = "biciservice.cc"
     LOGIN_LOCKOUT_MAX = 5
     LOGIN_LOCKOUT_DURATION = 900
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)

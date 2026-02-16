@@ -98,7 +98,7 @@ shell: ## Abrir shell en contenedor web
 	$(DOCKER_COMPOSE) exec $(WEB_SERVICE) sh
 
 db-shell: ## Abrir psql en contenedor db
-	$(DOCKER_COMPOSE) exec $(DB_SERVICE) psql -U postgres -d service_bicycle_crm
+	$(DOCKER_COMPOSE) exec $(DB_SERVICE) psql -U postgres -d biciservice_cc
 
 # --- Produccion ---
 

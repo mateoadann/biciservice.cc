@@ -26,7 +26,7 @@ class TestingConfig(Config):
         "poolclass": StaticPool,
     }
     UPLOAD_FOLDER = os.environ.get(
-        "UPLOAD_FOLDER", str(Path("/tmp") / "service_bicycle_crm_test_uploads")
+        "UPLOAD_FOLDER", str(Path("/tmp") / "biciservice_cc_test_uploads")
     )
 
 

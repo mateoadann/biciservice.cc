@@ -1,5 +1,5 @@
 # AGENTS.md
-Guide for coding agents working in `service_bicycle_crm`.
+Guide for coding agents working in `biciservice_cc`.
 Use this as the repo-specific operating manual.
 
 ## Project Snapshot
