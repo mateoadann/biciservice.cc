@@ -73,7 +73,7 @@ export const DashboardDemo = () => {
       >
         <div style={{ opacity: titleOpacity }}>
           <div style={{ fontSize: 24, letterSpacing: 3, textTransform: "uppercase", color: "#8DA2FF" }}>
-            Service Bicycle CRM
+            biciservice.cc
           </div>
           <div style={{ marginTop: 8, fontSize: 64, fontWeight: 700 }}>Dashboard operativo en tiempo real</div>
         </div>

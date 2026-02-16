@@ -98,7 +98,7 @@ def security():
             session["two_factor_pending_secret"] = pending_secret
         setup_uri = pyotp.totp.TOTP(pending_secret).provisioning_uri(
             name=current_user.email,
-            issuer_name=current_app.config.get("SECURITY_TWO_FACTOR_ISSUER", "Service Bicycle CRM"),
+            issuer_name=current_app.config.get("SECURITY_TWO_FACTOR_ISSUER", "biciservice.cc"),
         )
 
     if request.method == "POST":

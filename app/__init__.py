@@ -126,7 +126,7 @@ def create_app(config_class=Config):
             "background": "#f6f7fb",
             "logo_path": None,
             "favicon_path": None,
-            "name": "Service Bicycle CRM",
+            "name": "biciservice.cc",
         }
         stores = []
         if g.get("active_workshop"):
@@ -218,10 +218,10 @@ def create_app(config_class=Config):
         from .services.email_service import send_email
 
         to_value = to.strip().lower()
-        subject = "Prueba de correo - Service Bicycle CRM"
+        subject = "Prueba de correo - biciservice.cc"
         timestamp = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
         body_lines = [
-            "Este es un correo de prueba de Service Bicycle CRM.",
+            "Este es un correo de prueba de biciservice.cc.",
             "",
             "Si recibiste este correo, la configuracion SMTP funciona.",
             f"Fecha: {timestamp}",

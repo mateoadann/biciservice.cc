@@ -26,7 +26,7 @@ def send_confirmation_email(user) -> None:
     token = generate_confirmation_token(user.email)
     confirm_url = url_for("auth.confirm_email", token=token, _external=True)
     expires_minutes = int(current_app.config.get("SECURITY_EMAIL_CONFIRM_EXPIRES", 3600) / 60)
-    subject = "Confirma tu cuenta - Service Bicycle CRM"
+    subject = "Confirma tu cuenta - biciservice.cc"
     body = (
         f"Hola {full_name},\n\n"
         "Para confirmar tu email y activar tu cuenta, usa este link:\n"
@@ -106,7 +106,7 @@ def send_password_reset_email(user, token: str) -> None:
         "auth.reset_password", user_id=user.id, token=token, _external=True
     )
     expires_minutes = int(current_app.config.get("SECURITY_PASSWORD_RESET_EXPIRES", 3600) / 60)
-    subject = "Recuperacion de contrasena - Service Bicycle CRM"
+    subject = "Recuperacion de contrasena - biciservice.cc"
     body = (
         f"Hola {full_name},\n\n"
         "Recibimos una solicitud para restablecer tu contrasena.\n"

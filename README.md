@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="app/static/css/favicon_bike1.png" alt="Service Bicycle CRM" width="96" />
+  <img src="app/static/css/favicon_bike1.png" alt="biciservice.cc" width="96" />
 </p>
 
-<h1 align="center">Service Bicycle CRM</h1>
+<h1 align="center">biciservice.cc</h1>
 
 <p align="center">Plataforma para la gestion diaria de talleres de bicicletas.</p>
 
