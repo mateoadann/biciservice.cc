@@ -1,0 +1,49 @@
+services:
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    ports:
+      - "80:80"
+      - "443:443"
+      - "81:81"
+    volumes:
+      - npm-data:/data
+      - npm-letsencrypt:/etc/letsencrypt
+    restart: unless-stopped
+
+  landing:
+    image: nginx:alpine
+    expose:
+      - "80"
+    volumes:
+      - ./landing:/usr/share/nginx/html:ro
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    expose:
+      - "5000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - uploads:/app/app/static/uploads
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    expose:
+      - "5432"
+    env_file:
+      - .env
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  uploads:
+  npm-data:
+  npm-letsencrypt:

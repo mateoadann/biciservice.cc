@@ -11,9 +11,10 @@ DB_SERVICE ?= db
 .PHONY: help \
 	venv install env run test test-local hooks-install \
 	db-upgrade db-migrate db-downgrade \
-	docker-build docker-up docker-up-build docker-down docker-restart docker-ps docker-logs \
+	build up up-build up-full down restart docker-ps logs \
 	docker-db-upgrade docker-db-migrate docker-db-downgrade docker-test \
-	docker-shell docker-db-shell
+	shell db-shell landing-dev \
+	prod-up prod-down prod-logs prod-db-upgrade prod-shell
 
 help: ## Mostrar comandos disponibles
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUso:\n  make <objetivo>\n\nObjetivos:\n"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "  %-22s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -54,6 +55,9 @@ up: ## Levantar Docker sin rebuild
 up-build: ## Levantar Docker con build
 	$(DOCKER_COMPOSE) up --build -d
 
+up-full: ## Levantar stack completo (foreground)
+	$(DOCKER_COMPOSE) up --build
+
 down: ## Bajar servicios Docker
 	$(DOCKER_COMPOSE) down
 
@@ -65,6 +69,9 @@ docker-ps: ## Ver estado de contenedores
 
 logs: ## Ver logs (usar SERVICE=web y TAIL=200)
 	$(DOCKER_COMPOSE) logs -f --tail $(or $(TAIL),200) $(SERVICE)
+
+landing-dev: ## Levantar landing estatica en localhost:8080
+	$(PYTHON) -m http.server 8080 --directory landing
 
 docker-db-upgrade: ## Ejecutar migraciones en Docker (upgrade)
 	$(DOCKER_COMPOSE) exec $(WEB_SERVICE) $(FLASK) db upgrade
@@ -86,3 +93,22 @@ shell: ## Abrir shell en contenedor web
 
 db-shell: ## Abrir psql en contenedor db
 	$(DOCKER_COMPOSE) exec $(DB_SERVICE) psql -U postgres -d service_bicycle_crm
+
+# --- Produccion ---
+
+PROD_COMPOSE = $(DOCKER_COMPOSE) -f docker-compose.prod.yml
+
+prod-up: ## Levantar entorno produccion
+	$(PROD_COMPOSE) up --build -d
+
+prod-down: ## Bajar entorno produccion
+	$(PROD_COMPOSE) down
+
+prod-logs: ## Ver logs produccion (usar SERVICE=web y TAIL=200)
+	$(PROD_COMPOSE) logs -f --tail $(or $(TAIL),200) $(SERVICE)
+
+prod-db-upgrade: ## Ejecutar migraciones en produccion
+	$(PROD_COMPOSE) exec web $(FLASK) db upgrade
+
+prod-shell: ## Abrir shell en contenedor web produccion
+	$(PROD_COMPOSE) exec web sh

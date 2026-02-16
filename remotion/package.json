@@ -1,0 +1,19 @@
+{
+  "name": "service-bicycle-remotion",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "remotion studio src/index.jsx",
+    "render:dashboard": "remotion render src/index.jsx Dashboard ../landing/videos/demo-dashboard.mp4",
+    "render:clientes": "remotion render src/index.jsx Clientes ../landing/videos/demo-clientes.mp4",
+    "build": "npm run render:dashboard && npm run render:clientes"
+  },
+  "dependencies": {
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@remotion/cli": "^4.0.0"
+  }
+}

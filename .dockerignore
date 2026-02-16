@@ -6,3 +6,6 @@
 __pycache__
 app/static/uploads
 migrations/__pycache__
+landing/
+remotion/
+nginx/

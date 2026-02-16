@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1f4cff">
+  <title>Service Bicycle CRM | Gestion para talleres</title>
+  <meta name="description" content="Software de gestion para talleres de reparacion. Controla clientes, trabajos, inventario y sucursales desde un solo lugar.">
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/landing.css">
+  <script src="js/landing.js" defer></script>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container nav-wrapper">
+      <a class="brand" href="#inicio" aria-label="Ir al inicio">
+        <img src="img/app-icon.png" alt="Icono Service Bicycle CRM" width="44" height="44">
+        <span>Service Bicycle CRM</span>
+      </a>
+
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span class="sr-only">Abrir menu</span>
+      </button>
+
+      <nav id="site-nav" class="site-nav" aria-label="Navegacion principal">
+        <a href="#features">Funciones</a>
+        <a href="#rubros">Rubros</a>
+        <a href="#videos">Videos</a>
+        <a href="#contacto">Contacto</a>
+        <a class="button button-ghost app-link" data-path="/auth/login" href="https://app.dominio.com/auth/login">Iniciar sesion</a>
+        <a class="button app-link" data-path="/auth/register" href="https://app.dominio.com/auth/register">Registrarse</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="inicio">
+    <section class="hero section">
+      <div class="container hero-grid">
+        <div class="hero-copy reveal">
+          <p class="eyebrow">Gestion para talleres sin hojas sueltas</p>
+          <h1>Software de gestion para talleres de reparacion</h1>
+          <p class="lead">
+            Centraliza clientes, bicicletas o equipos, trabajos, inventario y reportes en una sola plataforma.
+            Menos llamadas para preguntar estado, menos errores de stock y mas tiempo para reparar.
+          </p>
+          <div class="hero-actions">
+            <a class="button app-link" data-path="/auth/register" href="https://app.dominio.com/auth/register">Empieza gratis</a>
+            <a class="button button-ghost" href="#contacto">Hablar con ventas</a>
+          </div>
+          <ul class="hero-points" aria-label="Beneficios principales">
+            <li>Seguimiento de trabajos con estados en tiempo real</li>
+            <li>Inventario y repuestos por sucursal</li>
+            <li>Roles, permisos y auditoria de cambios</li>
+          </ul>
+        </div>
+
+        <div class="hero-media reveal">
+          <div class="screen-card">
+            <video autoplay muted loop playsinline poster="img/hero-screenshot.png">
+              <source src="videos/demo-dashboard.mp4" type="video/mp4">
+              <img src="img/hero-screenshot.png" alt="Vista del dashboard del CRM">
+            </video>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="problema" class="section section-soft">
+      <div class="container">
+        <div class="section-head reveal">
+          <p class="eyebrow">Problema y solucion</p>
+          <h2>Lo que hoy te frena, lo resolvemos en un solo flujo</h2>
+        </div>
+        <div class="card-grid cols-3">
+          <article class="info-card reveal">
+            <h3>Gestion manual dispersa</h3>
+            <p>Anotaciones en papel, planillas y mensajes sueltos terminan en reprocesos y perdida de tiempo.</p>
+            <p class="solution">Solucion: todo centralizado en un panel unico, con historial por cliente y equipo.</p>
+          </article>
+          <article class="info-card reveal">
+            <h3>Falta de seguimiento</h3>
+            <p>Clientes llamando para saber avances y trabajos que quedan sin actualizacion visible para el equipo.</p>
+            <p class="solution">Solucion: estados de trabajo claros, prioridad y trazabilidad desde apertura a cierre.</p>
+          </article>
+          <article class="info-card reveal">
+            <h3>Inventario desordenado</h3>
+            <p>Repuestos sin control, faltantes de ultimo momento y compras urgentes con sobrecosto.</p>
+            <p class="solution">Solucion: control de stock, movimientos y consumo ligado al trabajo.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="container">
+        <div class="section-head reveal">
+          <p class="eyebrow">Funciones</p>
+          <h2>Todo lo necesario para operar con orden y crecer</h2>
+        </div>
+        <div class="card-grid cols-3">
+          <article class="feature-card reveal"><h3>Clientes</h3><p>Ficha completa, contacto rapido e historial de servicios.</p></article>
+          <article class="feature-card reveal"><h3>Trabajos</h3><p>Estados open, in_progress, ready y closed con codigo unico.</p></article>
+          <article class="feature-card reveal"><h3>Inventario</h3><p>Repuestos, movimientos y alertas para evitar quiebres de stock.</p></article>
+          <article class="feature-card reveal"><h3>Multi sucursal</h3><p>Gestiona tiendas con contexto separado por equipo y operaciones.</p></article>
+          <article class="feature-card reveal"><h3>Dashboard</h3><p>Metricas clave de productividad, volumen y cierres por periodo.</p></article>
+          <article class="feature-card reveal"><h3>PDF y reportes</h3><p>Documentos operativos y salida profesional para cliente final.</p></article>
+          <article class="feature-card reveal"><h3>Roles y permisos</h3><p>Owners, tecnicos y usuarios con acceso segun responsabilidad.</p></article>
+          <article class="feature-card reveal"><h3>Auditoria</h3><p>Registro de cambios para mayor control operativo y seguridad.</p></article>
+          <article class="feature-card reveal"><h3>Onboarding CSV</h3><p>Migracion inicial de datos para arrancar rapido y sin friccion.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="rubros" class="section section-soft">
+      <div class="container">
+        <div class="section-head reveal">
+          <p class="eyebrow">Rubros donde aplica</p>
+          <h2>Disenado para servicios tecnicos con flujo de reparacion</h2>
+        </div>
+        <div class="card-grid cols-3">
+          <article class="rubro-card reveal"><span aria-hidden="true">01</span><h3>Talleres de bicicletas</h3><p>Mantenimiento, service y repuestos.</p></article>
+          <article class="rubro-card reveal"><span aria-hidden="true">02</span><h3>Talleres mecanicos</h3><p>Diagnostico, ordenes y entregas.</p></article>
+          <article class="rubro-card reveal"><span aria-hidden="true">03</span><h3>Electrodomesticos</h3><p>Recepcion, garantia y seguimiento.</p></article>
+          <article class="rubro-card reveal"><span aria-hidden="true">04</span><h3>Servicio tecnico IT</h3><p>Equipos, componentes y tickets.</p></article>
+          <article class="rubro-card reveal"><span aria-hidden="true">05</span><h3>Costura y zapateria</h3><p>Trabajos por etapa y tiempos de entrega.</p></article>
+          <article class="rubro-card reveal"><span aria-hidden="true">06</span><h3>Otros talleres</h3><p>Cualquier negocio con reparaciones por trabajo.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="videos" class="section">
+      <div class="container">
+        <div class="section-head reveal">
+          <p class="eyebrow">Videos demo</p>
+          <h2>Mira el flujo real en menos de un minuto</h2>
+        </div>
+        <div class="video-grid">
+          <article class="video-card reveal">
+            <h3>Dashboard y operaciones</h3>
+            <video controls preload="metadata" poster="img/hero-screenshot.png">
+              <source src="videos/demo-dashboard.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="video-card reveal">
+            <h3>Alta de clientes y seguimiento</h3>
+            <video controls preload="metadata" poster="img/hero-screenshot.png">
+              <source src="videos/demo-clientes.mp4" type="video/mp4">
+            </video>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="contacto" class="section section-cta">
+      <div class="container cta-grid">
+        <div class="reveal">
+          <p class="eyebrow">Contacto</p>
+          <h2>Quieres ver si aplica a tu taller?</h2>
+          <p>Escribinos y te mostramos una demo enfocada en tu flujo de trabajo.</p>
+        </div>
+        <div class="contact-card reveal">
+          <p><strong>Email:</strong> <a href="mailto:hola@dominio.com">hola@dominio.com</a></p>
+          <p><strong>WhatsApp:</strong> <a href="https://wa.me/5491100000000" target="_blank" rel="noreferrer">+54 9 11 0000 0000</a></p>
+          <p><strong>Formulario:</strong> <a href="https://formspree.io/f/tu-form-id" target="_blank" rel="noreferrer">Enviar consulta</a></p>
+          <div class="hero-actions">
+            <a class="button app-link" data-path="/auth/register" href="https://app.dominio.com/auth/register">Crear cuenta</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <p>Copyright <span id="year"></span> Service Bicycle CRM. Todos los derechos reservados.</p>
+      <div>
+        <a href="#inicio">Inicio</a>
+        <a href="#features">Funciones</a>
+        <a href="#contacto">Contacto</a>
+      </div>
+    </div>
+  </footer>
+</body>
+
+</html>
