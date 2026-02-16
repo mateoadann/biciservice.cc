@@ -13,8 +13,8 @@ DB_SERVICE ?= db
 	db-upgrade db-migrate db-downgrade \
 	build up up-build up-full down restart docker-ps logs \
 	docker-db-upgrade docker-db-migrate docker-db-downgrade docker-test \
-	shell db-shell landing-dev \
-	prod-up prod-down prod-logs prod-db-upgrade prod-shell
+	shell db-shell landing-dev email-test docker-email-test \
+	prod-up prod-down prod-logs prod-db-upgrade prod-shell prod-email-test
 
 help: ## Mostrar comandos disponibles
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUso:\n  make <objetivo>\n\nObjetivos:\n"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "  %-22s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -73,6 +73,9 @@ logs: ## Ver logs (usar SERVICE=web y TAIL=200)
 landing-dev: ## Levantar landing estatica en localhost:8080
 	$(PYTHON) -m http.server 8080 --directory landing
 
+email-test: ## Enviar correo de prueba local (pide email)
+	$(FLASK) send-test-email
+
 docker-db-upgrade: ## Ejecutar migraciones en Docker (upgrade)
 	$(DOCKER_COMPOSE) exec $(WEB_SERVICE) $(FLASK) db upgrade
 
@@ -87,6 +90,9 @@ test: ## Ejecutar tests dentro de Docker
 
 docker-test: ## Alias para tests dentro de Docker
 	$(DOCKER_COMPOSE) exec $(WEB_SERVICE) pytest
+
+docker-email-test: ## Enviar correo de prueba en Docker (pide email)
+	$(DOCKER_COMPOSE) exec $(WEB_SERVICE) $(FLASK) send-test-email
 
 shell: ## Abrir shell en contenedor web
 	$(DOCKER_COMPOSE) exec $(WEB_SERVICE) sh
@@ -112,3 +118,6 @@ prod-db-upgrade: ## Ejecutar migraciones en produccion
 
 prod-shell: ## Abrir shell en contenedor web produccion
 	$(PROD_COMPOSE) exec web sh
+
+prod-email-test: ## Enviar correo de prueba en produccion (pide email)
+	$(PROD_COMPOSE) exec web $(FLASK) send-test-email

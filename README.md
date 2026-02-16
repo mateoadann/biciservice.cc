@@ -109,6 +109,29 @@ Se ejecuta workflow de tests en cada `push` y `pull_request` desde `.github/work
 - `UPLOAD_FOLDER`: carpeta de uploads
 - `SESSION_COOKIE_SECURE`: usar `true` en produccion
 - `REMEMBER_COOKIE_SECURE`: usar `true` en produccion
+- `APP_BASE_URL`: URL publica de la app (ej. `https://app.tudominio.com`)
+- `MAIL_FROM`: remitente de correos (ej. `no-reply@tudominio.com`)
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`: credenciales SMTP
+- `SMTP_USE_TLS` / `SMTP_USE_SSL`: seguridad del transporte SMTP
+- `MAIL_TIMEOUT_SECONDS`: timeout de conexion SMTP
+- `ADMIN_NOTIFICATION_EMAIL`: email para avisos de nuevos registros pendientes
+
+## Correo de confirmacion en produccion
+El sistema ya envia correos de confirmacion, aprobacion y reset de contrasena via SMTP.
+
+Pasos sugeridos:
+1. Configurar proveedor SMTP (Gmail para pruebas o proveedor transaccional para prod).
+2. Cargar variables SMTP en `.env`.
+3. Levantar servicios y validar envio con un correo de prueba.
+
+Nota Gmail: activar verificacion en 2 pasos y usar `App Password` en `SMTP_PASSWORD`.
+
+Comandos de prueba:
+- Local: `make email-test`
+- Docker dev: `make docker-email-test`
+- Docker prod: `make prod-email-test`
+
+Los comandos piden por consola el email destino para validar el envio.
 
 ## Flujo sugerido para trabajar
 1. `make up-build`

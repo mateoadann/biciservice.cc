@@ -19,6 +19,7 @@ from app.models import Store, User, Workshop
 class TestingConfig(Config):
     TESTING = True
     WTF_CSRF_ENABLED = False
+    MAIL_SUPPRESS_SEND = True
     SQLALCHEMY_DATABASE_URI = "sqlite://"
     SQLALCHEMY_ENGINE_OPTIONS = {
         "connect_args": {"check_same_thread": False},

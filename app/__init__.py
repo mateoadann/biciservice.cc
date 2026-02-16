@@ -211,6 +211,32 @@ def create_app(config_class=Config):
         db.session.commit()
         click.echo("Super admin creado")
 
+    @app.cli.command("send-test-email")
+    @click.option("--to", prompt="Email destino de prueba")
+    def send_test_email(to):
+        """Envia un correo de prueba con la config SMTP actual."""
+        from .services.email_service import send_email
+
+        to_value = to.strip().lower()
+        subject = "Prueba de correo - Service Bicycle CRM"
+        timestamp = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
+        body_lines = [
+            "Este es un correo de prueba de Service Bicycle CRM.",
+            "",
+            "Si recibiste este correo, la configuracion SMTP funciona.",
+            f"Fecha: {timestamp}",
+        ]
+        if app.config.get("APP_BASE_URL"):
+            body_lines.append(f"URL de app configurada: {app.config['APP_BASE_URL']}")
+
+        sent = send_email(to_value, subject, "\n".join(body_lines))
+        if not sent:
+            raise click.ClickException(
+                "No se pudo enviar el correo de prueba. Revisa SMTP_* y MAIL_FROM en .env"
+            )
+
+        click.echo(f"Correo de prueba enviado a {to_value}")
+
     app.jinja_env.filters["currency"] = format_currency
 
     return app
