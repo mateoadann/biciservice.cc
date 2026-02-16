@@ -28,6 +28,19 @@ def send_confirmation_email(user) -> None:
     user.confirmation_sent_at = datetime.now(timezone.utc)
 
 
+def send_approval_notification(user) -> None:
+    login_url = url_for("auth.login", _external=True)
+    message = f"Account approved for {user.email}: {login_url}"
+    current_app.logger.warning(message)
+    print(message, flush=True)
+
+
+def notify_admin_new_registration(user) -> None:
+    message = f"New registration pending approval: {user.email}"
+    current_app.logger.warning(message)
+    print(message, flush=True)
+
+
 def send_password_reset_email(user, token: str) -> None:
     reset_url = url_for(
         "auth.reset_password", user_id=user.id, token=token, _external=True

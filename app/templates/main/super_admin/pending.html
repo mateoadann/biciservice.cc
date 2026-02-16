@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block page_title %}Registros pendientes{% endblock %}
+
+{% block page_actions %}
+  <a class="button button-ghost" href="{{ url_for('main.super_admin_dashboard') }}">Panel global</a>
+  <a class="button button-ghost" href="{{ url_for('main.super_admin_owners') }}">Ver owners</a>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Solicitudes pendientes</h2>
+      <p class="muted">Owners que esperan aprobacion del super admin</p>
+    </div>
+  </div>
+  {% if owners %}
+    <div class="table-scroll">
+      <table class="table table-compact">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Taller</th>
+            <th>Email confirmado</th>
+            <th>Creado</th>
+            <th class="table-actions-cell">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for owner in owners %}
+            <tr>
+              <td class="table-title">{{ owner.full_name }}</td>
+              <td><span class="truncate" title="{{ owner.email }}">{{ owner.email }}</span></td>
+              <td>
+                {% if owner.workshops %}
+                  <span class="truncate" title="{{ owner.workshops | map(attribute='name') | join(', ') }}">{{ owner.workshops | map(attribute='name') | join(', ') }}</span>
+                {% else %}
+                  <span class="muted">-</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="status {{ 'success' if owner.email_confirmed else 'in_progress' }}">
+                  {{ 'Si' if owner.email_confirmed else 'Pendiente' }}
+                </span>
+              </td>
+              <td style="white-space:nowrap">{{ owner.created_at.strftime('%Y-%m-%d') if owner.created_at else '-' }}</td>
+              <td class="table-actions-cell">
+                <div class="table-actions">
+                  <form method="post" class="inline-form js-confirm" action="{{ url_for('main.super_admin_pending_approve', user_id=owner.id) }}" data-confirm-title="Aprobar owner" data-confirm-message="Aprobar este registro?">
+                    {{ form.hidden_tag() }}
+                    <button class="button button-ghost button-compact" type="submit">Aprobar</button>
+                  </form>
+                  <form method="post" class="inline-form js-confirm" action="{{ url_for('main.super_admin_pending_reject', user_id=owner.id) }}" data-confirm-title="Rechazar owner" data-confirm-message="Rechazar este registro?">
+                    {{ form.hidden_tag() }}
+                    <button class="button button-ghost button-compact" type="submit">Rechazar</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="muted">No hay registros pendientes.</p>
+  {% endif %}
+</section>
+{% endblock %}

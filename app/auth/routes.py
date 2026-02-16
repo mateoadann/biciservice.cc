@@ -10,7 +10,12 @@ from wtforms import BooleanField, PasswordField, StringField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Regexp, ValidationError
 
 from . import auth_bp
-from .utils import confirm_email_token, send_confirmation_email, send_password_reset_email
+from .utils import (
+    confirm_email_token,
+    notify_admin_new_registration,
+    send_confirmation_email,
+    send_password_reset_email,
+)
 from ..config import Config
 from ..extensions import db
 from ..models import User, Workshop, Store
@@ -250,6 +255,9 @@ def login():
         if not user.is_active:
             flash("Cuenta desactivada. Contacta al administrador.", "error")
             return render_template("auth/login.html", form=form)
+        if not user.is_approved:
+            flash("Tu cuenta esta pendiente de aprobacion por el administrador.", "error")
+            return render_template("auth/login.html", form=form)
         if user.email_confirmed is False:
             if _can_resend_confirmation(user):
                 send_confirmation_email(user)
@@ -291,6 +299,11 @@ def login_two_factor():
         session.pop("pending_2fa_remember", None)
         flash("Cuenta desactivada. Contacta al administrador.", "error")
         return redirect(url_for("auth.login"))
+    if not user.is_approved:
+        session.pop("pending_2fa_user_id", None)
+        session.pop("pending_2fa_remember", None)
+        flash("Tu cuenta esta pendiente de aprobacion por el administrador.", "error")
+        return redirect(url_for("auth.login"))
     form = TwoFactorForm()
     if form.validate_on_submit():
         totp = pyotp.TOTP(user.two_factor_secret)
@@ -324,8 +337,12 @@ def register():
         db.session.add_all([user, workshop, store])
         db.session.commit()
         send_confirmation_email(user)
+        notify_admin_new_registration(user)
         db.session.commit()
-        flash("Te enviamos un correo para verificar tu cuenta.", "success")
+        flash(
+            "Te enviamos un correo para verificar tu cuenta. Un administrador debe aprobar tu registro.",
+            "success",
+        )
         return redirect(url_for("auth.login"))
     if request.method == "POST":
         flash("Revisa los datos ingresados", "error")

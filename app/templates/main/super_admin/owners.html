@@ -23,6 +23,7 @@
             <th>Email</th>
             <th>Talleres</th>
             <th>Estado</th>
+            <th>Aprobado</th>
             <th>Email</th>
             <th>Creado</th>
             <th>Acciones</th>
@@ -46,6 +47,11 @@
                 </span>
               </td>
               <td>
+                <span class="status {{ 'success' if owner.is_approved else 'in_progress' }}">
+                  {{ 'Si' if owner.is_approved else 'Pendiente' }}
+                </span>
+              </td>
+              <td>
                 <span class="status {{ 'success' if owner.email_confirmed else 'in_progress' }}">
                   {{ 'OK' if owner.email_confirmed else 'Pendiente' }}
                 </span>
@@ -53,7 +59,7 @@
               <td style="white-space:nowrap">{{ owner.created_at.strftime('%Y-%m-%d') if owner.created_at else '-' }}</td>
               <td>
                 <div class="table-actions">
-                  <form method="post" class="inline-form js-confirm" action="{{ url_for('main.super_admin_owner_toggle', user_id=owner.id) }}" data-confirm-title="Cambiar estado" data-confirm-message="Cambiar el estado de este owner?" data-confirm-final="Confirmar cambio de estado" data-confirm-final-accept="Confirmar">
+                  <form method="post" class="inline-form js-confirm" action="{{ url_for('main.super_admin_owner_toggle', user_id=owner.id) }}" data-confirm-title="Cambiar estado" data-confirm-message="Cambiar el estado de este owner?">
                     {{ form.hidden_tag() }}
                     <button class="button button-ghost button-compact" type="submit">
                       {{ 'Desactivar' if owner.is_active else 'Activar' }}
@@ -67,6 +73,12 @@
                     {{ form.hidden_tag() }}
                     <button class="button button-ghost button-compact" type="submit">Forzar email</button>
                   </form>
+                  {% if not owner.is_active and not owner.is_approved %}
+                    <form method="post" class="inline-form js-confirm" action="{{ url_for('main.super_admin_owner_delete', user_id=owner.id) }}" data-confirm-title="Eliminar owner" data-confirm-message="Eliminar owner, taller y sucursales?" data-confirm-final="Esta accion no se puede deshacer" data-confirm-final-accept="Eliminar">
+                      {{ form.hidden_tag() }}
+                      <button class="button button-ghost button-compact" type="submit">Eliminar</button>
+                    </form>
+                  {% endif %}
                 </div>
               </td>
             </tr>

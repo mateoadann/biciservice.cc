@@ -149,6 +149,24 @@
                 {% endif %}
               </label>
             </div>
+            <div class="settings-section">
+              <div class="section-title">WhatsApp</div>
+              <label>
+                Mensaje por defecto
+                {{ form.whatsapp_message_template(class_="input", rows="6", placeholder="Hola {cliente_nombre}, tu trabajo {codigo_trabajo} ya esta listo.") }}
+                <span class="field-hint">Este mensaje se muestra en el popup antes de enviar al cliente.</span>
+              </label>
+              <div>
+                <div class="field-label">Variables disponibles</div>
+                <div class="code-sample">
+                  {% for variable_name, variable_label in whatsapp_variables %}
+                    {{ "{" ~ variable_name ~ "}" }} = {{ variable_label }}{% if not loop.last %}
+{% endif %}
+                  {% endfor %}
+                </div>
+                <p class="muted">Puedes combinar texto libre con variables para personalizar cada mensaje.</p>
+              </div>
+            </div>
           </div>
         </div>
         <div class="settings-preview">

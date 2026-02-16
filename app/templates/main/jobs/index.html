@@ -23,11 +23,13 @@
           <label class="filter-field">
             <span>Estado</span>
             <select class="input input-compact" id="jobStatusFilter">
-              <option value="all">Todos</option>
-              <option value="open">Abierto</option>
-              <option value="in_progress">En progreso</option>
-              <option value="ready">Listo</option>
-              <option value="closed">Cerrado</option>
+              <option value="all" {% if active_status == "all" %}selected{% endif %}>Todos</option>
+              <option value="open" {% if active_status == "open" %}selected{% endif %}>Abierto</option>
+              <option value="in_progress" {% if active_status == "in_progress" %}selected{% endif %}>En progreso</option>
+              <option value="ready" {% if active_status == "ready" %}selected{% endif %}>Listo</option>
+              <option value="closed" {% if active_status == "closed" %}selected{% endif %}>Cerrado</option>
+              <option value="cancelled" {% if active_status == "cancelled" %}selected{% endif %}>Cancelado</option>
+              <option value="overdue" {% if active_status == "overdue" %}selected{% endif %}>Atrasado</option>
             </select>
           </label>
           {% if pagination.pages > 1 %}
@@ -36,12 +38,12 @@
               <span class="pagination-page">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
               <div class="pagination-actions">
                 {% if pagination.has_prev %}
-                  <a class="button button-ghost button-compact" href="{{ url_for('main.jobs', page=pagination.prev_num) }}">Anterior</a>
+                  <a class="button button-ghost button-compact" href="{{ url_for('main.jobs', page=pagination.prev_num, status=active_status if active_status != 'all' else None) }}">Anterior</a>
                 {% else %}
                   <span class="button button-ghost button-compact is-disabled" aria-disabled="true">Anterior</span>
                 {% endif %}
                 {% if pagination.has_next %}
-                  <a class="button button-ghost button-compact" href="{{ url_for('main.jobs', page=pagination.next_num) }}">Siguiente</a>
+                  <a class="button button-ghost button-compact" href="{{ url_for('main.jobs', page=pagination.next_num, status=active_status if active_status != 'all' else None) }}">Siguiente</a>
                 {% else %}
                   <span class="button button-ghost button-compact is-disabled" aria-disabled="true">Siguiente</span>
                 {% endif %}
@@ -67,6 +69,7 @@
               {% for job in jobs %}
                 <tr
                   data-status="{{ job.status }}"
+                  data-delivery-date="{{ job.estimated_delivery_at.isoformat() if job.estimated_delivery_at else '' }}"
                   data-search="{{ job.code or '' }} {{ job.bicycle.client.full_name }} {{ job.bicycle.brand or '' }} {{ job.bicycle.model or '' }} {% for item in job.items %}{{ item.service_type.name }} {% endfor %}"
                 >
                   <td class="hide-mobile">
@@ -98,6 +101,7 @@
                         <option value="in_progress" {% if job.status == "in_progress" %}selected{% endif %}>En progreso</option>
                         <option value="ready" {% if job.status == "ready" %}selected{% endif %}>Listo</option>
                         <option value="closed" {% if job.status == "closed" %}selected{% endif %}>Cerrado</option>
+                        <option value="cancelled" {% if job.status == "cancelled" %}selected{% endif %}>Cancelado</option>
                       </select>
                     </form>
                   </td>
@@ -145,6 +149,7 @@
                       {% if job.status == "in_progress" %}En progreso{% endif %}
                       {% if job.status == "ready" %}Listo{% endif %}
                       {% if job.status == "closed" %}Cerrado{% endif %}
+                      {% if job.status == "cancelled" %}Cancelado{% endif %}
                     </div>
                   </div>
                   <div class="modal-section">
@@ -267,6 +272,7 @@
       "status-in_progress",
       "status-ready",
       "status-closed",
+      "status-cancelled",
     ];
 
     const applyStatusClass = (select) => {
@@ -291,6 +297,9 @@
     const jobStatusFilter = document.querySelector("#jobStatusFilter");
     const jobRows = document.querySelectorAll("tbody tr[data-status]");
     const jobNoResults = document.querySelector("#jobNoResults");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
     const filterJobs = () => {
       const query = (jobSearch?.value || "").toLowerCase().trim();
@@ -300,8 +309,11 @@
       jobRows.forEach((row) => {
         const haystack = (row.dataset.search || "").toLowerCase();
         const rowStatus = row.dataset.status || "";
+        const deliveryDate = row.dataset.deliveryDate || "";
+        const isOverdueStatus = rowStatus === "open" || rowStatus === "in_progress" || rowStatus === "ready";
+        const isOverdue = isOverdueStatus && deliveryDate && deliveryDate < todayKey;
         const matchesQuery = !query || haystack.includes(query);
-        const matchesStatus = status === "all" || rowStatus === status;
+        const matchesStatus = status === "all" || rowStatus === status || (status === "overdue" && isOverdue);
         const isVisible = matchesQuery && matchesStatus;
         row.style.display = isVisible ? "" : "none";
         if (isVisible) {
@@ -318,7 +330,19 @@
       jobSearch.addEventListener("input", filterJobs);
     }
     if (jobStatusFilter) {
-      jobStatusFilter.addEventListener("change", filterJobs);
+      jobStatusFilter.addEventListener("change", () => {
+        const selectedStatus = jobStatusFilter.value || "all";
+        const params = new URLSearchParams(window.location.search);
+        params.delete("page");
+        if (selectedStatus === "all") {
+          params.delete("status");
+        } else {
+          params.set("status", selectedStatus);
+        }
+        const queryString = params.toString();
+        const target = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname;
+        window.location.href = target;
+      });
     }
     filterJobs();
 

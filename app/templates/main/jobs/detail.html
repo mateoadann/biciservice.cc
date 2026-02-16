@@ -19,6 +19,7 @@
               {% if job.status == "in_progress" %}En progreso{% endif %}
               {% if job.status == "ready" %}Listo{% endif %}
               {% if job.status == "closed" %}Cerrado{% endif %}
+              {% if job.status == "cancelled" %}Cancelado{% endif %}
             </span>
             <span class="muted" style="font-size:0.85rem">{{ job.bicycle.client.full_name }}</span>
           </div>
@@ -40,6 +41,16 @@
               </svg>
               PDF
             </a>
+            {% if whatsapp_phone %}
+              <button class="button button-ghost button-compact btn-whatsapp"
+                      type="button"
+                      id="btnWhatsappOpen">
+                <svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M19.05 4.91A9.82 9.82 0 0 0 12.03 2a9.95 9.95 0 0 0-8.56 15.02L2 22l5.14-1.34A9.93 9.93 0 0 0 12.03 22C17.53 22 22 17.56 22 12.09a9.9 9.9 0 0 0-2.95-7.18zM12.03 20.3a8.2 8.2 0 0 1-4.2-1.15l-.3-.18-3.05.8.82-2.98-.2-.31a8.2 8.2 0 0 1-1.3-4.4c0-4.56 3.7-8.28 8.25-8.28a8.2 8.2 0 0 1 5.86 2.44 8.24 8.24 0 0 1 2.42 5.86c0 4.56-3.7 8.2-8.3 8.2zm4.53-6.15c-.25-.13-1.5-.73-1.73-.82-.23-.08-.4-.12-.57.13-.17.25-.65.82-.8.98-.15.17-.3.2-.55.07-.25-.13-1.05-.39-2.01-1.24-.74-.66-1.24-1.48-1.39-1.73-.15-.25-.02-.39.11-.52.11-.11.25-.3.38-.44.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.57-1.37-.78-1.88-.2-.48-.4-.42-.56-.42h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.09s.9 2.43 1.03 2.6c.13.17 1.77 2.7 4.28 3.79.6.26 1.07.42 1.44.54.6.19 1.15.16 1.58.1.48-.07 1.5-.61 1.71-1.2.21-.59.21-1.09.15-1.2-.06-.1-.23-.16-.48-.29z" />
+                </svg>
+                WhatsApp
+              </button>
+            {% endif %}
           {% endif %}
           <a class="button button-ghost button-compact" href="{{ url_for('main.jobs') }}">Volver a trabajos</a>
         </div>
@@ -62,6 +73,7 @@
                 {% if job.status == "in_progress" %}En progreso{% endif %}
                 {% if job.status == "ready" %}Listo{% endif %}
                 {% if job.status == "closed" %}Cerrado{% endif %}
+                {% if job.status == "cancelled" %}Cancelado{% endif %}
               </span>
             </div>
           </div>
@@ -129,19 +141,106 @@
       </div>
     </section>
 
+    {% if job.status in ["ready", "closed"] and whatsapp_phone %}
+      <div class="modal-overlay" id="waModal" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="waModalTitle">
+          <div class="modal-header">
+            <h3 id="waModalTitle">Mensaje de WhatsApp</h3>
+            <button class="modal-close" type="button" aria-label="Cerrar" id="waModalClose">X</button>
+          </div>
+          <div class="modal-body">
+            <label>
+              Mensaje a enviar
+              <textarea class="input wa-modal-message" id="waMessage" rows="6">{{ whatsapp_message }}</textarea>
+            </label>
+            <div class="wa-modal-actions">
+              <button class="button button-ghost button-compact" type="button" id="waModalCancel">Cancelar</button>
+              <a class="button button-ghost button-compact btn-whatsapp"
+                 href="https://wa.me/{{ whatsapp_phone }}"
+                 data-wa-base="https://wa.me/{{ whatsapp_phone }}"
+                 id="btnWhatsappSend"
+                 target="_blank"
+                 rel="noopener noreferrer">
+                <svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M19.05 4.91A9.82 9.82 0 0 0 12.03 2a9.95 9.95 0 0 0-8.56 15.02L2 22l5.14-1.34A9.93 9.93 0 0 0 12.03 22C17.53 22 22 17.56 22 12.09a9.9 9.9 0 0 0-2.95-7.18zM12.03 20.3a8.2 8.2 0 0 1-4.2-1.15l-.3-.18-3.05.8.82-2.98-.2-.31a8.2 8.2 0 0 1-1.3-4.4c0-4.56 3.7-8.28 8.25-8.28a8.2 8.2 0 0 1 5.86 2.44 8.24 8.24 0 0 1 2.42 5.86c0 4.56-3.7 8.2-8.3 8.2zm4.53-6.15c-.25-.13-1.5-.73-1.73-.82-.23-.08-.4-.12-.57.13-.17.25-.65.82-.8.98-.15.17-.3.2-.55.07-.25-.13-1.05-.39-2.01-1.24-.74-.66-1.24-1.48-1.39-1.73-.15-.25-.02-.39.11-.52.11-.11.25-.3.38-.44.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.57-1.37-.78-1.88-.2-.48-.4-.42-.56-.42h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.09s.9 2.43 1.03 2.6c.13.17 1.77 2.7 4.28 3.79.6.26 1.07.42 1.44.54.6.19 1.15.16 1.58.1.48-.07 1.5-.61 1.71-1.2.21-.59.21-1.09.15-1.2-.06-.1-.23-.16-.48-.29z" />
+                </svg>
+                Enviar por WhatsApp
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
     {% include "main/_audit_block.html" %}
   </div>
 
   {% if job.status in ["ready", "closed"] %}
   <script>
   (function() {
-    var btn = document.getElementById('btnPdf');
-    if (!btn) return;
-    btn.addEventListener('click', function() {
-      btn.classList.add('is-loading');
-      setTimeout(function() {
-        btn.classList.remove('is-loading');
-      }, 3000);
+    var pdfBtn = document.getElementById('btnPdf');
+    if (pdfBtn) {
+      pdfBtn.addEventListener('click', function() {
+        pdfBtn.classList.add('is-loading');
+        setTimeout(function() {
+          pdfBtn.classList.remove('is-loading');
+        }, 3000);
+      });
+    }
+
+    var waOpenBtn = document.getElementById('btnWhatsappOpen');
+    var waModal = document.getElementById('waModal');
+    var waCloseBtn = document.getElementById('waModalClose');
+    var waCancelBtn = document.getElementById('waModalCancel');
+    var waMessageField = document.getElementById('waMessage');
+    var waSendBtn = document.getElementById('btnWhatsappSend');
+
+    if (!waOpenBtn || !waModal || !waMessageField || !waSendBtn) {
+      return;
+    }
+
+    var updateWhatsappHref = function() {
+      var baseUrl = waSendBtn.getAttribute('data-wa-base') || '';
+      if (!baseUrl) {
+        return;
+      }
+      var message = waMessageField.value.trim();
+      waSendBtn.href = message ? (baseUrl + '?text=' + encodeURIComponent(message)) : baseUrl;
+    };
+
+    var openWaModal = function() {
+      updateWhatsappHref();
+      waModal.classList.add('is-open');
+      waModal.setAttribute('aria-hidden', 'false');
+      waMessageField.focus();
+      waMessageField.setSelectionRange(waMessageField.value.length, waMessageField.value.length);
+    };
+
+    var closeWaModal = function() {
+      waModal.classList.remove('is-open');
+      waModal.setAttribute('aria-hidden', 'true');
+    };
+
+    waOpenBtn.addEventListener('click', openWaModal);
+    if (waCloseBtn) {
+      waCloseBtn.addEventListener('click', closeWaModal);
+    }
+    if (waCancelBtn) {
+      waCancelBtn.addEventListener('click', closeWaModal);
+    }
+    waMessageField.addEventListener('input', updateWhatsappHref);
+    waSendBtn.addEventListener('click', updateWhatsappHref);
+
+    waModal.addEventListener('click', function(event) {
+      if (event.target === waModal) {
+        closeWaModal();
+      }
+    });
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape' && waModal.classList.contains('is-open')) {
+        closeWaModal();
+      }
     });
   })();
   </script>

@@ -56,6 +56,10 @@ class WorkshopSettingsForm(FlaskForm):
     secondary_color = StringField("Secondary color", validators=[Optional(), HEX_COLOR])
     accent_color = StringField("Accent color", validators=[Optional(), HEX_COLOR])
     background_color = StringField("Background color", validators=[Optional(), HEX_COLOR])
+    whatsapp_message_template = TextAreaField(
+        "WhatsApp message",
+        validators=[Optional(), Length(max=1000)],
+    )
     logo = FileField("Logo", validators=[FileAllowed(Config.ALLOWED_IMAGE_EXTENSIONS)])
     favicon = FileField("Favicon", validators=[FileAllowed(Config.ALLOWED_IMAGE_EXTENSIONS)])
 
@@ -187,6 +191,7 @@ class JobForm(FlaskForm):
             ("in_progress", "En progreso"),
             ("ready", "Listo"),
             ("closed", "Cerrado"),
+            ("cancelled", "Cancelado"),
         ],
         validators=[DataRequired()],
     )
@@ -208,6 +213,7 @@ class JobStatusForm(FlaskForm):
             ("in_progress", "En progreso"),
             ("ready", "Listo"),
             ("closed", "Cerrado"),
+            ("cancelled", "Cancelado"),
         ],
         validators=[DataRequired()],
     )

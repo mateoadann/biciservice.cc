@@ -54,6 +54,7 @@
           {% if job.status == "in_progress" %}En progreso{% endif %}
           {% if job.status == "ready" %}Listo{% endif %}
           {% if job.status == "closed" %}Cerrado{% endif %}
+          {% if job.status == "cancelled" %}Cancelado{% endif %}
         </span>
       </div>
       {% endfor %}
@@ -72,25 +73,60 @@
       <h2>Resumen del taller</h2>
     </div>
 
+    <form class="dashboard-range-form" method="get" action="{{ url_for('main.dashboard') }}">
+      <label>
+        <span>Desde</span>
+        <input type="hidden" name="date_from" id="dashboardDateFrom" value="{{ summary.date_from }}">
+        <input
+          class="input input-compact js-dashboard-range-picker"
+          id="dashboardDateFromPicker"
+          type="text"
+          placeholder="dd/mm/aaaa"
+          autocomplete="off"
+        >
+      </label>
+      <label>
+        <span>Hasta</span>
+        <input type="hidden" name="date_to" id="dashboardDateTo" value="{{ summary.date_to }}">
+        <input
+          class="input input-compact js-dashboard-range-picker"
+          id="dashboardDateToPicker"
+          type="text"
+          placeholder="dd/mm/aaaa"
+          autocomplete="off"
+        >
+      </label>
+      <button class="button button-compact" type="submit">Aplicar</button>
+      <a class="button button-ghost button-compact" href="{{ url_for('main.dashboard') }}">Limpiar</a>
+    </form>
+
+    {% if summary.has_active_range %}
+    <div class="panel-note dashboard-range-note">
+      Periodo aplicado: {{ summary.date_from or "inicio" }} a {{ summary.date_to or "hoy" }}.
+    </div>
+    {% endif %}
+
     <div class="metric">
       <div class="metric-label">Ingresos estimados</div>
       <div class="metric-value">$ {{ summary.revenue|currency }}</div>
     </div>
 
-    <div class="metric">
-      <div class="metric-label">Trabajos abiertos</div>
-      <div class="metric-value">{{ summary.open + summary.in_progress }}</div>
-      <div class="metric-bar">
-        <div class="metric-fill"
-          style="width: {{ ((summary.open + summary.in_progress) / ((summary.open + summary.in_progress + summary.ready + summary.closed) or 1) * 100)|round }}%">
-        </div>
-      </div>
-    </div>
-
-    <div class="summary-grid">
+    <div class="summary-grid dashboard-summary-grid">
       <div class="summary-card">
-        <div class="summary-label">Trabajos listos</div>
-        <div class="summary-value">{{ summary.ready }}</div>
+        <div class="summary-label">Ingresos cerrados</div>
+        <div class="summary-value">$ {{ summary.revenue_closed|currency }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Tasa de cierre</div>
+        <div class="summary-value">{{ summary.close_rate }}%</div>
+      </div>
+      <div class="summary-card {% if summary.overdue > 0 %}summary-card-warning{% endif %}">
+        <div class="summary-label">Trabajos atrasados</div>
+        <div class="summary-value">{{ summary.overdue }}</div>
+      </div>
+      <div class="summary-card {% if summary.ready_for_delivery > 0 %}summary-card-success{% endif %}">
+        <div class="summary-label">Listos para entrega</div>
+        <div class="summary-value">{{ summary.ready_for_delivery }}</div>
       </div>
       <div class="summary-card">
         <div class="summary-label">Servicios activos</div>
@@ -98,11 +134,192 @@
       </div>
     </div>
 
-    {% if summary.revenue == 0 and counts.jobs == 0 %}
-    <div class="panel-note">
-      Tip: Completa trabajos y marca como "Cerrado" para ver tus ingresos reflejados aqui.
+    <div class="metric">
+      <div class="metric-label">
+        {% if summary.has_active_range %}
+        Estado de trabajos en periodo ({{ summary.total_jobs }})
+        {% else %}
+        Estado de trabajos ({{ summary.total_jobs }})
+        {% endif %}
+      </div>
+      <div class="status-distribution" aria-label="Distribucion de estados de trabajos">
+        <span class="status-segment open" style="width: {{ summary.open_pct }}%"></span>
+        <span class="status-segment in_progress" style="width: {{ summary.in_progress_pct }}%"></span>
+        <span class="status-segment ready" style="width: {{ summary.ready_pct }}%"></span>
+        <span class="status-segment closed" style="width: {{ summary.closed_pct }}%"></span>
+        <span class="status-segment cancelled" style="width: {{ summary.cancelled_pct }}%"></span>
+      </div>
+      <div class="status-legend">
+        <span class="chip open">Abiertos: {{ summary.open }}</span>
+        <span class="chip in_progress">En progreso: {{ summary.in_progress }}</span>
+        <span class="chip ready">Listos: {{ summary.ready }}</span>
+        <span class="chip closed">Cerrados: {{ summary.closed }}</span>
+        <span class="chip cancelled">Cancelados: {{ summary.cancelled }}</span>
+      </div>
     </div>
-    {% endif %}
+
+    <div class="panel-note panel-note-divider">
+      <div class="panel-note-title">Alertas del dia</div>
+      {% if counts.jobs == 0 %}
+      <p class="muted">Aun no hay trabajos registrados. Crea tu primer trabajo para comenzar.</p>
+      <a class="button button-compact" href="{{ url_for('main.jobs_create') }}">Crear trabajo</a>
+      {% else %}
+      <div class="dashboard-alerts">
+        {% if summary.overdue > 0 %}
+        <div class="dashboard-alert warning">
+          Hay {{ summary.overdue }} trabajo(s) atrasado(s).
+          <a href="{{ url_for('main.jobs', status='overdue') }}">Ir a trabajos</a>
+        </div>
+        {% else %}
+        <div class="dashboard-alert success">No hay trabajos atrasados hoy.</div>
+        {% endif %}
+
+        {% if summary.ready_for_delivery > 0 %}
+        <div class="dashboard-alert accent">
+          Tienes {{ summary.ready_for_delivery }} trabajo(s) listo(s) para entrega.
+          <a href="{{ url_for('main.jobs', status='ready') }}">Ver trabajos</a>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
   </section>
 </section>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/air-datepicker/air-datepicker.min.css') }}">
+<script src="{{ url_for('static', filename='vendor/air-datepicker/air-datepicker.min.js') }}"></script>
+<script>
+  (() => {
+    const fromValueInput = document.querySelector("#dashboardDateFrom");
+    const toValueInput = document.querySelector("#dashboardDateTo");
+    const fromPickerInput = document.querySelector("#dashboardDateFromPicker");
+    const toPickerInput = document.querySelector("#dashboardDateToPicker");
+
+    if (!fromValueInput || !toValueInput || !fromPickerInput || !toPickerInput) {
+      return;
+    }
+
+    const parseIsoDate = (value) => {
+      if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return null;
+      }
+      const [year, month, day] = value.split("-").map(Number);
+      const candidate = new Date(year, month - 1, day);
+      return Number.isNaN(candidate.getTime()) ? null : candidate;
+    };
+
+    const parseDisplayDate = (value) => {
+      if (!value || !/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+        return null;
+      }
+      const [day, month, year] = value.split("/").map(Number);
+      const candidate = new Date(year, month - 1, day);
+      return Number.isNaN(candidate.getTime()) ? null : candidate;
+    };
+
+    const formatIsoDate = (date) => {
+      if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return "";
+      }
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
+    const formatDisplayDate = (date) => {
+      if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return "";
+      }
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+
+    const airDatepickerLocaleEs = {
+      days: ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"],
+      daysShort: ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"],
+      daysMin: ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
+      months: [
+        "Enero",
+        "Febrero",
+        "Marzo",
+        "Abril",
+        "Mayo",
+        "Junio",
+        "Julio",
+        "Agosto",
+        "Septiembre",
+        "Octubre",
+        "Noviembre",
+        "Diciembre",
+      ],
+      monthsShort: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
+      today: "Hoy",
+      clear: "Limpiar",
+      dateFormat: "dd/MM/yyyy",
+      firstDay: 1,
+    };
+
+    const setFromDate = (date) => {
+      fromValueInput.value = formatIsoDate(date);
+      fromPickerInput.value = formatDisplayDate(date);
+    };
+
+    const setToDate = (date) => {
+      toValueInput.value = formatIsoDate(date);
+      toPickerInput.value = formatDisplayDate(date);
+    };
+
+    const initialFromDate = parseIsoDate(fromValueInput.value);
+    const initialToDate = parseIsoDate(toValueInput.value);
+    setFromDate(initialFromDate);
+    setToDate(initialToDate);
+
+    const syncManualDate = (pickerInput, valueInput) => {
+      const typedDate = parseDisplayDate(pickerInput.value.trim()) || parseIsoDate(pickerInput.value.trim());
+      valueInput.value = formatIsoDate(typedDate);
+      pickerInput.value = formatDisplayDate(typedDate);
+    };
+
+    fromPickerInput.addEventListener("blur", () => syncManualDate(fromPickerInput, fromValueInput));
+    fromPickerInput.addEventListener("change", () => syncManualDate(fromPickerInput, fromValueInput));
+    toPickerInput.addEventListener("blur", () => syncManualDate(toPickerInput, toValueInput));
+    toPickerInput.addEventListener("change", () => syncManualDate(toPickerInput, toValueInput));
+
+    if (typeof AirDatepicker !== "undefined") {
+      const fromPicker = new AirDatepicker(fromPickerInput, {
+        locale: airDatepickerLocaleEs,
+        autoClose: true,
+        showEvent: "click",
+        toggleSelected: true,
+        dateFormat: "dd/MM/yyyy",
+        selectedDates: initialFromDate ? [initialFromDate] : [],
+        onSelect: ({ date }) => {
+          const selectedDate = Array.isArray(date) ? date[0] : date;
+          setFromDate(selectedDate);
+        },
+      });
+
+      const toPicker = new AirDatepicker(toPickerInput, {
+        locale: airDatepickerLocaleEs,
+        autoClose: true,
+        showEvent: "click",
+        toggleSelected: true,
+        dateFormat: "dd/MM/yyyy",
+        selectedDates: initialToDate ? [initialToDate] : [],
+        onSelect: ({ date }) => {
+          const selectedDate = Array.isArray(date) ? date[0] : date;
+          setToDate(selectedDate);
+        },
+      });
+
+      fromPickerInput.addEventListener("focus", () => fromPicker.show());
+      fromPickerInput.addEventListener("click", () => fromPicker.show());
+      toPickerInput.addEventListener("focus", () => toPicker.show());
+      toPickerInput.addEventListener("click", () => toPicker.show());
+    }
+  })();
+</script>
 {% endblock %}

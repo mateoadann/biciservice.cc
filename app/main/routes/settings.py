@@ -6,10 +6,12 @@ from app.extensions import db
 from app.services.audit_service import AuditService
 from app.main.forms import WorkshopSettingsForm, DeleteForm, TwoFactorSetupForm, TwoFactorDisableForm
 from app.main.helpers import (
+    WHATSAPP_TEMPLATE_VARIABLES,
     get_workshop_or_redirect,
     owner_or_redirect,
     save_upload,
-    delete_upload
+    delete_upload,
+    workshop_whatsapp_template,
 )
 
 @main_bp.route("/settings", methods=["GET", "POST"])
@@ -30,6 +32,7 @@ def settings():
         form.secondary_color.data = workshop.secondary_color
         form.accent_color.data = workshop.accent_color
         form.background_color.data = workshop.background_color
+        form.whatsapp_message_template.data = workshop_whatsapp_template(workshop)
 
     if form.validate_on_submit():
         workshop.name = form.name.data
@@ -37,6 +40,8 @@ def settings():
         workshop.secondary_color = form.secondary_color.data or workshop.secondary_color
         workshop.accent_color = form.accent_color.data or workshop.accent_color
         workshop.background_color = form.background_color.data or workshop.background_color
+        whatsapp_template = (form.whatsapp_message_template.data or "").strip()
+        workshop.whatsapp_message_template = whatsapp_template or None
 
         logo_path, logo_error = save_upload(form.logo.data, workshop.id)
         if logo_error:
@@ -69,7 +74,12 @@ def settings():
 
     if request.method == "POST" and form.errors:
         flash("Revisa los campos ingresados", "error")
-    return render_template("main/settings.html", form=form, workshop=workshop)
+    return render_template(
+        "main/settings.html",
+        form=form,
+        workshop=workshop,
+        whatsapp_variables=WHATSAPP_TEMPLATE_VARIABLES,
+    )
 
 
 @main_bp.route("/security", methods=["GET", "POST"])

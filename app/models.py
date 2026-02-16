@@ -24,6 +24,8 @@ class User(UserMixin, db.Model):
     full_name = db.Column(db.String(120), nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
+    is_approved = db.Column(db.Boolean, default=False, nullable=False)
+    approved_at = db.Column(db.DateTime)
     role = db.Column(db.String(20), default="owner")
     email_confirmed = db.Column(db.Boolean, default=False)
     email_confirmed_at = db.Column(db.DateTime)
@@ -87,6 +89,7 @@ class Workshop(db.Model):
     secondary_color = db.Column(db.String(20), default="#19b36b")
     accent_color = db.Column(db.String(20), default="#ff8c2b")
     background_color = db.Column(db.String(20), default="#f6f7fb")
+    whatsapp_message_template = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     users = db.relationship(

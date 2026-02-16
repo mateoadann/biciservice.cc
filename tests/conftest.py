@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -52,6 +53,7 @@ def create_owner_user(app):
         password="Password1",
         email_confirmed=True,
         is_active=True,
+        is_approved=True,
         workshop_name="Taller Test",
         store_name="Sucursal principal",
     ):
@@ -73,6 +75,8 @@ def create_owner_user(app):
         user.store_id = store.id
         user.email_confirmed = email_confirmed
         setattr(user, "is_active", is_active)
+        user.is_approved = is_approved
+        user.approved_at = datetime.now(timezone.utc) if is_approved else None
         user.set_password(password)
         user.workshops.append(workshop)
         db.session.add(user)
@@ -95,6 +99,7 @@ def create_super_admin_user(app):
         full_name="Super Admin",
         password="Password1",
         is_active=True,
+        is_approved=True,
     ):
         user = User()
         user.full_name = full_name
@@ -102,6 +107,8 @@ def create_super_admin_user(app):
         user.role = "super_admin"
         user.email_confirmed = True
         setattr(user, "is_active", is_active)
+        user.is_approved = is_approved
+        user.approved_at = datetime.now(timezone.utc) if is_approved else None
         user.set_password(password)
         db.session.add(user)
         db.session.commit()

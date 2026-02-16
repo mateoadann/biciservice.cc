@@ -1,3 +1,5 @@
+from datetime import date
+
 from flask import render_template, request, redirect, url_for, flash, g, send_file
 from flask_login import login_required, current_user
 from app.main import main_bp
@@ -8,13 +10,15 @@ from app.services.audit_service import AuditService
 from app.services.pdf_service import generate_job_pdf, build_pdf_filename
 from app.main.forms import JobForm, JobStatusForm, DeleteForm
 from app.main.helpers import (
+    build_job_whatsapp_message,
     get_workshop_or_redirect,
     get_store_or_redirect,
     paginate_query,
     format_currency,
+    normalize_whatsapp_phone,
     bicycle_choices,
     services_list,
-    brand_choices
+    brand_choices,
 )
 
 @main_bp.route("/jobs")
@@ -29,7 +33,28 @@ def jobs():
         return store_redirect
 
     page = request.args.get("page", 1, type=int)
-    query = Job.query.filter_by(workshop_id=workshop.id, store_id=store.id).order_by(Job.created_at.desc())
+    requested_status = (request.args.get("status") or "all").strip().lower()
+    allowed_statuses = {
+        "all",
+        "open",
+        "in_progress",
+        "ready",
+        "closed",
+        "cancelled",
+        "overdue",
+    }
+    active_status = requested_status if requested_status in allowed_statuses else "all"
+
+    query = Job.query.filter_by(workshop_id=workshop.id, store_id=store.id)
+    if active_status == "overdue":
+        query = query.filter(
+            Job.status.in_(["open", "in_progress", "ready"]),
+            Job.estimated_delivery_at < date.today(),
+        )
+    elif active_status != "all":
+        query = query.filter(Job.status == active_status)
+
+    query = query.order_by(Job.created_at.desc())
     pagination = paginate_query(query, page)
     return render_template(
         "main/jobs/index.html",
@@ -37,6 +62,7 @@ def jobs():
         pagination=pagination,
         delete_form=DeleteForm(),
         status_form=JobStatusForm(),
+        active_status=active_status,
     )
 
 
@@ -67,6 +93,12 @@ def jobs_detail(job_id):
         (part.unit_price or 0) * (part.quantity or 0) for part in job.parts
     )
     total = service_total + parts_total
+    client_phone = ""
+    if job.bicycle and job.bicycle.client and job.bicycle.client.phone:
+        client_phone = job.bicycle.client.phone
+    whatsapp_phone = normalize_whatsapp_phone(client_phone)
+    whatsapp_message = build_job_whatsapp_message(workshop, job, total)
+
     return render_template(
         "main/jobs/detail.html",
         job=job,
@@ -77,6 +109,8 @@ def jobs_detail(job_id):
         service_total=service_total,
         parts_total=parts_total,
         total=total,
+        whatsapp_phone=whatsapp_phone,
+        whatsapp_message=whatsapp_message,
     )
 
 

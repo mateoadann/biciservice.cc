@@ -1,4 +1,5 @@
 from io import BytesIO
+from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 from xml.sax.saxutils import escape
@@ -144,6 +145,7 @@ def generate_job_pdf(job, service_total, parts_total, total):
         ["Cliente", client_name, "Bicicleta", bike_label],
         ["Estado", _status_label(job.status), "Codigo", job.code],
         ["Ingreso al taller", fecha_ingreso, "Entrega estimada", fecha_entrega],
+        ["Fecha de emision", datetime.now().strftime("%d/%m/%Y %H:%M"), "", ""],
     ]
     col_w = [35 * mm, 52 * mm, 38 * mm, 52 * mm]
     info_table = Table(info_data, colWidths=col_w)

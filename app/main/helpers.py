@@ -15,6 +15,93 @@ from io import BytesIO
 from ..models import Store, Client, Bicycle, ServiceType, Job
 from .forms import BRAND_CHOICES
 
+
+DEFAULT_WHATSAPP_MESSAGE_TEMPLATE = (
+    "Hola {cliente_nombre}, tu trabajo {codigo_trabajo} ya esta {estado_trabajo}. "
+    "Total: $ {total_trabajo}. Escribinos para coordinar la entrega."
+)
+
+WHATSAPP_TEMPLATE_VARIABLES = [
+    ("cliente_nombre", "Nombre del cliente"),
+    ("cliente_telefono", "Telefono del cliente"),
+    ("codigo_trabajo", "Codigo del trabajo"),
+    ("estado_trabajo", "Estado del trabajo"),
+    ("bicicleta", "Marca y modelo"),
+    ("bicicleta_marca", "Marca"),
+    ("bicicleta_modelo", "Modelo"),
+    ("taller_nombre", "Nombre del taller"),
+    ("fecha_entrega", "Fecha estimada de entrega"),
+    ("total_trabajo", "Total del trabajo"),
+]
+
+
+def workshop_whatsapp_template(workshop):
+    raw = ""
+    if workshop and workshop.whatsapp_message_template:
+        raw = workshop.whatsapp_message_template.strip()
+    return raw or DEFAULT_WHATSAPP_MESSAGE_TEMPLATE
+
+
+def normalize_whatsapp_phone(phone):
+    if not phone:
+        return ""
+    digits = "".join(char for char in str(phone) if char.isdigit())
+    if not digits:
+        return ""
+    if not digits.startswith("54"):
+        digits = f"54{digits}"
+    return digits
+
+
+def _job_status_label(status):
+    labels = {
+        "open": "Abierto",
+        "in_progress": "En progreso",
+        "ready": "Listo",
+        "closed": "Cerrado",
+    }
+    return labels.get(status, "-")
+
+
+def render_job_whatsapp_message(template, job, total):
+    client = job.bicycle.client if job.bicycle and job.bicycle.client else None
+    client_name = client.full_name if client and client.full_name else "Cliente"
+    client_phone = client.phone if client and client.phone else "-"
+    bike_brand = job.bicycle.brand if job.bicycle and job.bicycle.brand else "Bicicleta"
+    bike_model = job.bicycle.model if job.bicycle and job.bicycle.model else ""
+    bike_label = f"{bike_brand} {bike_model}".strip()
+    workshop_name = job.workshop.name if job.workshop and job.workshop.name else "Taller"
+    delivery_date = (
+        job.estimated_delivery_at.strftime("%d/%m/%Y")
+        if job.estimated_delivery_at
+        else "-"
+    )
+
+    values = {
+        "cliente_nombre": client_name,
+        "cliente_telefono": client_phone,
+        "codigo_trabajo": job.code or "-",
+        "estado_trabajo": _job_status_label(job.status),
+        "bicicleta": bike_label,
+        "bicicleta_marca": bike_brand,
+        "bicicleta_modelo": bike_model or "-",
+        "taller_nombre": workshop_name,
+        "fecha_entrega": delivery_date,
+        "total_trabajo": format_currency(total),
+    }
+
+    def replace_variable(match):
+        key = match.group(1)
+        return str(values.get(key, match.group(0)))
+
+    return re.sub(r"\{([a-z_]+)\}", replace_variable, template or "")
+
+
+def build_job_whatsapp_message(workshop, job, total):
+    template = workshop_whatsapp_template(workshop)
+    return render_job_whatsapp_message(template, job, total)
+
+
 def validate_upload(file_storage):
     from werkzeug.utils import secure_filename
     filename = secure_filename(file_storage.filename)

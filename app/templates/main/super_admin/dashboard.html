@@ -3,6 +3,7 @@
 {% block page_title %}Panel global{% endblock %}
 
 {% block page_actions %}
+  <a class="button button-ghost" href="{{ url_for('main.super_admin_pending') }}">Ver pendientes</a>
   <a class="button button-ghost" href="{{ url_for('main.super_admin_owners') }}">Ver owners</a>
 {% endblock %}
 
@@ -12,6 +13,11 @@
       <div class="stat-label">Owners</div>
       <div class="stat-value">{{ metrics.owners }}</div>
       <div class="stat-meta">Registrados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pendientes</div>
+      <div class="stat-value">{{ metrics.pending }}</div>
+      <div class="stat-meta"><a href="{{ url_for('main.super_admin_pending') }}">Revisar ahora</a></div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Talleres</div>

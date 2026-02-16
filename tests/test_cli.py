@@ -22,6 +22,7 @@ def test_create_superadmin_command_creates_user(app):
     user = User.query.filter_by(email="admin@example.com").first()
     assert user is not None
     assert user.role == "super_admin"
+    assert user.is_approved is True
 
 
 def test_create_superadmin_command_blocks_second_superadmin(app, create_super_admin_user):

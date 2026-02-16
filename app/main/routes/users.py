@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app.main import main_bp
@@ -105,6 +107,8 @@ def users_create():
             full_name=form.full_name.data,
             email=email,
             role=form.role.data,
+            is_approved=True,
+            approved_at=datetime.now(timezone.utc),
             store=store,
         )
         user.set_password(form.password.data)
