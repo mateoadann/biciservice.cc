@@ -66,7 +66,7 @@ class WorkshopSettingsForm(FlaskForm):
 
 class ClientForm(FlaskForm):
     full_name = StringField("Full name", validators=[DataRequired(message="Campo obligatorio"), Length(max=120)])
-    email = StringField("Email", validators=[DataRequired(message="Campo obligatorio"), Email(message="Email invalido"), Length(max=255)])
+    email = StringField("Email", validators=[Optional(), Email(message="Email invalido"), Length(max=255)])
     phone = StringField("Phone", validators=[DataRequired(message="Campo obligatorio"), Length(max=40)])
 
 

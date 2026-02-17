@@ -18,12 +18,13 @@ class ClientService:
 
     @staticmethod
     def create_client(workshop_id, full_name, email, phone):
+        email_value = (email or "").strip() or None
         code = ClientService.generate_client_code(workshop_id)
         client = Client(
             workshop_id=workshop_id,
             client_code=code,
             full_name=full_name,
-            email=email,
+            email=email_value,
             phone=phone,
         )
         db.session.add(client)
@@ -40,8 +41,9 @@ class ClientService:
 
     @staticmethod
     def update_client(client, full_name, email, phone):
+        email_value = (email or "").strip() or None
         client.full_name = full_name
-        client.email = email
+        client.email = email_value
         client.phone = phone
         AuditService.log_action(
             "update",

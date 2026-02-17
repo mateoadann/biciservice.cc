@@ -24,8 +24,8 @@
             {% endif %}
           </label>
           <label>
-            Email
-            {{ form.email(class_="input", required=True, type="email", autocomplete="email", inputmode="email", autocapitalize="off", spellcheck="false") }}
+            Email (opcional)
+            {{ form.email(class_="input", type="email", autocomplete="email", inputmode="email", autocapitalize="off", spellcheck="false") }}
             {% if form.email.errors %}
               <span class="field-error">{{ form.email.errors[0] }}</span>
             {% endif %}
@@ -51,7 +51,6 @@
       const submitButton = clientForm.querySelector("button[type=\"submit\"]");
       const requiredFields = [
         clientForm.querySelector("input[name=\"full_name\"]"),
-        clientForm.querySelector("input[name=\"email\"]"),
         clientForm.querySelector("input[name=\"phone\"]"),
       ].filter(Boolean);
 
