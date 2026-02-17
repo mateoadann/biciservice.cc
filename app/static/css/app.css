@@ -769,29 +769,24 @@ a.button {
 .flash-stack {
   display: grid;
   gap: 10px;
-  margin-top: 16px;
+  margin: 0;
 }
 
 .flash-stack-page {
-  margin: 0;
-  position: absolute;
-  top: 92px;
-  left: 40px;
-  right: auto;
-  width: min(760px, calc(100% - 80px));
-  z-index: 20;
+  margin: 6px 0 18px;
+  position: relative;
+  width: min(760px, 100%);
+  z-index: 5;
   justify-items: start;
-  pointer-events: none;
 }
 
 .flash-stack-page .flash {
   width: 100%;
   max-width: none;
-  min-height: 66px;
+  min-height: 56px;
   display: flex;
   align-items: center;
   box-shadow: var(--shadow-soft);
-  pointer-events: auto;
 }
 
 .flash {
@@ -2725,9 +2720,8 @@ html[data-theme="dark"] .button-ghost:hover {
   }
 
   .flash-stack-page {
-    top: 106px;
-    left: 24px;
-    width: calc(100% - 48px);
+    width: 100%;
+    margin-bottom: 16px;
   }
 
   .job-top-grid {
@@ -2788,9 +2782,7 @@ html[data-theme="dark"] .button-ghost:hover {
   }
 
   .flash-stack-page {
-    top: 118px;
-    left: 16px;
-    width: calc(100% - 32px);
+    width: 100%;
   }
 
   .flash-stack-page .flash {
@@ -3073,8 +3065,8 @@ html[data-theme="dark"] .button-ghost:hover {
   }
 
   .flash-stack-page {
-    left: 12px;
-    right: 12px;
+    width: 100%;
+    margin-bottom: 14px;
   }
 
   .table th,
