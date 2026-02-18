@@ -44,6 +44,10 @@ def create_app(config_class=Config):
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
 
+    @app.get("/health")
+    def health_check():
+        return "ok", 200
+
     @app.get("/manifest.webmanifest")
     def manifest_file():
         response = send_from_directory(

@@ -2,7 +2,6 @@ from datetime import datetime, timedelta, timezone
 import logging
 import math
 import pyotp
-from time import time
 
 from flask import current_app, flash, redirect, render_template, request, session, url_for
 from flask_login import login_required, login_user, logout_user
@@ -139,32 +138,6 @@ class TwoFactorForm(FlaskForm):
     )
 
 
-_login_attempts = {}
-
-
-def _rate_limit_key(email: str) -> str:
-    ip = request.headers.get("X-Forwarded-For", request.remote_addr) or "unknown"
-    return f"{ip}:{email}"
-
-
-def _is_rate_limited(key: str) -> bool:
-    now = time()
-    window = current_app.config["LOGIN_RATE_LIMIT_WINDOW"]
-    attempts = [ts for ts in _login_attempts.get(key, []) if now - ts < window]
-    _login_attempts[key] = attempts
-    return len(attempts) >= current_app.config["LOGIN_RATE_LIMIT_MAX"]
-
-
-def _record_attempt(key: str, success: bool = False) -> None:
-    if success:
-        _login_attempts.pop(key, None)
-        return
-    now = time()
-    attempts = _login_attempts.get(key, [])
-    attempts.append(now)
-    _login_attempts[key] = attempts
-
-
 def _can_resend_confirmation(user) -> bool:
     if not user.confirmation_sent_at:
         return True
@@ -231,11 +204,6 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         email = form.email.data.lower()
-        key = _rate_limit_key(email)
-        if _is_rate_limited(key):
-            flash("Demasiados intentos. Intenta mas tarde.", "error")
-            logger.warning("Rate limited ip=%s email=%s", request.remote_addr, email)
-            return render_template("auth/login.html", form=form)
 
         user = User.query.filter_by(email=email).first()
         if user:
@@ -247,7 +215,6 @@ def login():
                 return render_template("auth/login.html", form=form)
 
         if not user or not user.check_password(form.password.data):
-            _record_attempt(key)
             if user:
                 locked = _register_failed_login(user)
                 if locked:
@@ -274,7 +241,6 @@ def login():
             else:
                 flash("Email sin confirmar. Revisa tu correo.", "error")
             return render_template("auth/login.html", form=form)
-        _record_attempt(key, success=True)
         if user.two_factor_enabled and user.two_factor_secret:
             session["pending_2fa_user_id"] = user.id
             session["pending_2fa_remember"] = bool(form.remember.data)
