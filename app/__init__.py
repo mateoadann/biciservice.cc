@@ -155,6 +155,9 @@ def create_app(config_class=Config):
 
     @app.after_request
     def apply_security_headers(response):
+        if request.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "public, max-age=31536000"
+
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
@@ -164,8 +167,8 @@ def create_app(config_class=Config):
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "img-src 'self' data:; "
-            "style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; "
-            "font-src 'self' https://fonts.gstatic.com; "
+            "style-src 'self' 'unsafe-inline'; "
+            "font-src 'self'; "
             "script-src 'self' 'unsafe-inline'"
         )
         if request.is_secure:

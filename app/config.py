@@ -58,3 +58,4 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
     REMEMBER_COOKIE_DURATION = timedelta(days=14)
     SESSION_REFRESH_EACH_REQUEST = False
+    CSS_VERSION = "1"
