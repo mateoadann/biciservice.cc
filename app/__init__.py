@@ -80,6 +80,7 @@ def create_app(config_class=Config):
     def set_active_workshop():
         g.active_workshop = None
         g.active_store = None
+        g.workshop_stores = []
         if not current_user.is_authenticated:
             return
         if current_user.role == "super_admin":
@@ -94,18 +95,23 @@ def create_app(config_class=Config):
         if g.active_workshop is None:
             return
 
+        g.workshop_stores = (
+            Store.query.filter_by(workshop_id=g.active_workshop.id)
+            .order_by(Store.name.asc())
+            .all()
+        )
+
         active_store_id = session.get("active_store_id")
         store = None
         if active_store_id:
-            store = Store.query.filter_by(
-                id=active_store_id, workshop_id=g.active_workshop.id
-            ).first()
+            store = next((s for s in g.workshop_stores if s.id == active_store_id), None)
 
         if current_user.role != "owner":
             if current_user.store_id:
-                store = Store.query.filter_by(
-                    id=current_user.store_id, workshop_id=g.active_workshop.id
-                ).first()
+                store = next(
+                    (s for s in g.workshop_stores if s.id == current_user.store_id),
+                    None,
+                )
             else:
                 store = None
             if store:
@@ -114,11 +120,7 @@ def create_app(config_class=Config):
                 session.pop("active_store_id", None)
         else:
             if store is None:
-                store = (
-                    Store.query.filter_by(workshop_id=g.active_workshop.id)
-                    .order_by(Store.id.asc())
-                    .first()
-                )
+                store = min(g.workshop_stores, key=lambda s: s.id, default=None)
                 if store:
                     session["active_store_id"] = store.id
 
@@ -138,11 +140,7 @@ def create_app(config_class=Config):
         stores = []
         if g.get("active_workshop"):
             theme = g.active_workshop.theme()
-            stores = (
-                Store.query.filter_by(workshop_id=g.active_workshop.id)
-                .order_by(Store.name.asc())
-                .all()
-            )
+            stores = g.get("workshop_stores", [])
         else:
             theme = default_theme
         return {

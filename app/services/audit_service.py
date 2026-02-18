@@ -1,5 +1,7 @@
 from flask import request
 from flask_login import current_user
+from sqlalchemy.orm import joinedload
+
 from ..extensions import db
 from ..models import AuditLog
 
@@ -36,6 +38,7 @@ class AuditService:
         update_types = update_entity_types or [entity_type]
         created_log = (
             AuditLog.query.filter_by(entity_type=entity_type, entity_id=entity_id, action="create")
+            .options(joinedload(AuditLog.user))
             .order_by(AuditLog.created_at.asc())
             .first()
         )
@@ -45,6 +48,7 @@ class AuditService:
                 AuditLog.entity_id == entity_id,
                 AuditLog.action == "update",
             )
+            .options(joinedload(AuditLog.user))
             .order_by(AuditLog.created_at.desc())
             .first()
         )
