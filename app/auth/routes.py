@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import logging
 import math
 import pyotp
 from time import time
@@ -19,6 +20,9 @@ from .utils import (
 from ..config import Config
 from ..extensions import db
 from ..models import User, Workshop, Store
+
+
+logger = logging.getLogger("auth")
 
 
 class LoginForm(FlaskForm):
@@ -230,6 +234,7 @@ def login():
         key = _rate_limit_key(email)
         if _is_rate_limited(key):
             flash("Demasiados intentos. Intenta mas tarde.", "error")
+            logger.warning("Rate limited ip=%s email=%s", request.remote_addr, email)
             return render_template("auth/login.html", form=form)
 
         user = User.query.filter_by(email=email).first()
@@ -238,6 +243,7 @@ def login():
             if remaining:
                 minutes = max(1, math.ceil(remaining / 60))
                 flash(f"Cuenta bloqueada. Intenta en {minutes} min.", "error")
+                logger.warning("Cuenta bloqueada ip=%s email=%s", request.remote_addr, email)
                 return render_template("auth/login.html", form=form)
 
         if not user or not user.check_password(form.password.data):
@@ -249,8 +255,10 @@ def login():
                         "Cuenta bloqueada por intentos fallidos. Intenta mas tarde.",
                         "error",
                     )
+                    logger.warning("Cuenta bloqueada ip=%s email=%s", request.remote_addr, email)
                     return render_template("auth/login.html", form=form)
             flash("Email o contrasena incorrectos", "error")
+            logger.warning("Login fallido ip=%s email=%s", request.remote_addr, email)
             return render_template("auth/login.html", form=form)
         if not user.is_active:
             flash("Cuenta desactivada. Contacta al administrador.", "error")
@@ -274,6 +282,7 @@ def login():
             return redirect(url_for("auth.login_two_factor"))
         login_user(user, remember=form.remember.data)
         session.permanent = True
+        logger.info("Login exitoso email=%s", user.email)
         return _post_login_redirect(user)
     if request.method == "POST":
         flash("Revisa los datos ingresados", "error")
@@ -309,6 +318,7 @@ def login_two_factor():
         totp = pyotp.TOTP(user.two_factor_secret)
         if not totp.verify(form.code.data, valid_window=1):
             flash("Codigo incorrecto.", "error")
+            logger.warning("2FA fallido ip=%s user_id=%s", request.remote_addr, user_id)
             return render_template("auth/2fa.html", form=form)
         remember = session.pop("pending_2fa_remember", False)
         session.pop("pending_2fa_user_id", None)

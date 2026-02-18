@@ -1,8 +1,9 @@
 import click
+import logging
 import os
 from decimal import Decimal, InvalidOperation
 from datetime import datetime, timezone
-from flask import Flask, g, request, session, url_for, flash, redirect, send_from_directory
+from flask import Flask, g, request, session, url_for, flash, redirect, render_template, send_from_directory
 from flask_login import current_user
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
@@ -17,6 +18,12 @@ def create_app(config_class=Config):
     load_dotenv()
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    if not app.debug and not app.testing:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+        )
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
@@ -167,6 +174,17 @@ def create_app(config_class=Config):
     def handle_csrf_error(error):
         flash("La sesion expiro. Intenta de nuevo.", "error")
         return redirect(request.referrer or url_for("auth.login")), 400
+
+    @app.errorhandler(404)
+    def not_found(error):
+        app.logger.info("404 %s %s", request.method, request.path)
+        return render_template("errors/404.html"), 404
+
+    @app.errorhandler(500)
+    def internal_error(error):
+        app.logger.error("500 %s %s", request.method, request.path, exc_info=True)
+        db.session.rollback()
+        return render_template("errors/500.html"), 500
 
     def format_currency(value):
         if value is None:

@@ -126,6 +126,7 @@ class Client(db.Model):
 
     __table_args__ = (
         db.UniqueConstraint("workshop_id", "client_code", name="uq_client_workshop_code"),
+        db.Index("ix_clients_workshop_id", "workshop_id"),
     )
 
     bicycles = db.relationship("Bicycle", backref="client", lazy=True)
@@ -139,6 +140,10 @@ class Store(db.Model):
     name = db.Column(db.String(120), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
+    __table_args__ = (
+        db.Index("ix_stores_workshop_id", "workshop_id"),
+    )
+
 
 class Bicycle(db.Model):
     __tablename__ = "bicycles"
@@ -150,6 +155,11 @@ class Bicycle(db.Model):
     model = db.Column(db.String(80))
     description = db.Column(db.String(300))
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        db.Index("ix_bicycles_workshop_id", "workshop_id"),
+        db.Index("ix_bicycles_client_id", "client_id"),
+    )
 
     jobs = db.relationship("Job", backref="bicycle", lazy=True)
 
@@ -164,6 +174,10 @@ class ServiceType(db.Model):
     base_price = db.Column(db.Numeric(10, 2), default=0)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        db.Index("ix_service_types_workshop_id", "workshop_id"),
+    )
 
     job_items = db.relationship("JobItem", backref="service_type", lazy=True)
 
@@ -181,6 +195,11 @@ class Job(db.Model):
     estimated_delivery_at = db.Column(db.Date, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        db.Index("ix_jobs_workshop_store_status", "workshop_id", "store_id", "status"),
+        db.Index("ix_jobs_estimated_delivery", "estimated_delivery_at"),
+    )
 
     items = db.relationship(
         "JobItem", backref="job", lazy=True, cascade="all, delete-orphan"
@@ -206,6 +225,10 @@ class AuditLog(db.Model):
     user_agent = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
+    __table_args__ = (
+        db.Index("ix_audit_entity", "entity_type", "entity_id", "action"),
+    )
+
     user = db.relationship("User", backref="audit_logs", lazy=True)
     workshop = db.relationship("Workshop", backref="audit_logs", lazy=True)
     store = db.relationship("Store", backref="audit_logs", lazy=True)
@@ -224,6 +247,10 @@ class JobPart(db.Model):
     kind = db.Column(db.String(20), default="part", nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
+    __table_args__ = (
+        db.Index("ix_job_parts_job_id", "job_id"),
+    )
+
 
 class JobItem(db.Model):
     __tablename__ = "job_items"
@@ -235,3 +262,7 @@ class JobItem(db.Model):
     )
     quantity = db.Column(db.Integer, default=1)
     unit_price = db.Column(db.Numeric(10, 2), default=0)
+
+    __table_args__ = (
+        db.Index("ix_job_items_job_id", "job_id"),
+    )
