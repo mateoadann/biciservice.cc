@@ -2,9 +2,11 @@ from datetime import date
 
 from flask import render_template, request, redirect, url_for, flash, g, send_file
 from flask_login import login_required, current_user
+from sqlalchemy.orm import joinedload
+
 from app.main import main_bp
 from app.extensions import db
-from app.models import Job
+from app.models import Bicycle, Job, JobItem
 from app.services.job_service import JobService
 from app.services.audit_service import AuditService
 from app.services.pdf_service import generate_job_pdf, build_pdf_filename
@@ -77,9 +79,15 @@ def jobs_detail(job_id):
     if store_redirect:
         return store_redirect
 
-    job = Job.query.filter_by(
-        id=job_id, workshop_id=workshop.id, store_id=store.id
-    ).first_or_404()
+    job = (
+        Job.query.filter_by(id=job_id, workshop_id=workshop.id, store_id=store.id)
+        .options(
+            joinedload(Job.bicycle).joinedload(Bicycle.client),
+            joinedload(Job.items).joinedload(JobItem.service_type),
+            joinedload(Job.parts),
+        )
+        .first_or_404()
+    )
     
     created_at, created_by, updated_at, updated_by = AuditService.get_audit_info(
         "job",

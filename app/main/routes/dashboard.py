@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from flask import render_template, redirect, url_for, g, flash, request
 from flask_login import login_required, current_user
-from sqlalchemy import func
+from sqlalchemy import case, func
 from app.main import main_bp
 from app.extensions import db
 from app.models import Client, Bicycle, ServiceType, Job, JobItem, JobPart, Store
@@ -86,49 +86,47 @@ def dashboard():
             .limit(5)
             .all()
         )
-        service_revenue = (
+        service_revenue_row = (
             db.session.query(
-                func.coalesce(func.sum(JobItem.unit_price * JobItem.quantity), 0)
+                func.coalesce(func.sum(JobItem.unit_price * JobItem.quantity), 0),
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (Job.status == "closed", JobItem.unit_price * JobItem.quantity),
+                            else_=0,
+                        )
+                    ),
+                    0,
+                ),
             )
             .join(Job, Job.id == JobItem.job_id)
             .filter(Job.workshop_id == workshop.id, Job.store_id == store.id, *date_filters)
-            .scalar()
+            .one()
         )
-        parts_revenue = (
+        service_revenue = service_revenue_row[0]
+        service_revenue_closed = service_revenue_row[1]
+
+        parts_revenue_row = (
             db.session.query(
-                func.coalesce(func.sum(JobPart.unit_price * JobPart.quantity), 0)
+                func.coalesce(func.sum(JobPart.unit_price * JobPart.quantity), 0),
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (Job.status == "closed", JobPart.unit_price * JobPart.quantity),
+                            else_=0,
+                        )
+                    ),
+                    0,
+                ),
             )
             .join(Job, Job.id == JobPart.job_id)
             .filter(Job.workshop_id == workshop.id, Job.store_id == store.id, *date_filters)
-            .scalar()
+            .one()
         )
+        parts_revenue = parts_revenue_row[0]
+        parts_revenue_closed = parts_revenue_row[1]
+
         revenue = service_revenue + parts_revenue
-        service_revenue_closed = (
-            db.session.query(
-                func.coalesce(func.sum(JobItem.unit_price * JobItem.quantity), 0)
-            )
-            .join(Job, Job.id == JobItem.job_id)
-            .filter(
-                Job.workshop_id == workshop.id,
-                Job.store_id == store.id,
-                Job.status == "closed",
-                *date_filters,
-            )
-            .scalar()
-        )
-        parts_revenue_closed = (
-            db.session.query(
-                func.coalesce(func.sum(JobPart.unit_price * JobPart.quantity), 0)
-            )
-            .join(Job, Job.id == JobPart.job_id)
-            .filter(
-                Job.workshop_id == workshop.id,
-                Job.store_id == store.id,
-                Job.status == "closed",
-                *date_filters,
-            )
-            .scalar()
-        )
         revenue_closed = service_revenue_closed + parts_revenue_closed
         status_counts = dict(
             db.session.query(Job.status, func.count(Job.id))
@@ -142,13 +140,7 @@ def dashboard():
         closed_jobs = status_counts.get("closed", 0)
         cancelled_jobs = status_counts.get("cancelled", 0)
         total_jobs = open_jobs + in_progress_jobs + ready_jobs + closed_jobs + cancelled_jobs
-        ready_for_delivery = (
-            Job.query.filter(
-                Job.workshop_id == workshop.id,
-                Job.store_id == store.id,
-                Job.status == "ready",
-            ).count()
-        )
+        ready_for_delivery = status_counts.get("ready", 0)
         overdue_jobs = (
             Job.query.filter(
                 Job.workshop_id == workshop.id,
