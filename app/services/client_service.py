@@ -1,10 +1,16 @@
 import csv
+import logging
 from io import StringIO
+
 from sqlalchemy import func
+
 from ..extensions import db
 from ..models import Client, Bicycle, User
 from .audit_service import AuditService
 from ..main.forms import BRAND_CHOICES
+
+
+logger = logging.getLogger("client_service")
 
 class ClientService:
     @staticmethod
@@ -125,6 +131,9 @@ class ClientService:
         try:
             content = data.decode("utf-8")
         except UnicodeDecodeError:
+            logger.warning(
+                "CSV clientes: encoding no valido, usando fallback con errors=ignore"
+            )
             content = data.decode("utf-8", errors="ignore")
 
         reader = csv.DictReader(StringIO(content))
@@ -186,6 +195,9 @@ class ClientService:
         try:
             content = data.decode("utf-8")
         except UnicodeDecodeError:
+            logger.warning(
+                "CSV bicicletas: encoding no valido, usando fallback con errors=ignore"
+            )
             content = data.decode("utf-8", errors="ignore")
 
         reader = csv.DictReader(StringIO(content))

@@ -31,14 +31,8 @@
   <link rel="apple-touch-icon" href="{{ url_for('apple_touch_icon') }}">
   <link rel="manifest" href="{{ url_for('manifest_file') }}">
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
-    rel="stylesheet">
-
   <!-- Styles -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v={{ config.CSS_VERSION }}">
 
   <!-- Custom Theme Colors -->
   <style>
