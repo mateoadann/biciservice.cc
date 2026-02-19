@@ -16,11 +16,19 @@ def clients():
     page = request.args.get("page", 1, type=int)
     query = Client.query.filter_by(workshop_id=workshop.id).order_by(Client.full_name.asc())
     pagination = paginate_query(query, page)
+
+    template_data = {
+        "clients": pagination["items"],
+        "pagination": pagination,
+        "delete_form": DeleteForm(),
+    }
+
+    if request.args.get("partial"):
+        return render_template("main/clients/_fragments.html", **template_data)
+
     return render_template(
         "main/clients/index.html",
-        clients=pagination["items"],
-        pagination=pagination,
-        delete_form=DeleteForm(),
+        **template_data,
     )
 
 

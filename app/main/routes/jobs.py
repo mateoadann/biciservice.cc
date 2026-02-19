@@ -58,13 +58,21 @@ def jobs():
 
     query = query.order_by(Job.created_at.desc())
     pagination = paginate_query(query, page)
+
+    table_template_data = {
+        "jobs": pagination["items"],
+        "pagination": pagination,
+        "delete_form": DeleteForm(),
+        "status_form": JobStatusForm(),
+        "active_status": active_status,
+    }
+
+    if request.args.get("partial"):
+        return render_template("main/jobs/_fragments.html", **table_template_data)
+
     return render_template(
         "main/jobs/index.html",
-        jobs=pagination["items"],
-        pagination=pagination,
-        delete_form=DeleteForm(),
-        status_form=JobStatusForm(),
-        active_status=active_status,
+        **table_template_data,
     )
 
 

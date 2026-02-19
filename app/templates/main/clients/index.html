@@ -28,74 +28,9 @@
               <option value="without">Sin bicicletas</option>
             </select>
           </label>
-          {% if pagination.pages > 1 %}
-            <div class="pagination pagination-top">
-              <div class="pagination-info">Mostrando {{ pagination.start }}-{{ pagination.end }} de {{ pagination.total }}</div>
-              <span class="pagination-page">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
-              <div class="pagination-actions">
-                {% if pagination.has_prev %}
-                  <a class="button button-ghost button-compact" href="{{ url_for('main.clients', page=pagination.prev_num) }}">Anterior</a>
-                {% else %}
-                  <span class="button button-ghost button-compact is-disabled" aria-disabled="true">Anterior</span>
-                {% endif %}
-                {% if pagination.has_next %}
-                  <a class="button button-ghost button-compact" href="{{ url_for('main.clients', page=pagination.next_num) }}">Siguiente</a>
-                {% else %}
-                  <span class="button button-ghost button-compact is-disabled" aria-disabled="true">Siguiente</span>
-                {% endif %}
-              </div>
-            </div>
-          {% endif %}
+          {% include "main/clients/_pagination.html" %}
         </div>
-        <div class="table-wrap table-scroll">
-          <table class="table table-mobile-cards">
-            <thead>
-              <tr>
-                <th>Codigo</th>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Telefono</th>
-                <th>Bicicletas</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for client in clients %}
-                <tr data-bikes="{{ client.bicycles|length }}" data-search="{{ client.client_code }} {{ client.full_name }} {{ client.email or '' }} {{ client.phone or '' }}">
-                  <td data-label="Codigo"><strong>#{{ client.client_code }}</strong></td>
-                  <td data-label="Nombre"><span class="truncate" title="{{ client.full_name }}">{{ client.full_name }}</span></td>
-                  <td data-label="Email"><span class="truncate" title="{{ client.email or '-' }}">{{ client.email or "-" }}</span></td>
-                  <td data-label="Telefono">{{ client.phone or "-" }}</td>
-                  <td data-label="Bicicletas">{{ client.bicycles|length }}</td>
-                  <td class="table-actions table-actions-cell" data-label="Acciones">
-                    <a class="button button-ghost button-compact" href="{{ url_for('main.clients_detail', client_id=client.id) }}">Ver</a>
-                    <form
-                      method="post"
-                      action="{{ url_for('main.clients_delete', client_id=client.id) }}"
-                      class="inline-form js-confirm"
-                      data-confirm-title="Eliminar cliente"
-                      data-confirm-message="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?"
-                      data-confirm-final-accept="Eliminar"
-                    >
-                      {{ delete_form.hidden_tag() }}
-                      <button class="button button-danger icon-button button-compact" type="submit" aria-label="Eliminar">
-                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          <path d="M8 6V4h8v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          <path d="M6 6l1 14h10l1-14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                      </button>
-                    </form>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        <div class="empty-state empty-state-inline table-empty-results is-hidden" id="clientNoResults">
-          <h3>Sin resultados</h3>
-          <p class="muted">No hay clientes que coincidan con la busqueda o filtro aplicado.</p>
-        </div>
+        {% include "main/clients/_table.html" %}
       {% else %}
         <div class="empty-state">
           <h3>No hay clientes aun</h3>
@@ -108,12 +43,12 @@
   <script>
     const clientSearch = document.querySelector("#clientSearch");
     const clientFilter = document.querySelector("#clientFilter");
-    const clientRows = document.querySelectorAll("tbody tr");
-    const clientNoResults = document.querySelector("#clientNoResults");
 
     const filterClients = () => {
       const query = (clientSearch?.value || "").toLowerCase().trim();
       const filter = clientFilter?.value || "all";
+      const clientRows = document.querySelectorAll("#table-content tbody tr");
+      const clientNoResults = document.querySelector("#clientNoResults");
       let visibleCount = 0;
 
       clientRows.forEach((row) => {
@@ -140,6 +75,8 @@
     if (clientFilter) {
       clientFilter.addEventListener("change", filterClients);
     }
+
+    document.addEventListener("pagination:updated", filterClients);
     filterClients();
   </script>
 {% endblock %}

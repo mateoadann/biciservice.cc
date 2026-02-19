@@ -26,6 +26,15 @@ def bicycles():
     query = Bicycle.query.filter_by(workshop_id=workshop.id).order_by(Bicycle.id.desc())
     pagination = paginate_query(query, page)
     
+    table_template_data = {
+        "bicycles": pagination["items"],
+        "pagination": pagination,
+        "delete_form": DeleteForm(),
+    }
+
+    if request.args.get("partial"):
+        return render_template("main/bicycles/_fragments.html", **table_template_data)
+
     brand_rows = (
         db.session.query(Bicycle.brand)
         .filter(Bicycle.workshop_id == workshop.id, Bicycle.brand.isnot(None))
@@ -37,10 +46,8 @@ def bicycles():
 
     return render_template(
         "main/bicycles/index.html",
-        bicycles=pagination["items"],
-        pagination=pagination,
+        **table_template_data,
         brands=brands,
-        delete_form=DeleteForm(),
     )
 
 
