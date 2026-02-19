@@ -45,7 +45,7 @@
                   <td class="table-actions table-actions-cell" data-label="Acciones">
                     <a class="button button-ghost button-compact" href="{{ url_for('main.services_detail', service_id=service.id) }}">Ver</a>
                     <a class="button button-ghost button-compact" href="{{ url_for('main.services_edit', service_id=service.id) }}">Editar</a>
-                    <form method="post" action="{{ url_for('main.services_delete', service_id=service.id) }}" class="inline-form js-confirm" data-confirm-title="Eliminar service" data-confirm-message="Vas a eliminar este service. ¿Continuar?" data-confirm-final="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?" data-confirm-final-accept="Eliminar">
+                    <form method="post" action="{{ url_for('main.services_delete', service_id=service.id) }}" class="inline-form js-confirm" data-confirm-title="Eliminar service" data-confirm-message="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?" data-confirm-final-accept="Eliminar">
                       {{ delete_form.hidden_tag() }}
                       <button class="button button-danger icon-button button-compact" type="submit" aria-label="Eliminar">
                         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">

@@ -471,16 +471,13 @@
         confirmAccept.textContent = confirmForm.dataset.confirmFinalAccept || 'Confirmar';
         return;
       }
-      confirmForm.dataset.confirmed = 'true';
+      const formToSubmit = confirmForm;
       closeConfirmModal();
-      confirmForm.submit();
+      formToSubmit.submit();
     });
 
     document.querySelectorAll('form.js-confirm').forEach((form) => {
       form.addEventListener('submit', (event) => {
-        if (form.dataset.confirmed === 'true') {
-          return;
-        }
         event.preventDefault();
         openConfirmModal(form);
       });

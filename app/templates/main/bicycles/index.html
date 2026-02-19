@@ -74,9 +74,8 @@
                       action="{{ url_for('main.bicycles_delete', bicycle_id=bicycle.id) }}"
                       class="inline-form js-confirm"
                       data-confirm-title="Eliminar bicicleta"
-                      data-confirm-message="Vas a eliminar esta bicicleta. ¿Continuar?"
-                      data-confirm-final="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?"
-                        data-confirm-final-accept="Eliminar"
+                      data-confirm-message="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?"
+                      data-confirm-final-accept="Eliminar"
                     >
                       {{ delete_form.hidden_tag() }}
                       <button class="button button-danger icon-button button-compact" type="submit" aria-label="Eliminar">
