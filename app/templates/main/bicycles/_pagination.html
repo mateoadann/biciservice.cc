@@ -1,0 +1,38 @@
+{% if pagination.pages > 1 %}
+  <div id="pagination-content" class="pagination pagination-top">
+    <span class="pagination-info">{{ pagination.start }}-{{ pagination.end }} de {{ pagination.total }}</span>
+    <span class="pagination-divider"></span>
+    <span class="pagination-page">{{ pagination.page }} / {{ pagination.pages }}</span>
+    <span class="pagination-divider"></span>
+    <div class="pagination-actions">
+      {% if pagination.has_prev %}
+        <a class="pagination-btn" href="{{ url_for('main.bicycles', page=pagination.prev_num) }}" aria-label="Pagina anterior">
+          <svg viewBox="0 0 16 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 3L2.5 7.5L7 12M12 3L7.5 7.5L12 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      {% else %}
+        <span class="pagination-btn is-disabled" aria-disabled="true">
+          <svg viewBox="0 0 16 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 3L2.5 7.5L7 12M12 3L7.5 7.5L12 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      {% endif %}
+      {% if pagination.has_next %}
+        <a class="pagination-btn" href="{{ url_for('main.bicycles', page=pagination.next_num) }}" aria-label="Pagina siguiente">
+          <svg viewBox="0 0 16 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 3L6.5 7.5L2 12M7 3L11.5 7.5L7 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      {% else %}
+        <span class="pagination-btn is-disabled" aria-disabled="true">
+          <svg viewBox="0 0 16 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 3L6.5 7.5L2 12M7 3L11.5 7.5L7 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      {% endif %}
+    </div>
+  </div>
+{% else %}
+  <div id="pagination-content"></div>
+{% endif %}
