@@ -1,0 +1,39 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="{{ flash_stack_class|default('flash-stack') }}">
+      {% for category, message in messages %}
+        {% set flash_category = category if category in ['success', 'error', 'warning', 'info'] else 'info' %}
+        <div class="flash {{ flash_category }}" role="status" aria-live="polite">
+          <span class="flash-icon" aria-hidden="true">
+            {% if flash_category == 'success' %}
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                <path d="M8.5 12.3L11 14.8L15.8 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            {% elif flash_category == 'error' %}
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                <path d="M12 8.2V12.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                <circle cx="12" cy="16.1" r="1" fill="currentColor"></circle>
+              </svg>
+            {% elif flash_category == 'warning' %}
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 4.2L20 18.2H4L12 4.2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
+                <path d="M12 9V13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                <circle cx="12" cy="16" r="1" fill="currentColor"></circle>
+              </svg>
+            {% else %}
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                <path d="M12 11V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                <circle cx="12" cy="8.2" r="1" fill="currentColor"></circle>
+              </svg>
+            {% endif %}
+          </span>
+          <span class="flash-msg">{{ message }}</span>
+          <button class="flash-close" type="button" aria-label="Cerrar mensaje">&times;</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}

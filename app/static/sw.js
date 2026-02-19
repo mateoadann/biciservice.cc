@@ -1,4 +1,4 @@
-const CACHE_NAME_STATIC = "service-bicycle-static-v1";
+const CACHE_NAME_STATIC = "service-bicycle-static-v2";
 const STATIC_ASSETS = [
   "/static/css/app.css",
   "/static/css/favicon_bike1.png",

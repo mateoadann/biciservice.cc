@@ -257,15 +257,8 @@
       </header>
       {% endif %}
 
-      {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-      <div class="flash-stack flash-stack-page">
-        {% for category, message in messages %}
-        <div class="flash {{ category }}">{{ message }}</div>
-        {% endfor %}
-      </div>
-      {% endif %}
-      {% endwith %}
+      {% set flash_stack_class = 'flash-stack flash-stack-page' %}
+      {% include '_flash.html' %}
 
       {% block content %}{% endblock %}
     </main>
@@ -504,10 +497,23 @@
       });
     }
 
+    const hideFlash = (flash) => {
+      if (!flash || flash.classList.contains('flash-hide')) {
+        return;
+      }
+      flash.classList.add('flash-hide');
+      setTimeout(() => flash.remove(), 300);
+    };
+
+    document.querySelectorAll('.flash-close').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        hideFlash(btn.closest('.flash'));
+      });
+    });
+
     setTimeout(() => {
-      document.querySelectorAll('.flash').forEach((el) => {
-        el.classList.add('flash-hide');
-        setTimeout(() => el.remove(), 300);
+      document.querySelectorAll('.flash').forEach((flash) => {
+        hideFlash(flash);
       });
     }, 4000);
   </script>
