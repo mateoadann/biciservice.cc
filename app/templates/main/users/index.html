@@ -43,8 +43,7 @@
                         action="{{ url_for('main.users_delete', user_id=user.id) }}"
                         class="inline-form js-confirm"
                         data-confirm-title="Eliminar usuario"
-                        data-confirm-message="Vas a eliminar este usuario. ¿Continuar?"
-                        data-confirm-final="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?"
+                        data-confirm-message="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?"
                         data-confirm-final-accept="Eliminar"
                       >
                         {{ delete_form.hidden_tag() }}
