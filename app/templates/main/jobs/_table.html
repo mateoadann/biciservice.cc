@@ -1,16 +1,16 @@
 <div id="table-content">
   <div class="table-wrap table-scroll">
-    <table class="table">
+    <table class="table table-jobs">
       <thead>
         <tr>
-          <th class="hide-mobile">Codigo</th>
-          <th>Bicicleta</th>
+          <th class="col-jobs-code hide-mobile">Codigo</th>
+          <th class="col-jobs-bike">Bicicleta</th>
           <th class="show-mobile">Ver</th>
-          <th class="hide-mobile">Service</th>
-          <th class="hide-mobile">Estado</th>
-          <th class="hide-mobile">Ingreso</th>
-          <th class="hide-mobile">Entrega estimada</th>
-          <th class="hide-mobile"></th>
+          <th class="col-jobs-service hide-mobile">Service</th>
+          <th class="col-jobs-status hide-mobile">Estado</th>
+          <th class="col-jobs-date hide-mobile">Ingreso</th>
+          <th class="col-jobs-delivery hide-mobile"><span class="th-break">Fecha<br>estimada</span></th>
+          <th class="col-jobs-actions hide-mobile"></th>
         </tr>
       </thead>
       <tbody>
@@ -20,28 +20,34 @@
             data-delivery-date="{{ job.estimated_delivery_at.isoformat() if job.estimated_delivery_at else '' }}"
             data-search="{{ job.code or '' }} {{ job.bicycle.client.full_name }} {{ job.bicycle.brand or '' }} {{ job.bicycle.model or '' }} {% for item in job.items %}{{ item.service_type.name }} {% endfor %}"
           >
-            <td class="hide-mobile">
+            <td class="col-jobs-code hide-mobile">
               <span class="job-code">{{ job.code or "-" }}</span>
             </td>
-            <td>
+            <td class="cell-wrap col-jobs-bike">
               <div class="table-title"><span class="truncate" title="{{ job.bicycle.client.full_name }}">{{ job.bicycle.client.full_name }}</span></div>
               <div class="muted"><span class="truncate" title="{{ job.bicycle.brand or 'Bicicleta' }} {{ job.bicycle.model or '' }}">{{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}</span></div>
             </td>
             <td class="show-mobile">
               <button class="button button-ghost button-compact job-modal-trigger" type="button" data-target="job-details-{{ job.id }}">Ver</button>
             </td>
-            <td class="hide-mobile">
+            <td class="col-jobs-service hide-mobile">
               {% if job.items %}
-                {% if job.items|length > 1 %}
-                  <span class="chip">{{ job.items|length }}</span>
-                {% else %}
-                  <span class="chip">{{ job.items[0].service_type.name }}</span>
-                {% endif %}
+                <span class="service-chip-stack">
+                  <span class="chip chip-main">{{ job.items[0].service_type.name }}</span>
+                  {% if job.items|length > 1 %}
+                    <span
+                      class="chip chip-badge"
+                      title="{% for item in job.items %}{{ item.service_type.name }}{% if not loop.last %}, {% endif %}{% endfor %}"
+                    >
+                      +{{ job.items|length - 1 }}
+                    </span>
+                  {% endif %}
+                </span>
               {% else %}
-                Sin service
+                <span class="muted">Sin service</span>
               {% endif %}
             </td>
-            <td class="hide-mobile">
+            <td class="col-jobs-status hide-mobile">
               <form method="post" action="{{ url_for('main.jobs_status', job_id=job.id) }}" class="inline-form status-form">
                 {{ status_form.csrf_token }}
                 <select name="status" class="input input-compact status-select status-{{ job.status }}">
@@ -53,9 +59,9 @@
                 </select>
               </form>
             </td>
-            <td class="hide-mobile">{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "" }}</td>
-            <td class="hide-mobile">{{ job.estimated_delivery_at.strftime("%d/%m/%Y") if job.estimated_delivery_at else "" }}</td>
-            <td class="table-actions hide-mobile">
+            <td class="col-jobs-date hide-mobile">{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "" }}</td>
+            <td class="col-jobs-delivery hide-mobile">{{ job.estimated_delivery_at.strftime("%d/%m/%Y") if job.estimated_delivery_at else "" }}</td>
+            <td class="table-actions table-actions-cell col-jobs-actions hide-mobile">
               <a class="button button-ghost button-compact" href="{{ url_for('main.jobs_detail', job_id=job.id) }}">Ver</a>
               <a class="button button-ghost button-compact" href="{{ url_for('main.jobs_edit', job_id=job.id) }}">Editar</a>
               {% if job.status != "in_progress" %}
