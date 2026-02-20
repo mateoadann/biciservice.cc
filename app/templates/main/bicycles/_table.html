@@ -1,24 +1,24 @@
 <div id="table-content">
   <div class="table-wrap table-scroll">
-    <table class="table table-mobile-cards">
+    <table class="table table-mobile-cards table-bicycles">
       <thead>
         <tr>
-          <th>Marca</th>
-          <th>Modelo</th>
-          <th>Descripcion</th>
-          <th>Cliente</th>
-          <th></th>
+          <th class="col-bike-brand">Marca</th>
+          <th class="col-bike-model">Modelo</th>
+          <th class="col-bike-description">Descripcion</th>
+          <th class="col-bike-client">Cliente</th>
+          <th class="col-bike-actions"></th>
         </tr>
       </thead>
       <tbody>
         {% for bicycle in bicycles %}
           {% set description = bicycle.description or "-" %}
           <tr data-brand="{{ bicycle.brand or '' }}" data-search="{{ bicycle.brand or '' }} {{ bicycle.model or '' }} {{ bicycle.description or '' }} {{ bicycle.client.full_name }}">
-            <td data-label="Marca"><span class="truncate" title="{{ bicycle.brand or '-' }}">{{ bicycle.brand or "-" }}</span></td>
-            <td data-label="Modelo"><span class="truncate" title="{{ bicycle.model or '-' }}">{{ bicycle.model or "-" }}</span></td>
-            <td data-label="Descripcion"><span class="truncate" title="{{ description }}">{{ description|truncate(45, True, '...') }}</span></td>
-            <td data-label="Cliente"><span class="truncate" title="{{ bicycle.client.full_name }}">{{ bicycle.client.full_name }}</span></td>
-            <td class="table-actions table-actions-cell" data-label="Acciones">
+            <td class="col-bike-brand" data-label="Marca"><span class="truncate" title="{{ bicycle.brand or '-' }}">{{ bicycle.brand or "-" }}</span></td>
+            <td class="col-bike-model" data-label="Modelo"><span class="truncate" title="{{ bicycle.model or '-' }}">{{ bicycle.model or "-" }}</span></td>
+            <td class="col-bike-description" data-label="Descripcion"><span class="truncate" title="{{ description }}">{{ description|truncate(45, True, '...') }}</span></td>
+            <td class="col-bike-client" data-label="Cliente"><span class="truncate" title="{{ bicycle.client.full_name }}">{{ bicycle.client.full_name }}</span></td>
+            <td class="col-bike-actions table-actions table-actions-cell" data-label="Acciones">
               <a class="button button-ghost button-compact" href="{{ url_for('main.bicycles_detail', bicycle_id=bicycle.id) }}">Ver</a>
               <form
                 method="post"

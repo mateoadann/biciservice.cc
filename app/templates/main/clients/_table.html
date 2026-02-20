@@ -1,25 +1,25 @@
 <div id="table-content">
   <div class="table-wrap table-scroll">
-    <table class="table table-mobile-cards">
+    <table class="table table-mobile-cards table-clients">
       <thead>
         <tr>
-          <th>Codigo</th>
-          <th>Nombre</th>
-          <th>Email</th>
-          <th>Telefono</th>
-          <th>Bicicletas</th>
-          <th></th>
+          <th class="col-client-code">Codigo</th>
+          <th class="col-client-name">Nombre</th>
+          <th class="col-client-email">Email</th>
+          <th class="col-client-phone">Telefono</th>
+          <th class="col-client-bikes">Bicicletas</th>
+          <th class="col-client-actions"></th>
         </tr>
       </thead>
       <tbody>
         {% for client in clients %}
           <tr data-bikes="{{ client.bicycles|length }}" data-search="{{ client.client_code }} {{ client.full_name }} {{ client.email or '' }} {{ client.phone or '' }}">
-            <td data-label="Codigo"><strong>#{{ client.client_code }}</strong></td>
-            <td data-label="Nombre"><span class="truncate" title="{{ client.full_name }}">{{ client.full_name }}</span></td>
-            <td data-label="Email"><span class="truncate" title="{{ client.email or '-' }}">{{ client.email or "-" }}</span></td>
-            <td data-label="Telefono">{{ client.phone or "-" }}</td>
-            <td data-label="Bicicletas">{{ client.bicycles|length }}</td>
-            <td class="table-actions table-actions-cell" data-label="Acciones">
+            <td class="col-client-code" data-label="Codigo"><strong>#{{ client.client_code }}</strong></td>
+            <td class="col-client-name cell-wrap" data-label="Nombre"><span class="truncate" title="{{ client.full_name }}">{{ client.full_name }}</span></td>
+            <td class="col-client-email cell-wrap" data-label="Email"><span class="truncate" title="{{ client.email or '-' }}">{{ client.email or "-" }}</span></td>
+            <td class="col-client-phone" data-label="Telefono">{{ client.phone or "-" }}</td>
+            <td class="col-client-bikes" data-label="Bicicletas">{{ client.bicycles|length }}</td>
+            <td class="col-client-actions table-actions table-actions-cell" data-label="Acciones">
               <a class="button button-ghost button-compact" href="{{ url_for('main.clients_detail', client_id=client.id) }}">Ver</a>
               <form
                 method="post"

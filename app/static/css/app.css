@@ -1320,6 +1320,7 @@ textarea.input:disabled,
 .table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .table th,
@@ -1327,7 +1328,232 @@ textarea.input:disabled,
   padding: 12px 10px;
   border-bottom: 1px solid var(--color-border);
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table .col-code {
+  width: 80px;
+}
+
+.table .col-service {
+  width: 130px;
+}
+
+.table .col-status {
+  width: 130px;
+}
+
+.table .col-date {
+  width: 110px;
+}
+
+.table .col-date-wide {
+  width: 140px;
+}
+
+.table .col-actions-3 {
+  width: 190px;
+}
+
+.table .col-actions-2 {
+  width: 120px;
+}
+
+.table td.cell-wrap {
+  white-space: normal;
+}
+
+.table.table-jobs .col-jobs-code {
+  width: 92px;
+}
+
+.table.table-jobs .col-jobs-status {
+  width: 160px;
+}
+
+.table.table-jobs .col-jobs-date {
+  width: 116px;
+}
+
+.table.table-jobs .col-jobs-delivery {
+  width: 124px;
+}
+
+.table.table-jobs .col-jobs-actions {
+  width: 214px;
+}
+
+.table.table-jobs .col-jobs-bike {
+  width: calc((100% - 706px) * 0.47);
+}
+
+.table.table-jobs .col-jobs-service {
+  width: calc((100% - 706px) * 0.53);
+}
+
+.table.table-jobs th.col-jobs-delivery {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.05;
+}
+
+.table.table-jobs th.col-jobs-delivery .th-break {
+  display: inline-block;
+}
+
+.table.table-jobs td.col-jobs-service {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table.table-jobs .service-chip-stack {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.table.table-jobs .service-chip-stack .chip-main {
+  display: inline-block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table.table-jobs .service-chip-stack .chip-badge {
+  flex-shrink: 0;
+}
+
+.table.table-jobs td.col-jobs-actions .table-actions {
+  flex-wrap: nowrap;
+  gap: 5px;
+}
+
+.table.table-jobs td.col-jobs-actions .button-danger.icon-button.button-compact {
+  padding: 0;
+  line-height: 1.2;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table.table-jobs td.col-jobs-actions .button-danger.icon-button.button-compact .icon {
+  display: block;
+  margin: 0;
+}
+
+.table.table-clients .col-client-code {
+  width: 92px;
+}
+
+.table.table-clients .col-client-phone {
+  width: 128px;
+}
+
+.table.table-clients .col-client-bikes {
+  width: 92px;
+}
+
+.table.table-clients .col-client-actions {
+  width: 172px;
+}
+
+.table.table-clients .col-client-name {
+  width: calc((100% - 484px) * 0.58);
+}
+
+.table.table-clients .col-client-email {
+  width: calc((100% - 484px) * 0.42);
+}
+
+.table.table-clients td.col-client-actions .table-actions {
+  flex-wrap: nowrap;
+}
+
+.table.table-bicycles .col-bike-brand {
+  width: 132px;
+}
+
+.table.table-bicycles .col-bike-client {
+  width: 220px;
+}
+
+.table.table-bicycles .col-bike-actions {
+  width: 172px;
+}
+
+.table.table-bicycles .col-bike-model {
+  width: calc((100% - 524px) * 0.4);
+}
+
+.table.table-bicycles .col-bike-description {
+  width: calc((100% - 524px) * 0.6);
+}
+
+.table.table-bicycles td.col-bike-actions .table-actions {
+  flex-wrap: nowrap;
+}
+
+.table.table-services .col-service-price {
+  width: 130px;
+}
+
+.table.table-services .col-service-status {
+  width: 120px;
+}
+
+.table.table-services .col-service-actions {
+  width: 212px;
+}
+
+.table.table-services .col-service-name {
+  width: calc(100% - 462px);
+}
+
+.table.table-services td.col-service-actions .table-actions {
+  flex-wrap: nowrap;
+}
+
+.table.table-jobs th,
+.table.table-jobs td,
+.table.table-clients th,
+.table.table-clients td,
+.table.table-bicycles th,
+.table.table-bicycles td,
+.table.table-services th,
+.table.table-services td {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.table.table-jobs .status-select.input-compact {
+  min-height: 38px;
+  padding: 6px 10px;
+}
+
+.table.table-jobs .button-compact,
+.table.table-clients .button-compact,
+.table.table-bicycles .button-compact,
+.table.table-services .button-compact {
+  min-height: 36px;
+  padding: 5px 10px;
+}
+
+.table.table-jobs .icon-button.button-compact,
+.table.table-clients .icon-button.button-compact,
+.table.table-bicycles .icon-button.button-compact,
+.table.table-services .icon-button.button-compact {
+  width: 36px;
+  height: 36px;
 }
 
 .table th {
@@ -1356,9 +1582,16 @@ textarea.input:disabled,
 
 .table-actions {
   display: flex;
+  align-items: center;
   gap: 6px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.table-actions .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .table-actions-cell {
@@ -1419,6 +1652,15 @@ html[data-theme="dark"] .table-scroll {
 
 .inline-form {
   display: inline;
+}
+
+.table-actions .inline-form {
+  display: contents;
+}
+
+.table-actions .icon-button .icon {
+  display: block;
+  margin: 0;
 }
 
 .status {
@@ -1627,6 +1869,20 @@ html[data-theme="dark"] .pill {
 .chip.accent {
   background: rgba(255, 140, 43, 0.18);
   color: #9a3412;
+}
+
+.chip-badge {
+  background: rgba(250, 204, 21, 0.18);
+  color: #facc15;
+  font-weight: 700;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  cursor: default;
+}
+
+html[data-theme="dark"] .chip-badge {
+  background: rgba(250, 204, 21, 0.18);
+  color: #facc15;
 }
 
 .metric {
@@ -3074,6 +3330,25 @@ html[data-theme="dark"] .button-ghost:hover {
     border: none;
     max-height: none;
     overflow: visible;
+    table-layout: auto;
+  }
+
+  .table-mobile-cards th,
+  .table-mobile-cards td {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .table.table-jobs th,
+  .table.table-jobs td,
+  .table.table-clients th,
+  .table.table-clients td,
+  .table.table-bicycles th,
+  .table.table-bicycles td,
+  .table.table-services th,
+  .table.table-services td {
+    width: auto;
   }
 
   .table-mobile-cards .table,
