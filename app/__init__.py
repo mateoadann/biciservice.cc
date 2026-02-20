@@ -1,8 +1,9 @@
 import click
+import logging
 import os
 from decimal import Decimal, InvalidOperation
 from datetime import datetime, timezone
-from flask import Flask, g, request, session, url_for, flash, redirect, send_from_directory
+from flask import Flask, g, request, session, url_for, flash, redirect, render_template, send_from_directory
 from flask_login import current_user
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
@@ -17,6 +18,12 @@ def create_app(config_class=Config):
     load_dotenv()
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    if not app.debug and not app.testing:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+        )
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
@@ -36,6 +43,10 @@ def create_app(config_class=Config):
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
+
+    @app.get("/health")
+    def health_check():
+        return "ok", 200
 
     @app.get("/manifest.webmanifest")
     def manifest_file():
@@ -73,6 +84,7 @@ def create_app(config_class=Config):
     def set_active_workshop():
         g.active_workshop = None
         g.active_store = None
+        g.workshop_stores = []
         if not current_user.is_authenticated:
             return
         if current_user.role == "super_admin":
@@ -87,18 +99,23 @@ def create_app(config_class=Config):
         if g.active_workshop is None:
             return
 
+        g.workshop_stores = (
+            Store.query.filter_by(workshop_id=g.active_workshop.id)
+            .order_by(Store.name.asc())
+            .all()
+        )
+
         active_store_id = session.get("active_store_id")
         store = None
         if active_store_id:
-            store = Store.query.filter_by(
-                id=active_store_id, workshop_id=g.active_workshop.id
-            ).first()
+            store = next((s for s in g.workshop_stores if s.id == active_store_id), None)
 
         if current_user.role != "owner":
             if current_user.store_id:
-                store = Store.query.filter_by(
-                    id=current_user.store_id, workshop_id=g.active_workshop.id
-                ).first()
+                store = next(
+                    (s for s in g.workshop_stores if s.id == current_user.store_id),
+                    None,
+                )
             else:
                 store = None
             if store:
@@ -107,11 +124,7 @@ def create_app(config_class=Config):
                 session.pop("active_store_id", None)
         else:
             if store is None:
-                store = (
-                    Store.query.filter_by(workshop_id=g.active_workshop.id)
-                    .order_by(Store.id.asc())
-                    .first()
-                )
+                store = min(g.workshop_stores, key=lambda s: s.id, default=None)
                 if store:
                     session["active_store_id"] = store.id
 
@@ -131,11 +144,7 @@ def create_app(config_class=Config):
         stores = []
         if g.get("active_workshop"):
             theme = g.active_workshop.theme()
-            stores = (
-                Store.query.filter_by(workshop_id=g.active_workshop.id)
-                .order_by(Store.name.asc())
-                .all()
-            )
+            stores = g.get("workshop_stores", [])
         else:
             theme = default_theme
         return {
@@ -146,6 +155,9 @@ def create_app(config_class=Config):
 
     @app.after_request
     def apply_security_headers(response):
+        if request.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "public, max-age=31536000"
+
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
@@ -155,8 +167,8 @@ def create_app(config_class=Config):
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "img-src 'self' data:; "
-            "style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; "
-            "font-src 'self' https://fonts.gstatic.com; "
+            "style-src 'self' 'unsafe-inline'; "
+            "font-src 'self'; "
             "script-src 'self' 'unsafe-inline'"
         )
         if request.is_secure:
@@ -167,6 +179,17 @@ def create_app(config_class=Config):
     def handle_csrf_error(error):
         flash("La sesion expiro. Intenta de nuevo.", "error")
         return redirect(request.referrer or url_for("auth.login")), 400
+
+    @app.errorhandler(404)
+    def not_found(error):
+        app.logger.info("404 %s %s", request.method, request.path)
+        return render_template("errors/404.html"), 404
+
+    @app.errorhandler(500)
+    def internal_error(error):
+        app.logger.error("500 %s %s", request.method, request.path, exc_info=True)
+        db.session.rollback()
+        return render_template("errors/500.html"), 500
 
     def format_currency(value):
         if value is None:

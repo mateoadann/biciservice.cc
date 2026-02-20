@@ -16,36 +16,36 @@
     <div class="panel-body">
       {% if services %}
         <div class="table-wrap table-scroll">
-          <table class="table table-mobile-cards">
+          <table class="table table-mobile-cards table-services">
             <thead>
               <tr>
-                <th>Nombre</th>
-                <th>Precio base</th>
-                <th>Estado</th>
-                <th></th>
+                <th class="col-service-name">Nombre</th>
+                <th class="col-service-price">Precio base</th>
+                <th class="col-service-status">Estado</th>
+                <th class="col-service-actions"></th>
               </tr>
             </thead>
             <tbody>
               {% for service in services %}
                 <tr>
-                  <td data-label="Nombre">
+                  <td class="col-service-name cell-wrap" data-label="Nombre">
                     <div class="table-title">{{ service.name }}</div>
                     <div class="muted">
                       {{ service.description|default("Sin descripcion")|truncate(50, True, "...") }}
                     </div>
                   </td>
-                  <td data-label="Precio base">$ {{ service.base_price|currency }}</td>
-                  <td data-label="Estado">
+                  <td class="col-service-price" data-label="Precio base">$ {{ service.base_price|currency }}</td>
+                  <td class="col-service-status" data-label="Estado">
                     {% if service.is_active %}
                       <span class="status success">Activo</span>
                     {% else %}
                       <span class="status muted">Pausado</span>
                     {% endif %}
                   </td>
-                  <td class="table-actions table-actions-cell" data-label="Acciones">
+                  <td class="col-service-actions table-actions table-actions-cell" data-label="Acciones">
                     <a class="button button-ghost button-compact" href="{{ url_for('main.services_detail', service_id=service.id) }}">Ver</a>
                     <a class="button button-ghost button-compact" href="{{ url_for('main.services_edit', service_id=service.id) }}">Editar</a>
-                    <form method="post" action="{{ url_for('main.services_delete', service_id=service.id) }}" class="inline-form js-confirm" data-confirm-title="Eliminar service" data-confirm-message="Vas a eliminar este service. ¿Continuar?" data-confirm-final="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?" data-confirm-final-accept="Eliminar">
+                    <form method="post" action="{{ url_for('main.services_delete', service_id=service.id) }}" class="inline-form js-confirm" data-confirm-title="Eliminar service" data-confirm-message="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?" data-confirm-final-accept="Eliminar">
                       {{ delete_form.hidden_tag() }}
                       <button class="button button-danger icon-button button-compact" type="submit" aria-label="Eliminar">
                         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">

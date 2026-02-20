@@ -27,7 +27,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v={{ config.CSS_VERSION }}">
   </head>
   <body class="auth-body">
     <div class="auth-card">
@@ -39,15 +39,7 @@
         </div>
       </div>
 
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div class="flash-stack">
-            {% for category, message in messages %}
-              <div class="flash {{ category }}">{{ message }}</div>
-            {% endfor %}
-          </div>
-        {% endif %}
-      {% endwith %}
+      {% include '_flash.html' %}
 
       <form method="post" class="auth-form">
         {{ form.hidden_tag() }}
@@ -101,5 +93,17 @@
       </div>
     </div>
     <script src="{{ url_for('static', filename='js/pwa-register.js') }}" defer></script>
+    <script>
+      document.querySelectorAll('.flash-close').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const flash = btn.closest('.flash');
+          if (!flash || flash.classList.contains('flash-hide')) {
+            return;
+          }
+          flash.classList.add('flash-hide');
+          setTimeout(() => flash.remove(), 300);
+        });
+      });
+    </script>
   </body>
 </html>

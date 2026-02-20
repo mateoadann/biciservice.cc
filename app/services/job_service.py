@@ -1,10 +1,15 @@
+import logging
 import random
 import string
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
+
 from ..extensions import db
 from ..models import Job, JobItem, JobPart, ServiceType
 from .audit_service import AuditService
+
+
+logger = logging.getLogger("job_service")
 
 class JobService:
     @staticmethod
@@ -24,6 +29,7 @@ class JobService:
         try:
             return Decimal(normalized)
         except InvalidOperation:
+            logger.warning("parse_decimal: valor no convertible=%r", value)
             return None
 
     @staticmethod

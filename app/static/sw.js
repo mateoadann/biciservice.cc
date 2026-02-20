@@ -1,6 +1,7 @@
-const CACHE_NAME_STATIC = "service-bicycle-static-v1";
+const CACHE_NAME_STATIC = "service-bicycle-static-v4";
 const STATIC_ASSETS = [
   "/static/css/app.css",
+  "/static/js/pagination.js",
   "/static/css/favicon_bike1.png",
   "/static/icons/pwa-192.png",
   "/static/icons/pwa-512.png",

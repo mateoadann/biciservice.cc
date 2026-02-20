@@ -32,199 +32,9 @@
               <option value="overdue" {% if active_status == "overdue" %}selected{% endif %}>Atrasado</option>
             </select>
           </label>
-          {% if pagination.pages > 1 %}
-            <div class="pagination pagination-top">
-              <div class="pagination-info">Mostrando {{ pagination.start }}-{{ pagination.end }} de {{ pagination.total }}</div>
-              <span class="pagination-page">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
-              <div class="pagination-actions">
-                {% if pagination.has_prev %}
-                  <a class="button button-ghost button-compact" href="{{ url_for('main.jobs', page=pagination.prev_num, status=active_status if active_status != 'all' else None) }}">Anterior</a>
-                {% else %}
-                  <span class="button button-ghost button-compact is-disabled" aria-disabled="true">Anterior</span>
-                {% endif %}
-                {% if pagination.has_next %}
-                  <a class="button button-ghost button-compact" href="{{ url_for('main.jobs', page=pagination.next_num, status=active_status if active_status != 'all' else None) }}">Siguiente</a>
-                {% else %}
-                  <span class="button button-ghost button-compact is-disabled" aria-disabled="true">Siguiente</span>
-                {% endif %}
-              </div>
-            </div>
-          {% endif %}
+          {% include "main/jobs/_pagination.html" %}
         </div>
-        <div class="table-wrap table-scroll">
-          <table class="table">
-            <thead>
-              <tr>
-                <th class="hide-mobile">Codigo</th>
-                <th>Bicicleta</th>
-                <th class="show-mobile">Ver</th>
-                <th class="hide-mobile">Service</th>
-                <th class="hide-mobile">Estado</th>
-                <th class="hide-mobile">Ingreso</th>
-                <th class="hide-mobile">Entrega estimada</th>
-                <th class="hide-mobile"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for job in jobs %}
-                <tr
-                  data-status="{{ job.status }}"
-                  data-delivery-date="{{ job.estimated_delivery_at.isoformat() if job.estimated_delivery_at else '' }}"
-                  data-search="{{ job.code or '' }} {{ job.bicycle.client.full_name }} {{ job.bicycle.brand or '' }} {{ job.bicycle.model or '' }} {% for item in job.items %}{{ item.service_type.name }} {% endfor %}"
-                >
-                  <td class="hide-mobile">
-                    <span class="job-code">{{ job.code or "-" }}</span>
-                  </td>
-                  <td>
-                    <div class="table-title"><span class="truncate" title="{{ job.bicycle.client.full_name }}">{{ job.bicycle.client.full_name }}</span></div>
-                    <div class="muted"><span class="truncate" title="{{ job.bicycle.brand or 'Bicicleta' }} {{ job.bicycle.model or '' }}">{{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}</span></div>
-                  </td>
-                  <td class="show-mobile">
-                    <button class="button button-ghost button-compact job-modal-trigger" type="button" data-target="job-details-{{ job.id }}">Ver</button>
-                  </td>
-                  <td class="hide-mobile">
-                    {% if job.items %}
-                      {% if job.items|length > 1 %}
-                        <span class="chip">{{ job.items|length }}</span>
-                      {% else %}
-                        <span class="chip">{{ job.items[0].service_type.name }}</span>
-                      {% endif %}
-                    {% else %}
-                      Sin service
-                    {% endif %}
-                  </td>
-                  <td class="hide-mobile">
-                    <form method="post" action="{{ url_for('main.jobs_status', job_id=job.id) }}" class="inline-form status-form">
-                      {{ status_form.csrf_token }}
-                      <select name="status" class="input input-compact status-select status-{{ job.status }}">
-                        <option value="open" {% if job.status == "open" %}selected{% endif %}>Abierto</option>
-                        <option value="in_progress" {% if job.status == "in_progress" %}selected{% endif %}>En progreso</option>
-                        <option value="ready" {% if job.status == "ready" %}selected{% endif %}>Listo</option>
-                        <option value="closed" {% if job.status == "closed" %}selected{% endif %}>Cerrado</option>
-                        <option value="cancelled" {% if job.status == "cancelled" %}selected{% endif %}>Cancelado</option>
-                      </select>
-                    </form>
-                  </td>
-                  <td class="hide-mobile">{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "" }}</td>
-                  <td class="hide-mobile">{{ job.estimated_delivery_at.strftime("%d/%m/%Y") if job.estimated_delivery_at else "" }}</td>
-                  <td class="table-actions hide-mobile">
-                    <a class="button button-ghost button-compact" href="{{ url_for('main.jobs_detail', job_id=job.id) }}">Ver</a>
-                    <a class="button button-ghost button-compact" href="{{ url_for('main.jobs_edit', job_id=job.id) }}">Editar</a>
-                    {% if job.status != "in_progress" %}
-                      <form
-                        method="post"
-                        action="{{ url_for('main.jobs_delete', job_id=job.id) }}"
-                        class="inline-form js-confirm"
-                        data-confirm-title="Eliminar trabajo"
-                        data-confirm-message="Vas a eliminar este trabajo. ¿Continuar?"
-                        data-confirm-final="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?"
-                        data-confirm-final-accept="Eliminar"
-                      >
-                        {{ delete_form.hidden_tag() }}
-                        <button class="button button-danger icon-button button-compact" type="submit" aria-label="Eliminar">
-                          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M8 6V4h8v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M6 6l1 14h10l1-14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                        </button>
-                      </form>
-                    {% endif %}
-                  </td>
-                </tr>
-                <template id="job-details-{{ job.id }}">
-                  <div class="modal-section">
-                    <div class="modal-title">Bicicleta</div>
-                    <div>{{ job.bicycle.client.full_name }}</div>
-                    <div class="muted">{{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}</div>
-                  </div>
-                  <div class="modal-section">
-                    <div class="modal-title">Codigo</div>
-                    <div>{{ job.code or "-" }}</div>
-                  </div>
-                  <div class="modal-section">
-                    <div class="modal-title">Estado</div>
-                    <div>
-                      {% if job.status == "open" %}Abierto{% endif %}
-                      {% if job.status == "in_progress" %}En progreso{% endif %}
-                      {% if job.status == "ready" %}Listo{% endif %}
-                      {% if job.status == "closed" %}Cerrado{% endif %}
-                      {% if job.status == "cancelled" %}Cancelado{% endif %}
-                    </div>
-                  </div>
-                  <div class="modal-section">
-                    <div class="modal-title">Services</div>
-                    {% set totals = namespace(service=0, parts=0) %}
-                    {% if job.items %}
-                      <div class="modal-list">
-                        {% for item in job.items %}
-                          {% set item_total = (item.unit_price or 0) * item.quantity %}
-                          {% set totals.service = totals.service + item_total %}
-                          <div class="modal-row">
-                            <span>{{ item.service_type.name }}</span>
-                            <span>$ {{ item.unit_price|currency }}</span>
-                          </div>
-                        {% endfor %}
-                      </div>
-                      <div class="modal-total">
-                        <span>Total servicios</span>
-                        <span>$ {{ totals.service|currency }}</span>
-                      </div>
-                    {% else %}
-                      <div class="muted">Sin services asignados.</div>
-                    {% endif %}
-                  </div>
-                  <div class="modal-section">
-                    <div class="modal-title">Repuestos y gastos</div>
-                    {% if job.parts %}
-                      <div class="modal-list">
-                        {% for part in job.parts %}
-                          {% set part_total = (part.unit_price or 0) * part.quantity %}
-                          {% set totals.parts = totals.parts + part_total %}
-                          <div class="modal-row">
-                            <span>{{ part.description }}</span>
-                            <span>$ {{ part.unit_price|currency }}</span>
-                          </div>
-                        {% endfor %}
-                      </div>
-                      <div class="modal-total">
-                        <span>Total repuestos</span>
-                        <span>$ {{ totals.parts|currency }}</span>
-                      </div>
-                    {% else %}
-                      <div class="muted">Sin repuestos cargados.</div>
-                    {% endif %}
-                  </div>
-                  <div class="modal-section">
-                    <div class="modal-title">Total</div>
-                    <div class="modal-total">
-                      <span>Total del trabajo</span>
-                      <span>$ {{ (totals.service + totals.parts)|currency }}</span>
-                    </div>
-                  </div>
-                  <div class="modal-section">
-                    <div class="modal-title">Ingreso al taller</div>
-                    <div>{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "" }}</div>
-                  </div>
-                  <div class="modal-section">
-                    <div class="modal-title">Entrega estimada</div>
-                    <div>{{ job.estimated_delivery_at.strftime("%d/%m/%Y") if job.estimated_delivery_at else "" }}</div>
-                  </div>
-                  {% if job.notes %}
-                    <div class="modal-section">
-                      <div class="modal-title">Notas</div>
-                      <div>{{ job.notes }}</div>
-                    </div>
-                  {% endif %}
-                </template>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        <div class="empty-state empty-state-inline table-empty-results is-hidden" id="jobNoResults">
-          <h3>Sin resultados</h3>
-          <p class="muted">No hay trabajos que coincidan con la busqueda o estado seleccionado.</p>
-        </div>
+        {% include "main/jobs/_table.html" %}
       {% else %}
         <div class="empty-state">
           <h3>No hay trabajos aun</h3>
@@ -247,6 +57,11 @@
     const modal = document.querySelector("#jobModal");
     const modalBody = modal ? modal.querySelector(".modal-body") : null;
     const modalClose = modal ? modal.querySelector(".modal-close") : null;
+    const jobSearch = document.querySelector("#jobSearch");
+    const jobStatusFilter = document.querySelector("#jobStatusFilter");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
     const closeModal = () => {
       if (modal) {
@@ -254,18 +69,6 @@
         modal.setAttribute("aria-hidden", "true");
       }
     };
-
-    document.querySelectorAll(".job-modal-trigger").forEach((button) => {
-      button.addEventListener("click", () => {
-        const targetId = button.dataset.target;
-        const template = document.querySelector(`#${targetId}`);
-        if (template && modalBody) {
-          modalBody.innerHTML = template.innerHTML;
-          modal.classList.add("is-open");
-          modal.setAttribute("aria-hidden", "false");
-        }
-      });
-    });
 
     const statusClasses = [
       "status-open",
@@ -282,28 +85,17 @@
       }
     };
 
-    document.querySelectorAll(".status-select").forEach((select) => {
-      applyStatusClass(select);
-      select.addEventListener("change", () => {
+    const applyStatusClasses = () => {
+      document.querySelectorAll("#table-content .status-select").forEach((select) => {
         applyStatusClass(select);
-        const form = select.closest("form");
-        if (form) {
-          form.submit();
-        }
       });
-    });
-
-    const jobSearch = document.querySelector("#jobSearch");
-    const jobStatusFilter = document.querySelector("#jobStatusFilter");
-    const jobRows = document.querySelectorAll("tbody tr[data-status]");
-    const jobNoResults = document.querySelector("#jobNoResults");
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    };
 
     const filterJobs = () => {
       const query = (jobSearch?.value || "").toLowerCase().trim();
       const status = jobStatusFilter?.value || "all";
+      const jobRows = document.querySelectorAll("#table-content tbody tr[data-status]");
+      const jobNoResults = document.querySelector("#jobNoResults");
       let visibleCount = 0;
 
       jobRows.forEach((row) => {
@@ -326,6 +118,33 @@
       }
     };
 
+    document.addEventListener("click", (event) => {
+      const trigger = event.target.closest(".job-modal-trigger");
+      if (!trigger || !modalBody || !modal) {
+        return;
+      }
+      const targetId = trigger.dataset.target;
+      const template = document.querySelector(`#${targetId}`);
+      if (!template) {
+        return;
+      }
+      modalBody.innerHTML = template.innerHTML;
+      modal.classList.add("is-open");
+      modal.setAttribute("aria-hidden", "false");
+    });
+
+    document.addEventListener("change", (event) => {
+      const select = event.target.closest(".status-select");
+      if (!select) {
+        return;
+      }
+      applyStatusClass(select);
+      const form = select.closest("form");
+      if (form) {
+        form.submit();
+      }
+    });
+
     if (jobSearch) {
       jobSearch.addEventListener("input", filterJobs);
     }
@@ -344,6 +163,13 @@
         window.location.href = target;
       });
     }
+
+    document.addEventListener("pagination:updated", () => {
+      applyStatusClasses();
+      filterJobs();
+    });
+
+    applyStatusClasses();
     filterJobs();
 
     if (modalClose) {

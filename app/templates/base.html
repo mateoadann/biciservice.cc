@@ -31,14 +31,8 @@
   <link rel="apple-touch-icon" href="{{ url_for('apple_touch_icon') }}">
   <link rel="manifest" href="{{ url_for('manifest_file') }}">
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
-    rel="stylesheet">
-
   <!-- Styles -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v={{ config.CSS_VERSION }}">
 
   <!-- Custom Theme Colors -->
   <style>
@@ -263,15 +257,8 @@
       </header>
       {% endif %}
 
-      {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-      <div class="flash-stack flash-stack-page">
-        {% for category, message in messages %}
-        <div class="flash {{ category }}">{{ message }}</div>
-        {% endfor %}
-      </div>
-      {% endif %}
-      {% endwith %}
+      {% set flash_stack_class = 'flash-stack flash-stack-page' %}
+      {% include '_flash.html' %}
 
       {% block content %}{% endblock %}
     </main>
@@ -294,6 +281,7 @@
   </div>
 
   <script src="{{ url_for('static', filename='js/pwa-register.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/pagination.js') }}" defer></script>
   <script>
     const navToggle = document.querySelector('.nav-toggle');
     const nav = document.querySelector('.nav');
@@ -477,19 +465,18 @@
         confirmAccept.textContent = confirmForm.dataset.confirmFinalAccept || 'Confirmar';
         return;
       }
-      confirmForm.dataset.confirmed = 'true';
+      const formToSubmit = confirmForm;
       closeConfirmModal();
-      confirmForm.submit();
+      formToSubmit.submit();
     });
 
-    document.querySelectorAll('form.js-confirm').forEach((form) => {
-      form.addEventListener('submit', (event) => {
-        if (form.dataset.confirmed === 'true') {
-          return;
-        }
-        event.preventDefault();
-        openConfirmModal(form);
-      });
+    document.addEventListener('submit', (event) => {
+      const form = event.target.closest('form.js-confirm');
+      if (!form) {
+        return;
+      }
+      event.preventDefault();
+      openConfirmModal(form);
     });
 
     collapseToggle?.addEventListener('click', () => {
@@ -513,10 +500,23 @@
       });
     }
 
+    const hideFlash = (flash) => {
+      if (!flash || flash.classList.contains('flash-hide')) {
+        return;
+      }
+      flash.classList.add('flash-hide');
+      setTimeout(() => flash.remove(), 300);
+    };
+
+    document.querySelectorAll('.flash-close').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        hideFlash(btn.closest('.flash'));
+      });
+    });
+
     setTimeout(() => {
-      document.querySelectorAll('.flash').forEach((el) => {
-        el.classList.add('flash-hide');
-        setTimeout(() => el.remove(), 300);
+      document.querySelectorAll('.flash').forEach((flash) => {
+        hideFlash(flash);
       });
     }, 4000);
   </script>

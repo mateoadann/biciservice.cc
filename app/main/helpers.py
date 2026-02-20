@@ -9,6 +9,7 @@ from decimal import Decimal, InvalidOperation
 
 from flask import current_app, flash, g, redirect, url_for, session
 from flask_login import current_user
+from sqlalchemy.orm import joinedload
 from PIL import Image
 from io import BytesIO
 
@@ -261,6 +262,7 @@ def store_choices(workshop):
 def bicycle_choices(workshop):
     bicycles = (
         Bicycle.query.filter_by(workshop_id=workshop.id)
+        .options(joinedload(Bicycle.client))
         .order_by(Bicycle.id.desc())
         .all()
     )
