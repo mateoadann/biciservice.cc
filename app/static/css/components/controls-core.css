@@ -1,0 +1,34 @@
+.button {
+  border: none;
+  padding: 10px 16px;
+  min-height: var(--touch-target);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--color-primary), #5d7bff);
+  color: #fff;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+}
+
+a.button {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button-ghost {
+  background: transparent;
+  color: var(--color-primary);
+  border: 1px solid rgba(31, 76, 255, 0.3);
+  box-shadow: none;
+}
+
+.button-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  box-shadow: none;
+}
+

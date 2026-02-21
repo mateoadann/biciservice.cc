@@ -13,7 +13,9 @@
   }
 
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch((error) => {
+    const assetVersion = window.__ASSET_VERSION__ || "dev";
+    const swUrl = `/sw.js?v=${encodeURIComponent(assetVersion)}`;
+    navigator.serviceWorker.register(swUrl, { scope: "/" }).catch((error) => {
       console.warn("No se pudo registrar el service worker", error);
     });
   });
