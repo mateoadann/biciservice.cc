@@ -21,6 +21,9 @@
       document.documentElement.classList.remove('dark');
     }
   </script>
+  <script>
+    window.__ASSET_VERSION__ = {{ asset_version|tojson }};
+  </script>
 
   <!-- Favicon -->
   {% if theme.favicon_path %}
@@ -32,7 +35,7 @@
   <link rel="manifest" href="{{ url_for('manifest_file') }}">
 
   <!-- Styles -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v={{ config.CSS_VERSION }}">
+  <link rel="stylesheet" href="{{ asset_url('css/app.css') }}">
 
   <!-- Custom Theme Colors -->
   <style>
@@ -280,8 +283,8 @@
     </div>
   </div>
 
-  <script src="{{ url_for('static', filename='js/pwa-register.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/pagination.js') }}" defer></script>
+  <script src="{{ asset_url('js/pwa-register.js') }}" defer></script>
+  <script src="{{ asset_url('js/pagination.js') }}" defer></script>
   <script>
     const navToggle = document.querySelector('.nav-toggle');
     const nav = document.querySelector('.nav');

@@ -1,0 +1,121 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(64px, 10vh, 96px) 20px 24px;
+  overflow-y: auto;
+  z-index: 80;
+}
+
+.modal-overlay.is-open {
+  display: flex;
+}
+
+.modal {
+  width: min(520px, 100%);
+  background: var(--color-surface);
+  border-radius: 18px;
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.modal-close {
+  border: 1px solid var(--color-border);
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--color-ink);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-close:hover,
+.modal-close:focus-visible {
+  background: rgba(31, 76, 255, 0.14);
+  border-color: rgba(31, 76, 255, 0.35);
+  color: var(--color-primary);
+}
+
+html[data-theme="dark"] .modal-close {
+  background: rgba(148, 163, 184, 0.18);
+  border-color: rgba(148, 163, 184, 0.42);
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .modal-close:hover,
+html[data-theme="dark"] .modal-close:focus-visible {
+  background: rgba(250, 204, 21, 0.2);
+  border-color: rgba(250, 204, 21, 0.45);
+  color: #f8fafc;
+}
+
+.modal-body {
+  display: grid;
+  gap: 14px;
+}
+
+.confirm-modal #confirmMessage {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-ink);
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-section {
+  display: grid;
+  gap: 6px;
+}
+
+.modal-title {
+  font-weight: 600;
+}
+
+.modal-list {
+  display: grid;
+  gap: 10px;
+}
+
+.modal-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+  padding: 6px 0;
+}
+
+.modal-row + .modal-row {
+  border-top: 1px dashed var(--color-border);
+}
+
+.modal-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 600;
+  margin-top: 10px;
+}
+

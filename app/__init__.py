@@ -3,7 +3,17 @@ import logging
 import os
 from decimal import Decimal, InvalidOperation
 from datetime import datetime, timezone
-from flask import Flask, g, request, session, url_for, flash, redirect, render_template, send_from_directory
+from flask import (
+    Flask,
+    g,
+    request,
+    session,
+    url_for,
+    flash,
+    redirect,
+    render_template,
+    send_from_directory,
+)
 from flask_login import current_user
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
@@ -60,10 +70,24 @@ def create_app(config_class=Config):
 
     @app.get("/sw.js")
     def service_worker_file():
-        response = send_from_directory(
-            app.static_folder,
-            "sw.js",
+        response = app.response_class(
+            render_template(
+                "sw.js.j2",
+                asset_version=app.config["ASSET_VERSION"],
+            ),
             mimetype="application/javascript",
+        )
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        return response
+
+    @app.get("/app.css")
+    def app_css_file():
+        response = app.response_class(
+            render_template(
+                "app.css.j2",
+                asset_version=app.config["ASSET_VERSION"],
+            ),
+            mimetype="text/css",
         )
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         return response
@@ -147,10 +171,19 @@ def create_app(config_class=Config):
             stores = g.get("workshop_stores", [])
         else:
             theme = default_theme
+        asset_version = app.config["ASSET_VERSION"]
+
+        def asset_url(path: str) -> str:
+            if path == "css/app.css":
+                return url_for("app_css_file", v=asset_version)
+            return url_for("static", filename=path, v=asset_version)
+
         return {
             "theme": theme,
             "stores": stores,
             "active_store": g.get("active_store"),
+            "asset_version": asset_version,
+            "asset_url": asset_url,
         }
 
     @app.after_request
