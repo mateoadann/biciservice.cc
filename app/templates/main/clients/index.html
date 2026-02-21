@@ -18,7 +18,7 @@
         <div class="table-filters">
           <label class="filter-field">
             <span>Buscar</span>
-            <input class="input input-compact" id="clientSearch" type="search" placeholder="Buscar cliente">
+            <input class="input input-compact" id="clientSearch" type="search" placeholder="Buscar cliente" value="{{ search_query }}">
           </label>
           <label class="filter-field">
             <span>Filtro</span>
@@ -33,25 +33,32 @@
         {% include "main/clients/_table.html" %}
       {% else %}
         <div class="empty-state">
-          <h3>No hay clientes aun</h3>
-          <p class="muted">Crea el primer cliente para empezar a registrar bicicletas.</p>
+          {% if search_query %}
+            <h3>Sin resultados</h3>
+            <p class="muted">No hay clientes que coincidan con la busqueda.</p>
+          {% else %}
+            <h3>No hay clientes aun</h3>
+            <p class="muted">Crea el primer cliente para empezar a registrar bicicletas.</p>
+          {% endif %}
           <a class="button" href="{{ url_for('main.clients_create') }}">Crear cliente</a>
         </div>
       {% endif %}
     </div>
   </section>
   <script>
+    document.addEventListener("DOMContentLoaded", () => {
     const clientSearch = document.querySelector("#clientSearch");
     const clientFilter = document.querySelector("#clientFilter");
+    const tableSearch = window.TableSearch;
 
-    const filterClients = () => {
-      const query = (clientSearch?.value || "").toLowerCase().trim();
+    const applyClientFilters = (queryValue = "") => {
       const filter = clientFilter?.value || "all";
-      const clientRows = document.querySelectorAll("#table-content tbody tr");
-      const clientNoResults = document.querySelector("#clientNoResults");
+      const query = queryValue.toLowerCase().trim();
+      const rows = document.querySelectorAll("#table-content tbody tr");
+      const noResults = document.querySelector("#clientNoResults");
       let visibleCount = 0;
 
-      clientRows.forEach((row) => {
+      rows.forEach((row) => {
         const haystack = (row.dataset.search || "").toLowerCase();
         const bikes = parseInt(row.dataset.bikes || "0", 10);
         const matchesQuery = !query || haystack.includes(query);
@@ -64,19 +71,31 @@
         }
       });
 
-      if (clientNoResults) {
-        clientNoResults.classList.toggle("is-hidden", visibleCount > 0);
+      if (noResults) {
+        const hasRows = rows.length > 0;
+        noResults.classList.toggle("is-hidden", hasRows && visibleCount > 0);
       }
     };
 
-    if (clientSearch) {
-      clientSearch.addEventListener("input", filterClients);
-    }
-    if (clientFilter) {
-      clientFilter.addEventListener("change", filterClients);
-    }
+    if (clientSearch && tableSearch) {
+      const controller = tableSearch.createTableSearch({
+        searchInput: clientSearch,
+        debounceMs: 700,
+        minChars: 2,
+        applyLocalFilter: applyClientFilters,
+        onTableUpdated: () => applyClientFilters(clientSearch.value),
+      });
 
-    document.addEventListener("pagination:updated", filterClients);
-    filterClients();
+      clientFilter?.addEventListener("change", () => {
+        applyClientFilters(clientSearch.value);
+      });
+
+      document.addEventListener("table:updated", () => {
+        applyClientFilters(clientSearch.value);
+      });
+
+      applyClientFilters(clientSearch.value);
+    }
+    });
   </script>
 {% endblock %}

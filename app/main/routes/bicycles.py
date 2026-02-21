@@ -1,8 +1,10 @@
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required
+from sqlalchemy import func, or_
+
 from app.main import main_bp
 from app.extensions import db
-from app.models import Bicycle, Job
+from app.models import Bicycle, Client, Job
 from app.services.client_service import ClientService
 from app.services.audit_service import AuditService
 from app.main.forms import BicycleForm, DeleteForm
@@ -23,13 +25,35 @@ def bicycles():
         return redirect_response
 
     page = request.args.get("page", 1, type=int)
-    query = Bicycle.query.filter_by(workshop_id=workshop.id).order_by(Bicycle.id.desc())
+    search_query = (request.args.get("q") or "").strip()
+    active_brand = (request.args.get("brand") or "all").strip()
+    if not active_brand:
+        active_brand = "all"
+
+    query = Bicycle.query.join(Client).filter(Bicycle.workshop_id == workshop.id)
+    if active_brand.lower() != "all":
+        query = query.filter(func.lower(func.coalesce(Bicycle.brand, "")) == active_brand.lower())
+
+    if search_query:
+        search_term = f"%{search_query.lower()}%"
+        query = query.filter(
+            or_(
+                func.lower(func.coalesce(Bicycle.brand, "")).like(search_term),
+                func.lower(func.coalesce(Bicycle.model, "")).like(search_term),
+                func.lower(func.coalesce(Bicycle.description, "")).like(search_term),
+                func.lower(func.coalesce(Client.full_name, "")).like(search_term),
+            )
+        )
+
+    query = query.order_by(Bicycle.id.desc())
     pagination = paginate_query(query, page)
     
     table_template_data = {
         "bicycles": pagination["items"],
         "pagination": pagination,
         "delete_form": DeleteForm(),
+        "search_query": search_query,
+        "active_brand": active_brand,
     }
 
     if request.args.get("partial"):

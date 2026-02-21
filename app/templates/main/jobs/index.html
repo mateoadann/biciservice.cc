@@ -17,7 +17,7 @@
       <div class="table-filters">
         <label class="filter-field">
           <span>Buscar</span>
-          <input class="input input-compact" id="jobSearch" type="search" placeholder="Buscar por cliente, bici o service">
+          <input class="input input-compact" id="jobSearch" type="search" placeholder="Buscar por cliente, bici o service" value="{{ search_query }}">
         </label>
         <label class="filter-field">
           <span>Estado</span>
@@ -46,11 +46,13 @@
     </div>
   </div>
   <script>
+    document.addEventListener("DOMContentLoaded", () => {
     const modal = document.querySelector("#jobModal");
     const modalBody = modal ? modal.querySelector(".modal-body") : null;
     const modalClose = modal ? modal.querySelector(".modal-close") : null;
     const jobSearch = document.querySelector("#jobSearch");
     const jobStatusFilter = document.querySelector("#jobStatusFilter");
+    const tableSearch = window.TableSearch;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -83,15 +85,14 @@
       });
     };
 
-    const filterJobs = () => {
-      const query = (jobSearch?.value || "").toLowerCase().trim();
+    const applyJobFilters = (queryValue = "") => {
+      const query = queryValue.toLowerCase().trim();
       const status = jobStatusFilter?.value || "all";
-      const jobRows = document.querySelectorAll("#table-content tbody tr[data-status]");
-      const hasRows = jobRows.length > 0;
-      const jobNoResults = document.querySelector("#jobNoResults");
+      const rows = document.querySelectorAll("#table-content tbody tr[data-status]");
+      const noResults = document.querySelector("#jobNoResults");
       let visibleCount = 0;
 
-      jobRows.forEach((row) => {
+      rows.forEach((row) => {
         const haystack = (row.dataset.search || "").toLowerCase();
         const rowStatus = row.dataset.status || "";
         const deliveryDate = row.dataset.deliveryDate || "";
@@ -106,8 +107,9 @@
         }
       });
 
-      if (jobNoResults) {
-        jobNoResults.classList.toggle("is-hidden", !hasRows || visibleCount > 0);
+      if (noResults) {
+        const hasRows = rows.length > 0;
+        noResults.classList.toggle("is-hidden", hasRows && visibleCount > 0);
       }
     };
 
@@ -138,32 +140,44 @@
       }
     });
 
-    if (jobSearch) {
-      jobSearch.addEventListener("input", filterJobs);
-    }
-    if (jobStatusFilter) {
-      jobStatusFilter.addEventListener("change", () => {
-        const selectedStatus = jobStatusFilter.value || "all";
-        const params = new URLSearchParams(window.location.search);
-        params.delete("page");
-        if (selectedStatus === "all") {
-          params.delete("status");
-        } else {
-          params.set("status", selectedStatus);
-        }
-        const queryString = params.toString();
-        const target = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname;
-        window.location.href = target;
+    if (jobSearch && tableSearch) {
+      const controller = tableSearch.createTableSearch({
+        searchInput: jobSearch,
+        debounceMs: 700,
+        minChars: 2,
+        applyLocalFilter: applyJobFilters,
+        collectParams: (params) => {
+          const selectedStatus = jobStatusFilter?.value || "all";
+          if (selectedStatus === "all") {
+            params.delete("status");
+          } else {
+            params.set("status", selectedStatus);
+          }
+        },
+        onTableUpdated: () => {
+          applyStatusClasses();
+          applyJobFilters(jobSearch.value);
+        },
+      });
+
+      jobStatusFilter?.addEventListener("change", () => {
+        applyJobFilters(jobSearch.value);
+        controller?.refresh("push");
       });
     }
 
     document.addEventListener("pagination:updated", () => {
       applyStatusClasses();
-      filterJobs();
+      applyJobFilters(jobSearch?.value || "");
+    });
+
+    document.addEventListener("table:updated", () => {
+      applyStatusClasses();
+      applyJobFilters(jobSearch?.value || "");
     });
 
     applyStatusClasses();
-    filterJobs();
+    applyJobFilters(jobSearch?.value || "");
 
     if (modalClose) {
       modalClose.addEventListener("click", closeModal);
@@ -181,6 +195,7 @@
       if (event.key === "Escape") {
         closeModal();
       }
+    });
     });
   </script>
 {% endblock %}

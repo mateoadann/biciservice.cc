@@ -175,7 +175,9 @@
         {% else %}
           <tr class="table-empty-row">
             <td colspan="8" class="muted">
-              {% if active_status == "all" %}
+              {% if search_query %}
+                No hay trabajos que coincidan con la busqueda.
+              {% elif active_status == "all" %}
                 No hay trabajos aun.
               {% else %}
                 No se encontraron trabajos con ese estado.

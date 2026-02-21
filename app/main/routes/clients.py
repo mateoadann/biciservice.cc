@@ -1,5 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required
+from sqlalchemy import func, or_
+
 from app.main import main_bp
 from app.models import Client
 from app.services.client_service import ClientService
@@ -13,14 +15,29 @@ def clients():
     workshop, redirect_response = get_workshop_or_redirect()
     if redirect_response:
         return redirect_response
+
     page = request.args.get("page", 1, type=int)
+    search_query = (request.args.get("q") or "").strip()
+    search_term = f"%{search_query.lower()}%"
+
     query = Client.query.filter_by(workshop_id=workshop.id).order_by(Client.full_name.asc())
+    if search_query:
+        query = query.filter(
+            or_(
+                func.lower(Client.client_code).like(search_term),
+                func.lower(Client.full_name).like(search_term),
+                func.lower(func.coalesce(Client.email, "")).like(search_term),
+                func.lower(func.coalesce(Client.phone, "")).like(search_term),
+            )
+        )
+
     pagination = paginate_query(query, page)
 
     template_data = {
         "clients": pagination["items"],
         "pagination": pagination,
         "delete_form": DeleteForm(),
+        "search_query": search_query,
     }
 
     if request.args.get("partial"):

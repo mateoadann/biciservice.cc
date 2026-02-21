@@ -18,14 +18,14 @@
         <div class="table-filters">
           <label class="filter-field">
             <span>Buscar</span>
-            <input class="input input-compact" id="bicycleSearch" type="search" placeholder="Buscar bicicleta o cliente">
+            <input class="input input-compact" id="bicycleSearch" type="search" placeholder="Buscar bicicleta o cliente" value="{{ search_query }}">
           </label>
           <label class="filter-field">
             <span>Marca</span>
             <select class="input input-compact" id="bicycleBrandFilter">
-              <option value="all">Todas</option>
+              <option value="all" {% if active_brand == "all" %}selected{% endif %}>Todas</option>
               {% for brand in brands %}
-                <option value="{{ brand }}">{{ brand }}</option>
+                <option value="{{ brand }}" {% if active_brand|lower == brand|lower %}selected{% endif %}>{{ brand }}</option>
               {% endfor %}
             </select>
           </label>
@@ -34,29 +34,36 @@
         {% include "main/bicycles/_table.html" %}
       {% else %}
         <div class="empty-state">
-          <h3>No hay bicicletas aun</h3>
-          <p class="muted">Registra una bicicleta vinculada a un cliente.</p>
+          {% if search_query or active_brand != "all" %}
+            <h3>Sin resultados</h3>
+            <p class="muted">No hay bicicletas que coincidan con la busqueda o marca seleccionada.</p>
+          {% else %}
+            <h3>No hay bicicletas aun</h3>
+            <p class="muted">Registra una bicicleta vinculada a un cliente.</p>
+          {% endif %}
           <a class="button" href="{{ url_for('main.bicycles_create') }}">Crear bicicleta</a>
         </div>
       {% endif %}
     </div>
   </section>
   <script>
+    document.addEventListener("DOMContentLoaded", () => {
     const bicycleSearch = document.querySelector("#bicycleSearch");
     const bicycleBrandFilter = document.querySelector("#bicycleBrandFilter");
+    const tableSearch = window.TableSearch;
 
-    const filterBicycles = () => {
-      const query = (bicycleSearch?.value || "").toLowerCase().trim();
-      const brand = bicycleBrandFilter?.value || "all";
-      const bicycleRows = document.querySelectorAll("#table-content tbody tr");
-      const bicycleNoResults = document.querySelector("#bicycleNoResults");
+    const applyBicycleFilters = (queryValue = "") => {
+      const query = queryValue.toLowerCase().trim();
+      const brand = (bicycleBrandFilter?.value || "all").toLowerCase();
+      const rows = document.querySelectorAll("#table-content tbody tr");
+      const noResults = document.querySelector("#bicycleNoResults");
       let visibleCount = 0;
 
-      bicycleRows.forEach((row) => {
+      rows.forEach((row) => {
         const haystack = (row.dataset.search || "").toLowerCase();
         const rowBrand = (row.dataset.brand || "").toLowerCase();
         const matchesQuery = !query || haystack.includes(query);
-        const matchesBrand = brand === "all" || rowBrand === brand.toLowerCase();
+        const matchesBrand = brand === "all" || rowBrand === brand;
         const isVisible = matchesQuery && matchesBrand;
         row.style.display = isVisible ? "" : "none";
         if (isVisible) {
@@ -64,19 +71,40 @@
         }
       });
 
-      if (bicycleNoResults) {
-        bicycleNoResults.classList.toggle("is-hidden", visibleCount > 0);
+      if (noResults) {
+        const hasRows = rows.length > 0;
+        noResults.classList.toggle("is-hidden", hasRows && visibleCount > 0);
       }
     };
 
-    if (bicycleSearch) {
-      bicycleSearch.addEventListener("input", filterBicycles);
-    }
-    if (bicycleBrandFilter) {
-      bicycleBrandFilter.addEventListener("change", filterBicycles);
-    }
+    if (bicycleSearch && tableSearch) {
+      const controller = tableSearch.createTableSearch({
+        searchInput: bicycleSearch,
+        debounceMs: 700,
+        minChars: 2,
+        applyLocalFilter: applyBicycleFilters,
+        collectParams: (params) => {
+          const brandValue = bicycleBrandFilter?.value || "all";
+          if (brandValue === "all") {
+            params.delete("brand");
+          } else {
+            params.set("brand", brandValue);
+          }
+        },
+        onTableUpdated: () => applyBicycleFilters(bicycleSearch.value),
+      });
 
-    document.addEventListener("pagination:updated", filterBicycles);
-    filterBicycles();
+      bicycleBrandFilter?.addEventListener("change", () => {
+        applyBicycleFilters(bicycleSearch.value);
+        controller?.refresh("push");
+      });
+
+      document.addEventListener("table:updated", () => {
+        applyBicycleFilters(bicycleSearch.value);
+      });
+
+      applyBicycleFilters(bicycleSearch.value);
+    }
+    });
   </script>
 {% endblock %}

@@ -2,11 +2,12 @@ from datetime import date
 
 from flask import render_template, request, redirect, url_for, flash, g, send_file
 from flask_login import login_required, current_user
+from sqlalchemy import func, or_
 from sqlalchemy.orm import joinedload
 
 from app.main import main_bp
 from app.extensions import db
-from app.models import Bicycle, Job, JobItem
+from app.models import Bicycle, Client, Job, JobItem, ServiceType
 from app.services.job_service import JobService
 from app.services.audit_service import AuditService
 from app.services.pdf_service import generate_job_pdf, build_pdf_filename
@@ -35,6 +36,7 @@ def jobs():
         return store_redirect
 
     page = request.args.get("page", 1, type=int)
+    search_query = (request.args.get("q") or "").strip()
     requested_status = (request.args.get("status") or "all").strip().lower()
     allowed_statuses = {
         "all",
@@ -56,6 +58,25 @@ def jobs():
     elif active_status != "all":
         query = query.filter(Job.status == active_status)
 
+    if search_query:
+        search_term = f"%{search_query.lower()}%"
+        query = (
+            query.join(Bicycle, Job.bicycle_id == Bicycle.id)
+            .join(Client, Bicycle.client_id == Client.id)
+            .outerjoin(JobItem, JobItem.job_id == Job.id)
+            .outerjoin(ServiceType, JobItem.service_type_id == ServiceType.id)
+            .filter(
+                or_(
+                    func.lower(func.coalesce(Job.code, "")).like(search_term),
+                    func.lower(func.coalesce(Client.full_name, "")).like(search_term),
+                    func.lower(func.coalesce(Bicycle.brand, "")).like(search_term),
+                    func.lower(func.coalesce(Bicycle.model, "")).like(search_term),
+                    func.lower(func.coalesce(ServiceType.name, "")).like(search_term),
+                )
+            )
+            .distinct()
+        )
+
     query = query.order_by(Job.created_at.desc())
     pagination = paginate_query(query, page)
 
@@ -65,6 +86,7 @@ def jobs():
         "delete_form": DeleteForm(),
         "status_form": JobStatusForm(),
         "active_status": active_status,
+        "search_query": search_query,
     }
 
     if request.args.get("partial"):
