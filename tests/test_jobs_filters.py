@@ -76,3 +76,16 @@ def test_jobs_overdue_filter_applies_on_server(client, owner_user, login):
     assert "F103" not in html
     assert "F104" not in html
     assert 'option value="overdue" selected' in html
+
+
+def test_jobs_status_filter_without_results_keeps_header_and_filters(client, owner_user, login):
+    _create_job(owner_user, code="F201", status="open", delivery_offset_days=1)
+    login(owner_user.email, "Password1")
+
+    response = client.get("/jobs?status=cancelled")
+    assert response.status_code == 200
+
+    html = response.get_data(as_text=True)
+    assert 'class="panel-header"' in html
+    assert 'class="table-filters"' in html
+    assert "No se encontraron trabajos con ese estado." in html

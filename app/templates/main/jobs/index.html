@@ -14,34 +14,26 @@
       <span class="pill">{{ pagination.total }} total</span>
     </div>
     <div class="panel-body">
-      {% if jobs %}
-        <div class="table-filters">
-          <label class="filter-field">
-            <span>Buscar</span>
-            <input class="input input-compact" id="jobSearch" type="search" placeholder="Buscar por cliente, bici o service">
-          </label>
-          <label class="filter-field">
-            <span>Estado</span>
-            <select class="input input-compact" id="jobStatusFilter">
-              <option value="all" {% if active_status == "all" %}selected{% endif %}>Todos</option>
-              <option value="open" {% if active_status == "open" %}selected{% endif %}>Abierto</option>
-              <option value="in_progress" {% if active_status == "in_progress" %}selected{% endif %}>En progreso</option>
-              <option value="ready" {% if active_status == "ready" %}selected{% endif %}>Listo</option>
-              <option value="closed" {% if active_status == "closed" %}selected{% endif %}>Cerrado</option>
-              <option value="cancelled" {% if active_status == "cancelled" %}selected{% endif %}>Cancelado</option>
-              <option value="overdue" {% if active_status == "overdue" %}selected{% endif %}>Atrasado</option>
-            </select>
-          </label>
-          {% include "main/jobs/_pagination.html" %}
-        </div>
-        {% include "main/jobs/_table.html" %}
-      {% else %}
-        <div class="empty-state">
-          <h3>No hay trabajos aun</h3>
-          <p class="muted">Empieza creando un trabajo con un service asociado.</p>
-          <a class="button" href="{{ url_for('main.jobs_create') }}">Crear trabajo</a>
-        </div>
-      {% endif %}
+      <div class="table-filters">
+        <label class="filter-field">
+          <span>Buscar</span>
+          <input class="input input-compact" id="jobSearch" type="search" placeholder="Buscar por cliente, bici o service">
+        </label>
+        <label class="filter-field">
+          <span>Estado</span>
+          <select class="input input-compact" id="jobStatusFilter">
+            <option value="all" {% if active_status == "all" %}selected{% endif %}>Todos</option>
+            <option value="open" {% if active_status == "open" %}selected{% endif %}>Abierto</option>
+            <option value="in_progress" {% if active_status == "in_progress" %}selected{% endif %}>En progreso</option>
+            <option value="ready" {% if active_status == "ready" %}selected{% endif %}>Listo</option>
+            <option value="closed" {% if active_status == "closed" %}selected{% endif %}>Cerrado</option>
+            <option value="cancelled" {% if active_status == "cancelled" %}selected{% endif %}>Cancelado</option>
+            <option value="overdue" {% if active_status == "overdue" %}selected{% endif %}>Atrasado</option>
+          </select>
+        </label>
+        {% include "main/jobs/_pagination.html" %}
+      </div>
+      {% include "main/jobs/_table.html" %}
     </div>
   </section>
   <div class="modal-overlay" id="jobModal" aria-hidden="true">
@@ -95,6 +87,7 @@
       const query = (jobSearch?.value || "").toLowerCase().trim();
       const status = jobStatusFilter?.value || "all";
       const jobRows = document.querySelectorAll("#table-content tbody tr[data-status]");
+      const hasRows = jobRows.length > 0;
       const jobNoResults = document.querySelector("#jobNoResults");
       let visibleCount = 0;
 
@@ -114,7 +107,7 @@
       });
 
       if (jobNoResults) {
-        jobNoResults.classList.toggle("is-hidden", visibleCount > 0);
+        jobNoResults.classList.toggle("is-hidden", !hasRows || visibleCount > 0);
       }
     };
 
