@@ -28,6 +28,10 @@ def test_service_worker_is_served_with_no_store(client):
     assert expected_cache_name in body
     expected_css_asset = f"/app.css?v={client.application.config['ASSET_VERSION']}"
     assert expected_css_asset in body
+    expected_pagination_asset = f"/static/js/pagination.js?v={client.application.config['ASSET_VERSION']}"
+    assert expected_pagination_asset in body
+    expected_table_search_asset = f"/static/js/table-search.js?v={client.application.config['ASSET_VERSION']}"
+    assert expected_table_search_asset in body
 
 
 def test_apple_touch_icon_is_served(client):
@@ -43,8 +47,14 @@ def test_login_page_has_manifest_and_pwa_registration(client):
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     expected_version = client.application.config["ASSET_VERSION"]
+    expected_sw_enabled = (
+        bool(client.application.config.get("SERVICE_WORKER_ENABLED", True))
+        and not client.application.debug
+        and not client.application.testing
+    )
     assert 'rel="manifest" href="/manifest.webmanifest"' in html
     assert f'window.__ASSET_VERSION__ = "{expected_version}"' in html
+    assert f"window.__SERVICE_WORKER_ENABLED__ = {str(expected_sw_enabled).lower()};" in html
     assert f'/static/js/pwa-register.js?v={expected_version}' in html
     assert f'/app.css?v={expected_version}' in html
 
@@ -55,8 +65,14 @@ def test_dashboard_page_has_manifest_and_pwa_registration(owner_user, login, app
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     expected_version = app.config["ASSET_VERSION"]
+    expected_sw_enabled = (
+        bool(app.config.get("SERVICE_WORKER_ENABLED", True))
+        and not app.debug
+        and not app.testing
+    )
     assert 'rel="manifest" href="/manifest.webmanifest"' in html
     assert f'window.__ASSET_VERSION__ = "{expected_version}"' in html
+    assert f"window.__SERVICE_WORKER_ENABLED__ = {str(expected_sw_enabled).lower()};" in html
     assert f'/static/js/pwa-register.js?v={expected_version}' in html
     assert f'/app.css?v={expected_version}' in html
 

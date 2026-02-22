@@ -1,7 +1,8 @@
 const CACHE_NAME_STATIC = {{ ("service-bicycle-static-" ~ asset_version)|tojson }};
 const STATIC_ASSETS = [
   "/app.css?v={{ asset_version|urlencode }}",
-  "/static/js/pagination.js",
+  "/static/js/pagination.js?v={{ asset_version|urlencode }}",
+  "/static/js/table-search.js?v={{ asset_version|urlencode }}",
   "/static/css/favicon_bike1.png",
   "/static/icons/pwa-192.png",
   "/static/icons/pwa-512.png",

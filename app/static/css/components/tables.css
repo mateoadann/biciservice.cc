@@ -163,6 +163,15 @@
   margin: 0;
 }
 
+.table.table-jobs td.col-jobs-actions .action-slot-delete-placeholder {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .table.table-clients .col-client-code {
   width: 92px;
 }
@@ -233,6 +242,7 @@
 
 .table.table-services td.col-service-actions .table-actions {
   flex-wrap: nowrap;
+  justify-content: center;
 }
 
 .table.table-jobs th,
@@ -511,4 +521,3 @@ html[data-theme="dark"] .pill {
   background: rgba(34, 197, 94, 0.25);
   color: #22c55e;
 }
-
