@@ -24,10 +24,14 @@
         }
       })();
     </script>
+    <script>
+      window.__ASSET_VERSION__ = {{ asset_version|tojson }};
+      window.__SERVICE_WORKER_ENABLED__ = {{ service_worker_enabled|tojson }};
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v={{ config.CSS_VERSION }}">
+    <link rel="stylesheet" href="{{ asset_url('css/app.css') }}">
   </head>
   <body class="auth-body">
     <div class="auth-card">
@@ -76,7 +80,7 @@
         <a href="{{ url_for('auth.register') }}">Crear cuenta</a>
       </div>
     </div>
-    <script src="{{ url_for('static', filename='js/pwa-register.js') }}" defer></script>
+    <script src="{{ asset_url('js/pwa-register.js') }}" defer></script>
     <script>
       document.querySelectorAll('.flash-close').forEach((btn) => {
         btn.addEventListener('click', () => {
