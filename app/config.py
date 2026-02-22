@@ -60,3 +60,4 @@ class Config:
     SESSION_REFRESH_EACH_REQUEST = False
     CSS_VERSION = "10"
     ASSET_VERSION = os.environ.get("ASSET_VERSION", "dev").strip() or "dev"
+    SERVICE_WORKER_ENABLED = _env_bool("SERVICE_WORKER_ENABLED", True)

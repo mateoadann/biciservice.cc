@@ -56,6 +56,8 @@
 - Service worker: `GET /sw.js`
 - Icono iOS: `GET /apple-touch-icon.png`
 - Registro del service worker: `app/static/js/pwa-register.js`
+- En desarrollo (`FLASK_DEBUG=1`) el service worker se desactiva automaticamente.
+- En produccion usar `ASSET_VERSION` unico por release (no usar `dev`).
 
 ### Alcance de cache y seguridad
 - Se cachean solo assets estaticos (`/static/*`, manifest, offline page).

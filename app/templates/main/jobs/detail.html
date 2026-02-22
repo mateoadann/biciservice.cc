@@ -11,9 +11,10 @@
     <section class="panel panel-scroll">
       <div class="panel-header">
         <div>
-          <h2>Trabajo {{ job.code }}</h2>
           <div class="detail-summary">
-            <span class="job-code">{{ job.code }}</span>
+          <h2>Trabajo </h2>
+          <span class="job-code">{{ job.code }}</span>
+            <!-- <span class="job-code">{{ job.code }}</span>
             <span class="status {{ job.status }}">
               {% if job.status == "open" %}Abierto{% endif %}
               {% if job.status == "in_progress" %}En progreso{% endif %}
@@ -21,7 +22,7 @@
               {% if job.status == "closed" %}Cerrado{% endif %}
               {% if job.status == "cancelled" %}Cancelado{% endif %}
             </span>
-            <span class="muted" style="font-size:0.85rem">{{ job.bicycle.client.full_name }}</span>
+            <span class="muted" style="font-size:0.85rem">{{ job.bicycle.client.full_name }}</span> -->
           </div>
         </div>
         <div class="panel-header-actions">

@@ -1,6 +1,7 @@
 import click
 import logging
 import os
+import time
 from decimal import Decimal, InvalidOperation
 from datetime import datetime, timezone
 from flask import (
@@ -28,6 +29,8 @@ def create_app(config_class=Config):
     load_dotenv()
     app = Flask(__name__)
     app.config.from_object(config_class)
+    if app.debug and app.config.get("ASSET_VERSION") == "dev":
+        app.config["ASSET_VERSION"] = f"dev-{int(time.time())}"
 
     if not app.debug and not app.testing:
         logging.basicConfig(
@@ -172,6 +175,11 @@ def create_app(config_class=Config):
         else:
             theme = default_theme
         asset_version = app.config["ASSET_VERSION"]
+        service_worker_enabled = (
+            bool(app.config.get("SERVICE_WORKER_ENABLED", True))
+            and not app.debug
+            and not app.testing
+        )
 
         def asset_url(path: str) -> str:
             if path == "css/app.css":
@@ -183,6 +191,7 @@ def create_app(config_class=Config):
             "stores": stores,
             "active_store": g.get("active_store"),
             "asset_version": asset_version,
+            "service_worker_enabled": service_worker_enabled,
             "asset_url": asset_url,
         }
 
