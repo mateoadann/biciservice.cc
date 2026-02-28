@@ -6,6 +6,10 @@
 }
 
 .btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   color: #25d366;
   border-color: rgba(37, 211, 102, 0.55);
 }
@@ -439,4 +443,3 @@ html[data-theme="dark"] .air-datepicker {
   color: var(--color-muted);
   font-size: 0.85rem;
 }
-

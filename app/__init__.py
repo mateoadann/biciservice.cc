@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from decimal import Decimal, InvalidOperation
-from datetime import datetime, timezone
+from datetime import datetime, timezone as dt_timezone
 from flask import (
     Flask,
     g,
@@ -23,6 +23,7 @@ from flask_wtf.csrf import CSRFError
 from .config import Config
 from .extensions import csrf, db, login_manager, migrate
 from .models import User, Workshop, Store
+from .timezone import format_cordoba_datetime
 
 
 def create_app(config_class=Config):
@@ -246,6 +247,9 @@ def create_app(config_class=Config):
             return str(value)
         return formatted.replace(",", "X").replace(".", ",").replace("X", ".")
 
+    def format_datetime_cordoba(value, fmt="%d/%m/%Y %H:%M"):
+        return format_cordoba_datetime(value, fmt)
+
     @app.cli.command("create-superadmin")
     @click.option("--email", prompt=True)
     @click.option("--name", prompt=True)
@@ -267,9 +271,9 @@ def create_app(config_class=Config):
             role="super_admin",
             store_id=None,
             is_approved=True,
-            approved_at=datetime.now(timezone.utc),
+            approved_at=datetime.now(dt_timezone.utc),
             email_confirmed=True,
-            email_confirmed_at=datetime.now(timezone.utc),
+            email_confirmed_at=datetime.now(dt_timezone.utc),
         )
         user.set_password(password)
         db.session.add(user)
@@ -284,7 +288,7 @@ def create_app(config_class=Config):
 
         to_value = to.strip().lower()
         subject = "Prueba de correo - biciservice.cc"
-        timestamp = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
+        timestamp = datetime.now(dt_timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
         body_lines = [
             "Este es un correo de prueba de biciservice.cc.",
             "",
@@ -303,5 +307,6 @@ def create_app(config_class=Config):
         click.echo(f"Correo de prueba enviado a {to_value}")
 
     app.jinja_env.filters["currency"] = format_currency
+    app.jinja_env.filters["datetime_cordoba"] = format_datetime_cordoba
 
     return app
