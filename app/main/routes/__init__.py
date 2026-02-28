@@ -9,5 +9,6 @@ from . import (
     users,
     onboarding,
     settings,
-    admin
+    admin,
+    tour,
 )

@@ -11,6 +11,7 @@
 @import "./pages/settings.css";
 @import "./pages/jobs.css";
 @import "./components/modal.css";
+@import "./components/tour.css";
 @import "./pages/settings-theme.css";
 @import "./pages/auth.css";
 @import "./base/accessibility-motion.css";

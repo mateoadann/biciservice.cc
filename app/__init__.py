@@ -176,11 +176,39 @@ def create_app(config_class=Config):
         else:
             theme = default_theme
         asset_version = app.config["ASSET_VERSION"]
+        try:
+            app_tour_version = max(int(app.config.get("APP_TOUR_VERSION", 1) or 1), 1)
+        except (TypeError, ValueError):
+            app_tour_version = 1
         service_worker_enabled = (
             bool(app.config.get("SERVICE_WORKER_ENABLED", True))
             and not app.debug
             and not app.testing
         )
+
+        app_tour = {
+            "enabled": False,
+            "version": app_tour_version,
+            "role": None,
+            "should_prompt": False,
+            "dismiss_url": None,
+            "complete_url": None,
+        }
+        if current_user.is_authenticated:
+            app_tour["role"] = current_user.role
+            if current_user.role != "super_admin":
+                seen_version = max(
+                    int(getattr(current_user, "tour_completed_version", 0) or 0),
+                    int(getattr(current_user, "tour_dismissed_version", 0) or 0),
+                )
+                app_tour.update(
+                    {
+                        "enabled": True,
+                        "should_prompt": seen_version < app_tour_version,
+                        "dismiss_url": url_for("main.tour_dismiss"),
+                        "complete_url": url_for("main.tour_complete"),
+                    }
+                )
 
         def asset_url(path: str) -> str:
             if path == "css/app.css":
@@ -194,6 +222,7 @@ def create_app(config_class=Config):
             "asset_version": asset_version,
             "service_worker_enabled": service_worker_enabled,
             "asset_url": asset_url,
+            "app_tour": app_tour,
         }
 
     @app.after_request
