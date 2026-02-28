@@ -208,6 +208,15 @@ html[data-theme="dark"] .search-result.is-active {
   padding: 0 2px;
 }
 
+.parts-scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.parts-scroll-content {
+  min-width: 680px;
+}
+
 .part-row {
   display: grid;
   grid-template-columns: minmax(180px, 1.7fr) 90px 110px 120px 110px 38px;
@@ -364,7 +373,7 @@ html[data-theme="dark"] .parts-summary {
 
 .service-option {
   display: grid;
-  grid-template-columns: 18px 1fr auto;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
   padding: 10px 12px;
@@ -423,6 +432,7 @@ html[data-theme="dark"] .air-datepicker {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .service-name {
@@ -442,4 +452,5 @@ html[data-theme="dark"] .air-datepicker {
 .service-desc {
   color: var(--color-muted);
   font-size: 0.85rem;
+  overflow-wrap: anywhere;
 }

@@ -446,6 +446,14 @@
     display: none;
   }
 
+  .parts-scroll-x {
+    overflow: visible;
+  }
+
+  .parts-scroll-content {
+    min-width: 0;
+  }
+
   .part-total {
     text-align: left;
   }
