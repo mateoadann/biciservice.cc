@@ -30,7 +30,10 @@ class LocalizedDecimalField(DecimalField):
         if self.data is None:
             return ""
         try:
-            return _format_decimal(self.data)
+            formatted = _format_decimal(self.data)
+            if formatted.endswith(",00"):
+                return formatted[:-3]
+            return formatted
         except (InvalidOperation, ValueError, TypeError):
             return str(self.data)
 

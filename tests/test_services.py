@@ -51,3 +51,16 @@ def test_services_edit_keeps_price_when_value_sent_unchanged(client, owner_user,
     refreshed = db.session.get(ServiceType, service.id)
     assert refreshed is not None
     assert refreshed.base_price == Decimal("8000.00")
+
+
+def test_services_edit_prefills_integer_price_without_decimals(client, owner_user, login):
+    workshop = owner_user.workshops[0]
+    service = _create_service(workshop.id, "Lavado", "8000.00")
+
+    login(owner_user.email, "Password1")
+    response = client.get(f"/services/{service.id}/edit")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'value="8.000"' in html
+    assert 'value="8.000,00"' not in html
