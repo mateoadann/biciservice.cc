@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block content %}
-  <section class="stats-grid">
+  <section class="stats-grid sa-stats-grid">
     <div class="stat-card">
       <div class="stat-label">Owners</div>
       <div class="stat-value">{{ metrics.owners }}</div>
@@ -19,36 +19,45 @@
       <div class="stat-value">{{ metrics.pending }}</div>
       <div class="stat-meta"><a href="{{ url_for('main.super_admin_pending') }}">Revisar ahora</a></div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Talleres</div>
-      <div class="stat-value">{{ metrics.workshops }}</div>
-      <div class="stat-meta">Workshops activos</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Sucursales</div>
-      <div class="stat-value">{{ metrics.stores }}</div>
-      <div class="stat-meta">Stores creadas</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Trabajos</div>
-      <div class="stat-value">{{ metrics.jobs }}</div>
-      <div class="stat-meta">Registrados</div>
-    </div>
   </section>
 
-  <section class="panel">
+  <section class="panel sa-dashboard-panel">
     <div class="panel-header">
       <h2>Ingresos estimados</h2>
     </div>
     <div class="panel-body">
-      <div class="summary-grid">
+      <form class="sa-month-form" method="get" action="{{ url_for('main.super_admin_dashboard') }}">
+        <label>
+          <span>Mes</span>
+          <input class="input input-compact" type="month" name="month" value="{{ selected_month }}">
+        </label>
+        <button class="button button-compact" type="submit">Aplicar</button>
+        <a class="button button-ghost button-compact" href="{{ url_for('main.super_admin_dashboard') }}">Mes actual</a>
+      </form>
+
+      <div class="panel-note sa-month-note">
+        Periodo: {{ month_label }}
+      </div>
+
+      <div class="summary-grid sa-summary-grid">
         <div class="summary-card">
-          <div class="summary-label">Ingresos</div>
-          <div class="summary-value">$ {{ revenue|currency }}</div>
+          <div class="summary-label">Ingresos del mes</div>
+          <div class="summary-value">$ {{ revenue_month|currency }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Trabajo promedio</div>
+          <div class="summary-value">$ {{ avg_job_month|currency }}</div>
+          <div class="summary-meta">{{ jobs_month_count }} trabajo(s) cargado(s)</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Service promedio</div>
+          <div class="summary-value">$ {{ avg_service_month|currency }}</div>
+          <div class="summary-meta">{{ service_units_month }} service(s) cargado(s)</div>
         </div>
       </div>
-      {% if revenue == 0 %}
-        <div class="panel-note">Aun no hay ingresos registrados.</div>
+
+      {% if jobs_month_count == 0 %}
+        <div class="panel-note">Aun no hay trabajos cargados en el mes seleccionado.</div>
       {% endif %}
     </div>
   </section>

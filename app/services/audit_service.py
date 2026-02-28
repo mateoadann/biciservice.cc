@@ -4,6 +4,7 @@ from sqlalchemy.orm import joinedload
 
 from ..extensions import db
 from ..models import AuditLog
+from ..timezone import now_cordoba_naive, utc_to_cordoba_naive
 
 class AuditService:
     @staticmethod
@@ -25,6 +26,7 @@ class AuditService:
             description=description,
             ip_address=ip_address,
             user_agent=user_agent[:255] if user_agent else None,
+            created_at=now_cordoba_naive(),
         )
         db.session.add(log_entry)
         # Note: We rely on the caller to commit the session, or we could commit here.
@@ -52,7 +54,11 @@ class AuditService:
             .order_by(AuditLog.created_at.desc())
             .first()
         )
-        created_at = created_log.created_at if created_log else fallback_created_at
+        created_at = (
+            created_log.created_at
+            if created_log
+            else utc_to_cordoba_naive(fallback_created_at)
+        )
         created_by = created_log.user.full_name if created_log and created_log.user else None
         updated_at = updated_log.created_at if updated_log else None
         updated_by = updated_log.user.full_name if updated_log and updated_log.user else None

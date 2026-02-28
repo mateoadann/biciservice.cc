@@ -5,6 +5,7 @@ from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .extensions import db
+from .timezone import now_cordoba_naive
 
 
 user_workshops = db.Table(
@@ -223,7 +224,7 @@ class AuditLog(db.Model):
     description = db.Column(db.Text)
     ip_address = db.Column(db.String(45))
     user_agent = db.Column(db.String(255))
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=now_cordoba_naive)
 
     __table_args__ = (
         db.Index("ix_audit_entity", "entity_type", "entity_id", "action"),
