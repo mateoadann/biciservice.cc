@@ -25,7 +25,7 @@
           </label>
           <label>
             Precio base
-            {{ form.base_price(class_="input js-money", inputmode="decimal", required=True) }}
+            {{ form.base_price(class_="input js-money", inputmode="decimal", type="text", required=True, autocomplete="off") }}
             <span class="input-feedback" id="basePriceFeedback">Formato: 0,00</span>
             {% if form.base_price.errors %}
               <span class="field-error">{{ form.base_price.errors[0] }}</span>

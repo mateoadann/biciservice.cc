@@ -26,6 +26,8 @@ def test_services_edit_prefills_base_price(client, owner_user, login):
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert 'name="base_price"' in html
+    price_input_chunk = html.split('name="base_price"', 1)[1][:180]
+    assert 'type="text"' in price_input_chunk
     assert 'value="12.345,67"' in html
 
 
