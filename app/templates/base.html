@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta name="theme-color" content="{{ theme.primary or '#1f4cff' }}">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -24,6 +25,7 @@
   <script>
     window.__ASSET_VERSION__ = {{ asset_version|tojson }};
     window.__SERVICE_WORKER_ENABLED__ = {{ service_worker_enabled|tojson }};
+    window.__APP_TOUR__ = {{ app_tour|tojson }};
   </script>
 
   <!-- Favicon -->
@@ -115,7 +117,7 @@
         {% set is_onboarding = endpoint.startswith('main.onboarding') %}
         {% set is_owner_config = is_settings or is_stores or is_users or is_security or is_onboarding %}
 
-        <a href="{{ url_for('main.dashboard') }}" class="nav-link{% if is_dashboard %} active{% endif %}" title="Dashboard" {% if is_dashboard %}aria-current="page"{% endif %}>
+        <a href="{{ url_for('main.dashboard') }}" class="nav-link{% if is_dashboard %} active{% endif %}" title="Dashboard" data-tour="nav-dashboard" {% if is_dashboard %}aria-current="page"{% endif %}>
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
               stroke-linecap="round" stroke-linejoin="round">
@@ -127,7 +129,7 @@
           </span>
           <span class="nav-label">Dashboard</span>
         </a>
-        <a href="{{ url_for('main.clients') }}" class="nav-link{% if is_clients %} active{% endif %}" title="Clientes" {% if is_clients %}aria-current="page"{% endif %}>
+        <a href="{{ url_for('main.clients') }}" class="nav-link{% if is_clients %} active{% endif %}" title="Clientes" data-tour="nav-clients" {% if is_clients %}aria-current="page"{% endif %}>
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
               stroke-linecap="round" stroke-linejoin="round">
@@ -137,7 +139,7 @@
           </span>
           <span class="nav-label">Clientes</span>
         </a>
-        <a href="{{ url_for('main.bicycles') }}" class="nav-link{% if is_bicycles %} active{% endif %}" title="Bicicletas" {% if is_bicycles %}aria-current="page"{% endif %}>
+        <a href="{{ url_for('main.bicycles') }}" class="nav-link{% if is_bicycles %} active{% endif %}" title="Bicicletas" data-tour="nav-bicycles" {% if is_bicycles %}aria-current="page"{% endif %}>
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M7 12.5L8.5 9.5M8.5 9.5H16M8.5 9.5L10.5 16.5L16 9.5M8.5 9.5L7.5 7M16 9.5L17 12.5M16 9.5L15.5 8.5L18.5 8V9.5M9 15.5C9 17.433 7.433 19 5.5 19C3.567 19 2 17.433 2 15.5C2 13.567 3.567 12 5.5 12C7.433 12 9 13.567 9 15.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"></path>
@@ -147,7 +149,7 @@
           </span>
           <span class="nav-label">Bicicletas</span>
         </a>
-        <a href="{{ url_for('main.services') }}" class="nav-link{% if is_services %} active{% endif %}" title="Service" {% if is_services %}aria-current="page"{% endif %}>
+        <a href="{{ url_for('main.services') }}" class="nav-link{% if is_services %} active{% endif %}" title="Service" data-tour="nav-services" {% if is_services %}aria-current="page"{% endif %}>
           <span class="nav-icon" aria-hidden="true">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75a4.5 4.5 0 0 1-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 1 1-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 0 1 6.336-4.486l-3.276 3.276a3.004 3.004 0 0 0 2.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852Z" />
@@ -156,7 +158,7 @@
           </span>
           <span class="nav-label">Service</span>
         </a>
-        <a href="{{ url_for('main.jobs') }}" class="nav-link{% if is_jobs %} active{% endif %}" title="Trabajos" {% if is_jobs %}aria-current="page"{% endif %}>
+        <a href="{{ url_for('main.jobs') }}" class="nav-link{% if is_jobs %} active{% endif %}" title="Trabajos" data-tour="nav-jobs" {% if is_jobs %}aria-current="page"{% endif %}>
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
               stroke-linecap="round" stroke-linejoin="round">
@@ -170,7 +172,7 @@
         </a>
         {% if current_user.role == "owner" %}
         <div class="nav-group">
-          <button type="button" class="nav-group-toggle{% if is_owner_config %} active{% endif %}" aria-expanded="{{ 'true' if is_owner_config else 'false' }}" aria-controls="ownerConfigMenu">
+          <button type="button" class="nav-group-toggle{% if is_owner_config %} active{% endif %}" data-tour="nav-owner-config" aria-expanded="{{ 'true' if is_owner_config else 'false' }}" aria-controls="ownerConfigMenu">
             <span class="nav-group-content">
               <span class="nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
@@ -192,11 +194,11 @@
             </span>
           </button>
           <div id="ownerConfigMenu" class="nav-group-menu{% if is_owner_config %} is-open{% endif %}">
-            <a href="{{ url_for('main.settings') }}" class="nav-link{% if is_settings %} active{% endif %}" {% if is_settings %}aria-current="page"{% endif %}>Personalizacion</a>
+            <a href="{{ url_for('main.settings') }}" class="nav-link{% if is_settings %} active{% endif %}" data-tour="nav-settings" {% if is_settings %}aria-current="page"{% endif %}>Personalizacion</a>
             <a href="{{ url_for('main.stores') }}" class="nav-link{% if is_stores %} active{% endif %}" {% if is_stores %}aria-current="page"{% endif %}>Sucursales</a>
             <a href="{{ url_for('main.users') }}" class="nav-link{% if is_users %} active{% endif %}" {% if is_users %}aria-current="page"{% endif %}>Usuarios</a>
             <a href="{{ url_for('main.security') }}" class="nav-link{% if is_security %} active{% endif %}" {% if is_security %}aria-current="page"{% endif %}>Seguridad</a>
-            <a href="{{ url_for('main.onboarding') }}" class="nav-link{% if is_onboarding %} active{% endif %}" {% if is_onboarding %}aria-current="page"{% endif %}>Onboarding</a>
+            <a href="{{ url_for('main.onboarding') }}" class="nav-link{% if is_onboarding %} active{% endif %}" data-tour="nav-onboarding" {% if is_onboarding %}aria-current="page"{% endif %}>Onboarding</a>
           </div>
         </div>
         {% endif %}
@@ -252,9 +254,15 @@
           </form>
           {% endif %}
 
+          {% if app_tour.enabled %}
+          <button class="button button-ghost js-tour-launch" type="button" data-tour="tour-launcher">
+            Como empiezo?
+          </button>
+          {% endif %}
+
           {% block page_actions %}
           {% if current_user.role != "super_admin" %}
-          <a class="button" href="{{ url_for('main.jobs_create') }}">Nuevo trabajo</a>
+          <a class="button" href="{{ url_for('main.jobs_create') }}" data-tour="action-new-job">Nuevo trabajo</a>
           {% endif %}
           {% endblock %}
         </div>
@@ -287,6 +295,7 @@
   <script src="{{ asset_url('js/pwa-register.js') }}" defer></script>
   <script src="{{ asset_url('js/table-search.js') }}" defer></script>
   <script src="{{ asset_url('js/pagination.js') }}" defer></script>
+  <script src="{{ asset_url('js/app-tour.js') }}" defer></script>
   <script>
     const navToggle = document.querySelector('.nav-toggle');
     const nav = document.querySelector('.nav');

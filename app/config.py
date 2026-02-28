@@ -61,3 +61,4 @@ class Config:
     CSS_VERSION = "10"
     ASSET_VERSION = os.environ.get("ASSET_VERSION", "dev").strip() or "dev"
     SERVICE_WORKER_ENABLED = _env_bool("SERVICE_WORKER_ENABLED", True)
+    APP_TOUR_VERSION = _env_int("APP_TOUR_VERSION", 1)

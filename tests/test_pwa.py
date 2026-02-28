@@ -32,6 +32,8 @@ def test_service_worker_is_served_with_no_store(client):
     assert expected_pagination_asset in body
     expected_table_search_asset = f"/static/js/table-search.js?v={client.application.config['ASSET_VERSION']}"
     assert expected_table_search_asset in body
+    expected_tour_asset = f"/static/js/app-tour.js?v={client.application.config['ASSET_VERSION']}"
+    assert expected_tour_asset in body
 
 
 def test_apple_touch_icon_is_served(client):
@@ -101,6 +103,7 @@ def test_app_css_is_served_with_no_store(client):
         "/static/css/pages/settings.css",
         "/static/css/pages/jobs.css",
         "/static/css/components/modal.css",
+        "/static/css/components/tour.css",
         "/static/css/pages/settings-theme.css",
         "/static/css/pages/auth.css",
         "/static/css/base/accessibility-motion.css",
