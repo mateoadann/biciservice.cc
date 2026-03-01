@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+from decimal import Decimal
 
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
@@ -26,6 +27,42 @@ from app.main.helpers import (
     generate_temp_password
 )
 from app.auth.utils import send_approval_notification, send_confirmation_email
+from app.timezone import now_cordoba_naive
+
+
+MONTH_LABELS = {
+    1: "Enero",
+    2: "Febrero",
+    3: "Marzo",
+    4: "Abril",
+    5: "Mayo",
+    6: "Junio",
+    7: "Julio",
+    8: "Agosto",
+    9: "Septiembre",
+    10: "Octubre",
+    11: "Noviembre",
+    12: "Diciembre",
+}
+
+
+def _parse_month_start(raw_month: str | None) -> date:
+    default_month = now_cordoba_naive().date().replace(day=1)
+    value = (raw_month or "").strip()
+    if not value:
+        return default_month
+    try:
+        parsed = datetime.strptime(value, "%Y-%m").date()
+    except ValueError:
+        return default_month
+    return parsed.replace(day=1)
+
+
+def _next_month(month_start: date) -> date:
+    if month_start.month == 12:
+        return date(month_start.year + 1, 1, 1)
+    return date(month_start.year, month_start.month + 1, 1)
+
 
 @main_bp.route("/admin/dashboard")
 @login_required
@@ -33,28 +70,66 @@ def super_admin_dashboard():
     _, redirect_response = super_admin_or_redirect()
     if redirect_response:
         return redirect_response
+
+    month_start = _parse_month_start(request.args.get("month"))
+    month_end = _next_month(month_start)
+    month_start_dt = datetime.combine(month_start, datetime.min.time())
+    month_end_dt = datetime.combine(month_end, datetime.min.time())
+
     metrics = {
         "owners": User.query.filter_by(role="owner").count(),
         "pending": User.query.filter_by(
             role="owner", is_approved=False, is_active=True
         ).count(),
-        "workshops": Workshop.query.count(),
-        "stores": Store.query.count(),
-        "jobs": Job.query.count(),
     }
-    service_revenue = (
+
+    month_filters = [Job.created_at >= month_start_dt, Job.created_at < month_end_dt]
+    jobs_month_count = Job.query.filter(*month_filters).count()
+
+    service_revenue_month = (
         db.session.query(func.coalesce(func.sum(JobItem.unit_price * JobItem.quantity), 0))
+        .join(Job, Job.id == JobItem.job_id)
+        .filter(*month_filters)
         .scalar()
     )
-    parts_revenue = (
+    parts_revenue_month = (
         db.session.query(func.coalesce(func.sum(JobPart.unit_price * JobPart.quantity), 0))
+        .join(Job, Job.id == JobPart.job_id)
+        .filter(*month_filters)
         .scalar()
     )
-    revenue = service_revenue + parts_revenue
+    service_units_month = (
+        db.session.query(func.coalesce(func.sum(JobItem.quantity), 0))
+        .join(Job, Job.id == JobItem.job_id)
+        .filter(*month_filters)
+        .scalar()
+    )
+
+    service_revenue_month_dec = Decimal(str(service_revenue_month or 0))
+    parts_revenue_month_dec = Decimal(str(parts_revenue_month or 0))
+    revenue_month = service_revenue_month_dec + parts_revenue_month_dec
+    service_units_month_dec = Decimal(str(service_units_month or 0))
+
+    avg_job_month = Decimal("0")
+    if jobs_month_count:
+        avg_job_month = revenue_month / Decimal(jobs_month_count)
+
+    avg_service_month = Decimal("0")
+    if service_units_month_dec:
+        avg_service_month = service_revenue_month_dec / service_units_month_dec
+
+    month_label = f"{MONTH_LABELS[month_start.month]} {month_start.year}"
+
     return render_template(
         "main/super_admin/dashboard.html",
         metrics=metrics,
-        revenue=revenue,
+        selected_month=month_start.strftime("%Y-%m"),
+        month_label=month_label,
+        jobs_month_count=jobs_month_count,
+        service_units_month=int(service_units_month_dec),
+        revenue_month=revenue_month,
+        avg_job_month=avg_job_month,
+        avg_service_month=avg_service_month,
     )
 
 

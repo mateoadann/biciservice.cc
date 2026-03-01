@@ -1,5 +1,4 @@
 from io import BytesIO
-from datetime import datetime
 from decimal import Decimal
 import logging
 from typing import Optional
@@ -17,6 +16,8 @@ from reportlab.platypus import (
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_RIGHT, TA_CENTER
+
+from app.timezone import now_cordoba_naive
 
 
 logger = logging.getLogger("pdf")
@@ -150,7 +151,7 @@ def generate_job_pdf(job, service_total, parts_total, total):
             ["Cliente", client_name, "Bicicleta", bike_label],
             ["Estado", _status_label(job.status), "Codigo", job.code],
             ["Ingreso al taller", fecha_ingreso, "Entrega estimada", fecha_entrega],
-            ["Fecha de emision", datetime.now().strftime("%d/%m/%Y %H:%M"), "", ""],
+            ["Fecha de emision", now_cordoba_naive().strftime("%d/%m/%Y %H:%M"), "", ""],
         ]
         col_w = [35 * mm, 52 * mm, 38 * mm, 52 * mm]
         info_table = Table(info_data, colWidths=col_w)

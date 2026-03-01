@@ -1,5 +1,69 @@
+from datetime import date, datetime, timedelta, timezone
+from decimal import Decimal
+
 from app.extensions import db
-from app.models import Store, User, Workshop
+from app.models import (
+    Bicycle,
+    Client,
+    Job,
+    JobItem,
+    JobPart,
+    ServiceType,
+    Store,
+    User,
+    Workshop,
+)
+
+
+def _create_dashboard_job(owner_user, *, code, created_at, service_price, part_price="0.00"):
+    workshop = owner_user.workshops[0]
+    store = owner_user.store
+
+    client = Client()
+    client.workshop_id = workshop.id
+    client.client_code = f"C{code}"
+    client.full_name = f"Cliente {code}"
+
+    bicycle = Bicycle()
+    bicycle.workshop_id = workshop.id
+    bicycle.client = client
+    bicycle.brand = "Trek"
+    bicycle.model = f"Modelo {code}"
+
+    service = ServiceType()
+    service.workshop_id = workshop.id
+    service.name = f"Service {code}"
+    service.base_price = Decimal(service_price)
+
+    job = Job()
+    job.workshop_id = workshop.id
+    job.store_id = store.id
+    job.bicycle = bicycle
+    job.code = code
+    job.status = "closed"
+    job.estimated_delivery_at = date.today()
+
+    item = JobItem()
+    item.job = job
+    item.service_type = service
+    item.quantity = 1
+    item.unit_price = Decimal(service_price)
+
+    db.session.add_all([client, bicycle, service, job, item])
+    db.session.flush()
+
+    if Decimal(part_price) > 0:
+        part = JobPart()
+        part.job = job
+        part.description = f"Parte {code}"
+        part.quantity = 1
+        part.unit_price = Decimal(part_price)
+        db.session.add(part)
+
+    job.created_at = created_at
+    db.session.commit()
+
+    return job
 
 
 def test_login_rejects_user_pending_approval(owner_user, login):
@@ -133,3 +197,53 @@ def test_super_admin_dashboard_shows_pending_count(
     assert response.status_code == 200
     assert b"Pendientes" in response.data
     assert b">1<" in response.data
+
+
+def test_super_admin_dashboard_month_metrics_and_new_stats(
+    client, create_owner_user, create_super_admin_user, login
+):
+    super_admin = create_super_admin_user(email="root-monthly@example.com")
+    owner = create_owner_user(email="owner-monthly@example.com", is_approved=True)
+
+    now_utc = datetime.now(timezone.utc)
+    current_month_dt = now_utc.replace(day=10, hour=12, minute=0, second=0, microsecond=0)
+    previous_month_dt = current_month_dt - timedelta(days=40)
+    selected_month = current_month_dt.strftime("%Y-%m")
+
+    _create_dashboard_job(
+        owner,
+        code="M001",
+        created_at=current_month_dt,
+        service_price="10000.00",
+        part_price="5000.00",
+    )
+    _create_dashboard_job(
+        owner,
+        code="M002",
+        created_at=current_month_dt,
+        service_price="5000.00",
+        part_price="0.00",
+    )
+    _create_dashboard_job(
+        owner,
+        code="M003",
+        created_at=previous_month_dt,
+        service_price="9000.00",
+        part_price="0.00",
+    )
+
+    login(super_admin.email, "Password1")
+    response = client.get(f"/admin/dashboard?month={selected_month}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Owners" in html
+    assert "Pendientes" in html
+    assert "Talleres" not in html
+    assert "Sucursales" not in html
+    assert "Ingresos del mes" in html
+    assert "20.000,00" in html
+    assert "Trabajo promedio" in html
+    assert "10.000,00" in html
+    assert "Service promedio" in html
+    assert "7.500,00" in html

@@ -80,7 +80,6 @@ def services_create():
         form=form,
         title="Nuevo service",
         submit_label="Crear service",
-        initial_base_price=None,
     )
 
 
@@ -95,6 +94,8 @@ def services_edit(service_id):
         ServiceType.query.filter_by(id=service_id, workshop_id=workshop.id).first_or_404()
     )
     form = ServiceTypeForm(obj=service)
+    if request.method == "GET":
+        form.base_price.data = service.base_price
 
     if form.validate_on_submit():
         InventoryService.update_service(
@@ -114,7 +115,6 @@ def services_edit(service_id):
         form=form,
         title="Editar service",
         submit_label="Guardar cambios",
-        initial_base_price=service.base_price,
     )
 
 

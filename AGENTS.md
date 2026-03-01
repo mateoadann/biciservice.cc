@@ -143,6 +143,17 @@ Use this as the repo-specific operating manual.
 - For NOT NULL additions, backfill before enforcing non-null.
 - Run relevant tests after migration updates.
 
+## Git Workflow Rules (Mandatory)
+- Protected branches: `main` and `dev`.
+- `main` accepts PRs only from `dev`.
+- Do not open PRs from any `feature/*` branch directly to `main`.
+- New work starts from `dev` and must use `feature/<numero>-<slug>`.
+- The `<slug>` must be 4-5 words, lowercase, separated with hyphens.
+- Legacy branches `feature/001` to `feature/012` are valid only because they already exist.
+- From now on, do not create new numeric-only branches like `feature/013`.
+- Standard cycle: `dev` -> `feature/*` -> PR to `dev` -> merge -> next feature.
+- Release cycle: `dev` -> PR to `main`.
+
 ## Final Checklist for Agents
 - Run focused tests for changed functionality.
 - Run broader suite when feasible (`make test-local` or Docker equivalent).

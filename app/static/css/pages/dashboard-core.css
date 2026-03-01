@@ -72,8 +72,15 @@
   min-width: 0;
 }
 
-.panel-scroll {
+.panel-scroll,
+.panel-scroll-x {
   overflow-x: auto;
+  overflow-y: visible;
+}
+
+.panel-scroll-y {
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .panel-table .panel-body {
@@ -162,4 +169,3 @@ html[data-theme="dark"] .detail-summary .job-code {
 .pagination-top {
   margin-left: auto;
 }
-

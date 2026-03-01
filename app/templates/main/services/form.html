@@ -25,11 +25,7 @@
           </label>
           <label>
             Precio base
-            {% set base_value = form.base_price._value() %}
-            {% if not base_value and initial_base_price is not none %}
-              {% set base_value = initial_base_price|currency %}
-            {% endif %}
-            {{ form.base_price(class_="input js-money", inputmode="decimal", value=base_value, required=True) }}
+            {{ form.base_price(class_="input js-money", inputmode="decimal", type="text", required=True, autocomplete="off") }}
             <span class="input-feedback" id="basePriceFeedback">Formato: 0,00</span>
             {% if form.base_price.errors %}
               <span class="field-error">{{ form.base_price.errors[0] }}</span>

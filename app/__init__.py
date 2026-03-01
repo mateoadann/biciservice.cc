@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from decimal import Decimal, InvalidOperation
-from datetime import datetime, timezone
+from datetime import datetime, timezone as dt_timezone
 from flask import (
     Flask,
     g,
@@ -23,6 +23,7 @@ from flask_wtf.csrf import CSRFError
 from .config import Config
 from .extensions import csrf, db, login_manager, migrate
 from .models import User, Workshop, Store
+from .timezone import format_cordoba_datetime
 
 
 def create_app(config_class=Config):
@@ -175,11 +176,39 @@ def create_app(config_class=Config):
         else:
             theme = default_theme
         asset_version = app.config["ASSET_VERSION"]
+        try:
+            app_tour_version = max(int(app.config.get("APP_TOUR_VERSION", 1) or 1), 1)
+        except (TypeError, ValueError):
+            app_tour_version = 1
         service_worker_enabled = (
             bool(app.config.get("SERVICE_WORKER_ENABLED", True))
             and not app.debug
             and not app.testing
         )
+
+        app_tour = {
+            "enabled": False,
+            "version": app_tour_version,
+            "role": None,
+            "should_prompt": False,
+            "dismiss_url": None,
+            "complete_url": None,
+        }
+        if current_user.is_authenticated:
+            app_tour["role"] = current_user.role
+            if current_user.role != "super_admin":
+                seen_version = max(
+                    int(getattr(current_user, "tour_completed_version", 0) or 0),
+                    int(getattr(current_user, "tour_dismissed_version", 0) or 0),
+                )
+                app_tour.update(
+                    {
+                        "enabled": True,
+                        "should_prompt": seen_version < app_tour_version,
+                        "dismiss_url": url_for("main.tour_dismiss"),
+                        "complete_url": url_for("main.tour_complete"),
+                    }
+                )
 
         def asset_url(path: str) -> str:
             if path == "css/app.css":
@@ -193,6 +222,7 @@ def create_app(config_class=Config):
             "asset_version": asset_version,
             "service_worker_enabled": service_worker_enabled,
             "asset_url": asset_url,
+            "app_tour": app_tour,
         }
 
     @app.after_request
@@ -246,6 +276,9 @@ def create_app(config_class=Config):
             return str(value)
         return formatted.replace(",", "X").replace(".", ",").replace("X", ".")
 
+    def format_datetime_cordoba(value, fmt="%d/%m/%Y %H:%M"):
+        return format_cordoba_datetime(value, fmt)
+
     @app.cli.command("create-superadmin")
     @click.option("--email", prompt=True)
     @click.option("--name", prompt=True)
@@ -267,9 +300,9 @@ def create_app(config_class=Config):
             role="super_admin",
             store_id=None,
             is_approved=True,
-            approved_at=datetime.now(timezone.utc),
+            approved_at=datetime.now(dt_timezone.utc),
             email_confirmed=True,
-            email_confirmed_at=datetime.now(timezone.utc),
+            email_confirmed_at=datetime.now(dt_timezone.utc),
         )
         user.set_password(password)
         db.session.add(user)
@@ -284,7 +317,7 @@ def create_app(config_class=Config):
 
         to_value = to.strip().lower()
         subject = "Prueba de correo - biciservice.cc"
-        timestamp = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
+        timestamp = datetime.now(dt_timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
         body_lines = [
             "Este es un correo de prueba de biciservice.cc.",
             "",
@@ -303,5 +336,6 @@ def create_app(config_class=Config):
         click.echo(f"Correo de prueba enviado a {to_value}")
 
     app.jinja_env.filters["currency"] = format_currency
+    app.jinja_env.filters["datetime_cordoba"] = format_datetime_cordoba
 
     return app

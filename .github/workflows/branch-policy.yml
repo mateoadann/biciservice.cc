@@ -1,0 +1,53 @@
+name: Branch Policy
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  branch-policy:
+    name: branch-policy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate source branch policy
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+
+          is_legacy_feature="false"
+          case "${HEAD_REF}" in
+            feature/001|feature/002|feature/003|feature/004|feature/005|feature/006|feature/007|feature/008|feature/009|feature/010|feature/011|feature/012)
+              is_legacy_feature="true"
+              ;;
+          esac
+
+          is_new_feature="false"
+          if [[ "${HEAD_REF}" =~ ^feature/[0-9]+-[a-z0-9]+(-[a-z0-9]+){3,4}$ ]]; then
+            is_new_feature="true"
+          fi
+
+          if [[ "${BASE_REF}" == "main" ]]; then
+            if [[ "${HEAD_REF}" != "dev" ]]; then
+              echo "Policy violation: PRs to 'main' must come only from 'dev'."
+              exit 1
+            fi
+            exit 0
+          fi
+
+          if [[ "${BASE_REF}" == "dev" ]]; then
+            if [[ "${is_legacy_feature}" != "true" && "${is_new_feature}" != "true" ]]; then
+              echo "Policy violation: PRs to 'dev' must come from feature branches."
+              echo "Allowed legacy branches: feature/001 ... feature/012"
+              echo "New required format: feature/<numero>-<slug-4-o-5-palabras>"
+              echo "Example: feature/013-ajustar-flujo-cierre-taller"
+              exit 1
+            fi
+            exit 0
+          fi
+
+          echo "No policy rule for base branch '${BASE_REF}'."
