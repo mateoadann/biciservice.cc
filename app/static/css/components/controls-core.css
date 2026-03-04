@@ -3,7 +3,7 @@
   padding: 10px 16px;
   min-height: var(--touch-target);
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--color-primary), #5d7bff);
+  background: var(--color-primary);
   color: #fff;
   font-weight: 600;
   line-height: 1.2;

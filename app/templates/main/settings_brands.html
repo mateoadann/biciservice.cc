@@ -8,26 +8,25 @@
 {% endblock %}
 
 {% block content %}
-  <section class="panel">
+  <section class="panel panel-table">
     <div class="panel-header">
       <h2>Marcas</h2>
       <span class="pill">{{ brands|length }} total</span>
     </div>
     <div class="panel-body">
-      <form method="post" class="form-stack">
+      <form method="post" class="brands-add-form">
         {{ form.hidden_tag() }}
-        <label>
-          Nueva marca
+        <div class="brands-add-row">
           {{ form.name(class_="input", placeholder="Ej: Raleigh", autocomplete="off") }}
-          {% if form.name.errors %}
-            <span class="field-error">{{ form.name.errors[0] }}</span>
-          {% endif %}
-        </label>
-        <button class="button" type="submit">Agregar marca</button>
+          <button class="button" type="submit">Agregar</button>
+        </div>
+        {% if form.name.errors %}
+          <span class="field-error">{{ form.name.errors[0] }}</span>
+        {% endif %}
       </form>
       {% if brands %}
-        <div class="table-wrap table-scroll">
-          <table class="table table-mobile-cards">
+        <div class="table-wrap">
+          <table class="table table-compact table-mobile-cards">
             <thead>
               <tr>
                 <th>Nombre</th>
@@ -43,7 +42,7 @@
                       <span class="pill pill-muted">Predeterminada</span>
                     {% endif %}
                   </td>
-                  <td class="table-actions table-actions-cell" data-label="Acciones">
+                  <td{% if brand.name != "Otra" %} class="table-actions table-actions-cell" data-label="Acciones"{% endif %}>
                     {% if brand.name != "Otra" %}
                       <form
                         method="post"
