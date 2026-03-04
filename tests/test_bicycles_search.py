@@ -1,5 +1,6 @@
 from app.extensions import db
 from app.models import Bicycle, Client
+from tests.conftest import get_or_create_brand
 
 
 def test_bicycles_search_finds_records_from_other_pages(client, owner_user, login):
@@ -11,11 +12,12 @@ def test_bicycles_search_finds_records_from_other_pages(client, owner_user, logi
     db.session.add(main_client)
     db.session.flush()
 
+    trek = get_or_create_brand(workshop.id, "Trek")
     for index in range(1, 13):
         bike = Bicycle()
         bike.workshop_id = workshop.id
         bike.client_id = main_client.id
-        bike.brand = "Trek"
+        bike.brand_id = trek.id
         bike.model = f"Modelo {index:02d}"
         bike.description = f"Bicicleta de prueba {index:02d}"
         db.session.add(bike)
@@ -47,17 +49,20 @@ def test_bicycles_search_supports_query_and_brand_filter(client, owner_user, log
     db.session.add_all([c1, c2])
     db.session.flush()
 
+    trek = get_or_create_brand(workshop.id, "Trek")
+    specialized = get_or_create_brand(workshop.id, "Specialized")
+
     b1 = Bicycle()
     b1.workshop_id = workshop.id
     b1.client_id = c1.id
-    b1.brand = "Trek"
+    b1.brand_id = trek.id
     b1.model = "X-Caliber"
     b1.description = "Azul"
 
     b2 = Bicycle()
     b2.workshop_id = workshop.id
     b2.client_id = c2.id
-    b2.brand = "Specialized"
+    b2.brand_id = specialized.id
     b2.model = "Rockhopper"
     b2.description = "Negra"
     db.session.add_all([b1, b2])

@@ -7,7 +7,7 @@ from sqlalchemy.orm import joinedload
 
 from app.main import main_bp
 from app.extensions import db
-from app.models import Bicycle, Client, Job, JobItem, ServiceType
+from app.models import Bicycle, BicycleBrand, Client, Job, JobItem, ServiceType
 from app.services.job_service import JobService
 from app.services.audit_service import AuditService
 from app.services.pdf_service import generate_job_pdf, build_pdf_filename
@@ -63,13 +63,14 @@ def jobs():
         query = (
             query.join(Bicycle, Job.bicycle_id == Bicycle.id)
             .join(Client, Bicycle.client_id == Client.id)
+            .outerjoin(BicycleBrand, Bicycle.brand_id == BicycleBrand.id)
             .outerjoin(JobItem, JobItem.job_id == Job.id)
             .outerjoin(ServiceType, JobItem.service_type_id == ServiceType.id)
             .filter(
                 or_(
                     func.lower(func.coalesce(Job.code, "")).like(search_term),
                     func.lower(func.coalesce(Client.full_name, "")).like(search_term),
-                    func.lower(func.coalesce(Bicycle.brand, "")).like(search_term),
+                    func.lower(func.coalesce(BicycleBrand.name, "")).like(search_term),
                     func.lower(func.coalesce(Bicycle.model, "")).like(search_term),
                     func.lower(func.coalesce(ServiceType.name, "")).like(search_term),
                 )

@@ -141,36 +141,23 @@ class SuperAdminProfileForm(FlaskForm):
             )
 
 
-BRAND_CHOICES = [
-    "BH",
-    "BMC",
-    "Cannodale",
-    "Canyon",
-    "Cervelo",
-    "Cube",
-    "Giant",
-    "Marin",
-    "Megamo",
-    "Merida",
-    "Orbea",
-    "Otra",
-    "Pinarello",
-    "Santa Cruz",
-    "Sava",
-    "Scott",
-    "Specialized",
-    "Trek",
-    "Vairo",
-    "Venzo",
-    "Volta",
+DEFAULT_BRAND_NAMES = [
+    "BH", "BMC", "Cannodale", "Canyon", "Cervelo", "Cube", "Giant",
+    "Marin", "Megamo", "Merida", "Orbea", "Otra", "Pinarello",
+    "Santa Cruz", "Sava", "Scott", "Specialized", "Trek", "Vairo",
+    "Venzo", "Volta",
 ]
 
 
 class BicycleForm(FlaskForm):
     client_id = SelectField("Cliente", coerce=int, validators=[DataRequired()])
-    brand_select = SelectField("Marca", validators=[DataRequired()], choices=[])
+    brand_select = SelectField("Marca", coerce=int, validators=[Optional()], choices=[])
     model = StringField("Modelo", validators=[DataRequired(message="Campo obligatorio"), Length(max=80)])
     description = TextAreaField("Descripcion", validators=[Optional(), Length(max=300)])
+
+
+class BicycleBrandForm(FlaskForm):
+    name = StringField("Nombre", validators=[DataRequired(message="Campo obligatorio"), Length(max=80)])
 
 
 class ServiceTypeForm(FlaskForm):

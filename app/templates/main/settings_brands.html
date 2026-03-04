@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block page_title %}Marcas de bicicletas{% endblock %}
+{% block page_subtitle %}Gestiona las marcas disponibles para tu taller.{% endblock %}
+
+{% block page_actions %}
+  <a class="button button-ghost" href="{{ url_for('main.settings') }}">Volver a Personalizacion</a>
+{% endblock %}
+
+{% block content %}
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Marcas</h2>
+      <span class="pill">{{ brands|length }} total</span>
+    </div>
+    <div class="panel-body">
+      <form method="post" class="form-stack">
+        {{ form.hidden_tag() }}
+        <label>
+          Nueva marca
+          {{ form.name(class_="input", placeholder="Ej: Raleigh", autocomplete="off") }}
+          {% if form.name.errors %}
+            <span class="field-error">{{ form.name.errors[0] }}</span>
+          {% endif %}
+        </label>
+        <button class="button" type="submit">Agregar marca</button>
+      </form>
+      {% if brands %}
+        <div class="table-wrap table-scroll">
+          <table class="table table-mobile-cards">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for brand in brands %}
+                <tr>
+                  <td data-label="Nombre">
+                    {{ brand.name }}
+                    {% if brand.name == "Otra" %}
+                      <span class="pill pill-muted">Predeterminada</span>
+                    {% endif %}
+                  </td>
+                  <td class="table-actions table-actions-cell" data-label="Acciones">
+                    {% if brand.name != "Otra" %}
+                      <form
+                        method="post"
+                        action="{{ url_for('main.settings_brands_delete', brand_id=brand.id) }}"
+                        class="inline-form js-confirm"
+                        data-confirm-title="Eliminar marca"
+                        data-confirm-message="Esta accion no se puede deshacer si no hay bicicletas con esta marca."
+                        data-confirm-final-accept="Eliminar"
+                      >
+                        {{ delete_form.hidden_tag() }}
+                        <button class="button button-danger icon-button button-compact" type="submit" aria-label="Eliminar">
+                          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 6V4h8v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M6 6l1 14h10l1-14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </button>
+                      </form>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <h3>No hay marcas aun</h3>
+          <p class="muted">Agrega marcas para usar en el registro de bicicletas.</p>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

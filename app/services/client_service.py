@@ -5,9 +5,8 @@ from io import StringIO
 from sqlalchemy import func
 
 from ..extensions import db
-from ..models import Client, Bicycle, User
+from ..models import Client, Bicycle, BicycleBrand, User
 from .audit_service import AuditService
-from ..main.forms import BRAND_CHOICES
 
 
 logger = logging.getLogger("client_service")
@@ -74,17 +73,18 @@ class ClientService:
         db.session.commit()
 
     @staticmethod
-    def create_bicycle(workshop_id, client_id, brand, model, description):
+    def create_bicycle(workshop_id, client_id, brand_id, model, description):
         bicycle = Bicycle(
             workshop_id=workshop_id,
             client_id=client_id,
-            brand=brand,
+            brand_id=brand_id,
             model=model,
             description=description,
         )
         db.session.add(bicycle)
         db.session.flush()
-        label = " ".join([value for value in [bicycle.brand, bicycle.model] if value])
+        brand_name = bicycle.brand_rel.name if bicycle.brand_rel else None
+        label = " ".join([value for value in [brand_name, bicycle.model] if value])
         AuditService.log_action(
             "create",
             "bicycle",
@@ -96,12 +96,13 @@ class ClientService:
         return bicycle
 
     @staticmethod
-    def update_bicycle(bicycle, client_id, brand, model, description):
+    def update_bicycle(bicycle, client_id, brand_id, model, description):
         bicycle.client_id = client_id
-        bicycle.brand = brand
+        bicycle.brand_id = brand_id
         bicycle.model = model
         bicycle.description = description
-        label = " ".join([value for value in [bicycle.brand, bicycle.model] if value])
+        brand_name = bicycle.brand_rel.name if bicycle.brand_rel else None
+        label = " ".join([value for value in [brand_name, bicycle.model] if value])
         AuditService.log_action(
             "update",
             "bicycle",
@@ -114,7 +115,8 @@ class ClientService:
 
     @staticmethod
     def delete_bicycle(bicycle):
-        label = " ".join([value for value in [bicycle.brand, bicycle.model] if value])
+        brand_name = bicycle.brand_rel.name if bicycle.brand_rel else None
+        label = " ".join([value for value in [brand_name, bicycle.model] if value])
         AuditService.log_action(
             "delete",
             "bicycle",
@@ -235,22 +237,33 @@ class ClientService:
                 skipped += 1
                 continue
 
-            brand = (row.get(brand_key) or "").strip() if brand_key else ""
-            if brand and brand not in BRAND_CHOICES:
-                brand = "Otra"
+            brand_name = (row.get(brand_key) or "").strip() if brand_key else ""
+            brand_id = None
+            if brand_name:
+                brand_obj = BicycleBrand.query.filter_by(
+                    workshop_id=workshop_id, name=brand_name
+                ).first()
+                if brand_obj:
+                    brand_id = brand_obj.id
+                else:
+                    otra = BicycleBrand.query.filter_by(
+                        workshop_id=workshop_id, name="Otra"
+                    ).first()
+                    brand_id = otra.id if otra else None
             model = (row.get(model_key) or "").strip() if model_key else ""
             description = (row.get(desc_key) or "").strip() if desc_key else ""
 
             bicycle = Bicycle(
                 workshop_id=workshop_id,
                 client_id=client.id,
-                brand=brand or None,
+                brand_id=brand_id,
                 model=model or None,
                 description=description or None,
             )
             db.session.add(bicycle)
             db.session.flush()
-            label = " ".join([value for value in [bicycle.brand, bicycle.model] if value])
+            brand_label = bicycle.brand_rel.name if bicycle.brand_rel else None
+            label = " ".join([value for value in [brand_label, bicycle.model] if value])
             AuditService.log_action(
                 "create",
                 "bicycle",

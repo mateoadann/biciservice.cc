@@ -11,7 +11,7 @@
     <section class="panel">
       <div class="panel-header">
         <div>
-          <h2>{{ bicycle.brand or "Bicicleta" }} {{ bicycle.model or "" }}</h2>
+          <h2>{{ bicycle.brand_rel.name if bicycle.brand_rel else "Bicicleta" }} {{ bicycle.model or "" }}</h2>
           <div class="detail-summary">
             <span class="muted" style="font-size:0.85rem">{{ bicycle.client.full_name }}</span>
             <span class="muted" style="font-size:0.85rem">{{ bicycle.jobs|length }} trabajo{{ 's' if bicycle.jobs|length != 1 else '' }}</span>
@@ -27,7 +27,7 @@
           </div>
           <div>
             <div class="field-label">Marca</div>
-            <div>{{ bicycle.brand or "-" }}</div>
+            <div>{{ bicycle.brand_rel.name if bicycle.brand_rel else "-" }}</div>
           </div>
           <div>
             <div class="field-label">Modelo</div>

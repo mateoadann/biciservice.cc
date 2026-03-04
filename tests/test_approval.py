@@ -13,6 +13,7 @@ from app.models import (
     User,
     Workshop,
 )
+from tests.conftest import get_or_create_brand
 
 
 def _create_dashboard_job(owner_user, *, code, created_at, service_price, part_price="0.00"):
@@ -24,10 +25,11 @@ def _create_dashboard_job(owner_user, *, code, created_at, service_price, part_p
     client.client_code = f"C{code}"
     client.full_name = f"Cliente {code}"
 
+    brand = get_or_create_brand(workshop.id, "Trek")
     bicycle = Bicycle()
     bicycle.workshop_id = workshop.id
     bicycle.client = client
-    bicycle.brand = "Trek"
+    bicycle.brand_id = brand.id
     bicycle.model = f"Modelo {code}"
 
     service = ServiceType()

@@ -137,7 +137,7 @@ def generate_job_pdf(job, service_total, parts_total, total):
         elements.append(Paragraph("Informacion general", style_section))
 
         client_name = job.bicycle.client.full_name if job.bicycle and job.bicycle.client else "-"
-        bike_brand = job.bicycle.brand or "Bicicleta" if job.bicycle else "-"
+        bike_brand = (job.bicycle.brand_rel.name if job.bicycle and job.bicycle.brand_rel else "Bicicleta") if job.bicycle else "-"
         bike_model = job.bicycle.model or "" if job.bicycle else ""
         bike_label = f"{bike_brand} {bike_model}".strip()
         fecha_ingreso = job.created_at.strftime("%d/%m/%Y") if job.created_at else "-"
