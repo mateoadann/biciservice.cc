@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 from flask import current_app, render_template, url_for
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -42,7 +42,7 @@ def send_confirmation_email(user) -> None:
     )
     sent = send_email(user.email, subject, body, html_body=html_body)
     if sent:
-        user.confirmation_sent_at = datetime.now(timezone.utc)
+        user.confirmation_sent_at = datetime.utcnow()
     else:
         current_app.logger.warning(
             "No se pudo enviar confirmacion a %s. Link generado: %s",
