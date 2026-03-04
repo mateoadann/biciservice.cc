@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import logging
 import math
 import pyotp
@@ -141,14 +141,14 @@ class TwoFactorForm(FlaskForm):
 def _can_resend_confirmation(user) -> bool:
     if not user.confirmation_sent_at:
         return True
-    return datetime.now(timezone.utc) - user.confirmation_sent_at > timedelta(minutes=5)
+    return datetime.utcnow() - user.confirmation_sent_at > timedelta(minutes=5)
 
 
 
 def _lockout_remaining(user) -> int | None:
     if not user.locked_until:
         return None
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     if user.locked_until <= now:
         user.locked_until = None
         user.failed_login_attempts = 0
@@ -162,7 +162,7 @@ def _register_failed_login(user) -> bool:
     max_attempts = current_app.config["LOGIN_LOCKOUT_MAX"]
     if user.failed_login_attempts >= max_attempts:
         user.failed_login_attempts = 0
-        user.locked_until = datetime.now(timezone.utc) + timedelta(
+        user.locked_until = datetime.utcnow() + timedelta(
             seconds=current_app.config["LOGIN_LOCKOUT_DURATION"]
         )
         db.session.commit()
@@ -341,7 +341,7 @@ def confirm_email(token):
         return redirect(url_for("auth.login"))
 
     user.email_confirmed = True
-    user.email_confirmed_at = datetime.now(timezone.utc)
+    user.email_confirmed_at = datetime.utcnow()
     db.session.commit()
     flash("Email confirmado. Ya puedes iniciar sesion.", "success")
     return redirect(url_for("auth.login"))
