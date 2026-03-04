@@ -151,7 +151,12 @@ DEFAULT_BRAND_NAMES = [
 
 class BicycleForm(FlaskForm):
     client_id = SelectField("Cliente", coerce=int, validators=[DataRequired()])
-    brand_select = SelectField("Marca", coerce=int, validators=[Optional()], choices=[])
+    brand_select = SelectField(
+        "Marca",
+        coerce=lambda v: int(v) if v else None,
+        validators=[Optional()],
+        choices=[],
+    )
     model = StringField("Modelo", validators=[DataRequired(message="Campo obligatorio"), Length(max=80)])
     description = TextAreaField("Descripcion", validators=[Optional(), Length(max=300)])
 
