@@ -13,7 +13,7 @@ from sqlalchemy.pool import StaticPool
 from app import create_app
 from app.config import Config
 from app.extensions import db
-from app.models import Store, User, Workshop
+from app.models import BicycleBrand, Store, User, Workshop
 
 
 class TestingConfig(Config):
@@ -128,3 +128,12 @@ def login(client):
         )
 
     return _login
+
+
+def get_or_create_brand(workshop_id, name):
+    brand = BicycleBrand.query.filter_by(workshop_id=workshop_id, name=name).first()
+    if not brand:
+        brand = BicycleBrand(workshop_id=workshop_id, name=name)
+        db.session.add(brand)
+        db.session.flush()
+    return brand

@@ -13,8 +13,8 @@
       <tbody>
         {% for bicycle in bicycles %}
           {% set description = bicycle.description or "-" %}
-          <tr data-brand="{{ bicycle.brand or '' }}" data-search="{{ bicycle.brand or '' }} {{ bicycle.model or '' }} {{ bicycle.description or '' }} {{ bicycle.client.full_name }}">
-            <td class="col-bike-brand" data-label="Marca"><span class="truncate" title="{{ bicycle.brand or '-' }}">{{ bicycle.brand or "-" }}</span></td>
+          <tr data-brand="{{ bicycle.brand_rel.name if bicycle.brand_rel else '' }}" data-search="{{ bicycle.brand_rel.name if bicycle.brand_rel else '' }} {{ bicycle.model or '' }} {{ bicycle.description or '' }} {{ bicycle.client.full_name }}">
+            <td class="col-bike-brand" data-label="Marca"><span class="truncate" title="{{ bicycle.brand_rel.name if bicycle.brand_rel else '-' }}">{{ bicycle.brand_rel.name if bicycle.brand_rel else "-" }}</span></td>
             <td class="col-bike-model" data-label="Modelo"><span class="truncate" title="{{ bicycle.model or '-' }}">{{ bicycle.model or "-" }}</span></td>
             <td class="col-bike-description" data-label="Descripcion"><span class="truncate" title="{{ description }}">{{ description|truncate(45, True, '...') }}</span></td>
             <td class="col-bike-client" data-label="Cliente"><span class="truncate" title="{{ bicycle.client.full_name }}">{{ bicycle.client.full_name }}</span></td>

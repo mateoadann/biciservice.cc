@@ -42,7 +42,7 @@
         <div>
           <div class="timeline-title">{{ job.bicycle.client.full_name }}</div>
           <div class="muted">
-            {{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}
+            {{ job.bicycle.brand_rel.name if job.bicycle.brand_rel else "Bicicleta" }} {{ job.bicycle.model or "" }}
             {% if job.items %}
             <span> • </span>
             <span>{{ job.items[0].service_type.name }}</span>

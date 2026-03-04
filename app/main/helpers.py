@@ -13,8 +13,7 @@ from sqlalchemy.orm import joinedload
 from PIL import Image
 from io import BytesIO
 
-from ..models import Store, Client, Bicycle, ServiceType, Job
-from .forms import BRAND_CHOICES
+from ..models import Store, Client, Bicycle, BicycleBrand, ServiceType, Job
 
 
 DEFAULT_WHATSAPP_MESSAGE_TEMPLATE = (
@@ -68,7 +67,7 @@ def render_job_whatsapp_message(template, job, total):
     client = job.bicycle.client if job.bicycle and job.bicycle.client else None
     client_name = client.full_name if client and client.full_name else "Cliente"
     client_phone = client.phone if client and client.phone else "-"
-    bike_brand = job.bicycle.brand if job.bicycle and job.bicycle.brand else "Bicicleta"
+    bike_brand = job.bicycle.brand_rel.name if job.bicycle and job.bicycle.brand_rel else "Bicicleta"
     bike_model = job.bicycle.model if job.bicycle and job.bicycle.model else ""
     bike_label = f"{bike_brand} {bike_model}".strip()
     workshop_name = job.workshop.name if job.workshop and job.workshop.name else "Taller"
@@ -268,7 +267,8 @@ def bicycle_choices(workshop):
     )
     choices = []
     for bicycle in bicycles:
-        label_parts = [bicycle.brand, bicycle.model]
+        brand_name = bicycle.brand_rel.name if bicycle.brand_rel else None
+        label_parts = [brand_name, bicycle.model]
         label = " ".join(part for part in label_parts if part)
         if not label:
             label = "Bicicleta"
@@ -288,11 +288,16 @@ def services_list(workshop):
         .all()
     )
 
-def brand_choices():
-    return [("", "Seleccionar marca")] + [(brand, brand) for brand in BRAND_CHOICES]
+def brand_choices(workshop):
+    brands = (
+        BicycleBrand.query.filter_by(workshop_id=workshop.id)
+        .order_by(BicycleBrand.name.asc())
+        .all()
+    )
+    return [("", "Seleccionar marca")] + [(b.id, b.name) for b in brands]
 
 
-def resolve_brand(form):
+def resolve_brand_id(form):
     return form.brand_select.data or None
 
 
