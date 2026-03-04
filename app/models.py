@@ -102,6 +102,7 @@ class Workshop(db.Model):
     clients = db.relationship("Client", backref="workshop", lazy=True)
     bicycles = db.relationship("Bicycle", backref="workshop", lazy=True)
     service_types = db.relationship("ServiceType", backref="workshop", lazy=True)
+    bicycle_brands = db.relationship("BicycleBrand", backref="workshop", lazy=True)
     jobs = db.relationship("Job", backref="workshop", lazy=True)
 
     def theme(self) -> dict:
@@ -148,13 +149,27 @@ class Store(db.Model):
     )
 
 
+class BicycleBrand(db.Model):
+    __tablename__ = "bicycle_brands"
+
+    id = db.Column(db.Integer, primary_key=True)
+    workshop_id = db.Column(db.Integer, db.ForeignKey("workshops.id"), nullable=False)
+    name = db.Column(db.String(80), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        db.UniqueConstraint("workshop_id", "name", name="uq_bicycle_brand_workshop_name"),
+        db.Index("ix_bicycle_brands_workshop_id", "workshop_id"),
+    )
+
+
 class Bicycle(db.Model):
     __tablename__ = "bicycles"
 
     id = db.Column(db.Integer, primary_key=True)
     workshop_id = db.Column(db.Integer, db.ForeignKey("workshops.id"), nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey("clients.id"), nullable=False)
-    brand = db.Column(db.String(80))
+    brand_id = db.Column(db.Integer, db.ForeignKey("bicycle_brands.id"), nullable=True)
     model = db.Column(db.String(80))
     description = db.Column(db.String(300))
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
@@ -164,6 +179,7 @@ class Bicycle(db.Model):
         db.Index("ix_bicycles_client_id", "client_id"),
     )
 
+    brand_rel = db.relationship("BicycleBrand", backref="bicycles")
     jobs = db.relationship("Job", backref="bicycle", lazy=True)
 
 

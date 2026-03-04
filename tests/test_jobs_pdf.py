@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from app.extensions import db
 from app.models import Bicycle, Client, Job, JobItem, ServiceType
+from tests.conftest import get_or_create_brand
 
 
 def _create_job(owner_user, *, code, status="ready", notes=""):
@@ -15,10 +16,11 @@ def _create_job(owner_user, *, code, status="ready", notes=""):
     client.full_name = "Cliente PDF"
     client.email = "cliente-pdf@example.com"
 
+    brand = get_or_create_brand(workshop.id, "Trek")
     bicycle = Bicycle()
     bicycle.workshop_id = workshop.id
     bicycle.client = client
-    bicycle.brand = "Trek"
+    bicycle.brand_id = brand.id
     bicycle.model = "Marlin"
 
     service = ServiceType()

@@ -4,7 +4,8 @@ from flask_login import login_required, current_user
 from app.main import main_bp
 from app.extensions import db
 from app.services.audit_service import AuditService
-from app.main.forms import WorkshopSettingsForm, DeleteForm, TwoFactorSetupForm, TwoFactorDisableForm
+from app.models import Bicycle, BicycleBrand
+from app.main.forms import WorkshopSettingsForm, DeleteForm, TwoFactorSetupForm, TwoFactorDisableForm, BicycleBrandForm
 from app.main.helpers import (
     WHATSAPP_TEMPLATE_VARIABLES,
     get_workshop_or_redirect,
@@ -202,3 +203,96 @@ def settings_remove_favicon():
         flash("Favicon eliminado", "success")
 
     return redirect(url_for("main.settings"))
+
+
+@main_bp.route("/settings/brands", methods=["GET", "POST"])
+@login_required
+def settings_brands():
+    workshop, redirect_response = get_workshop_or_redirect()
+    if redirect_response:
+        return redirect_response
+
+    _, owner_redirect = owner_or_redirect()
+    if owner_redirect:
+        return owner_redirect
+
+    form = BicycleBrandForm()
+    if form.validate_on_submit():
+        name = form.name.data.strip()
+        existing = BicycleBrand.query.filter_by(
+            workshop_id=workshop.id, name=name
+        ).first()
+        if existing:
+            flash("La marca ya existe", "error")
+        else:
+            brand = BicycleBrand(workshop_id=workshop.id, name=name)
+            db.session.add(brand)
+            db.session.flush()
+            AuditService.log_action(
+                "create",
+                "bicycle_brand",
+                brand.id,
+                f"Marca {brand.name}",
+                workshop_id=workshop.id,
+            )
+            db.session.commit()
+            flash("Marca creada", "success")
+        return redirect(url_for("main.settings_brands"))
+
+    if request.method == "POST" and form.errors:
+        flash("Revisa los campos ingresados", "error")
+
+    brands = (
+        BicycleBrand.query.filter_by(workshop_id=workshop.id)
+        .order_by(BicycleBrand.name.asc())
+        .all()
+    )
+    return render_template(
+        "main/settings_brands.html",
+        form=form,
+        brands=brands,
+        delete_form=DeleteForm(),
+    )
+
+
+@main_bp.route("/settings/brands/<int:brand_id>/delete", methods=["POST"])
+@login_required
+def settings_brands_delete(brand_id):
+    workshop, redirect_response = get_workshop_or_redirect()
+    if redirect_response:
+        return redirect_response
+
+    _, owner_redirect = owner_or_redirect()
+    if owner_redirect:
+        return owner_redirect
+
+    form = DeleteForm()
+    if not form.validate_on_submit():
+        return redirect(url_for("main.settings_brands"))
+
+    brand = BicycleBrand.query.filter_by(
+        id=brand_id, workshop_id=workshop.id
+    ).first_or_404()
+
+    if brand.name == "Otra":
+        flash("La marca 'Otra' no puede eliminarse", "error")
+        return redirect(url_for("main.settings_brands"))
+
+    in_use = Bicycle.query.filter_by(
+        workshop_id=workshop.id, brand_id=brand.id
+    ).first()
+    if in_use:
+        flash(f"No puedes eliminar '{brand.name}': hay bicicletas con esta marca", "error")
+        return redirect(url_for("main.settings_brands"))
+
+    AuditService.log_action(
+        "delete",
+        "bicycle_brand",
+        brand.id,
+        f"Marca {brand.name}",
+        workshop_id=workshop.id,
+    )
+    db.session.delete(brand)
+    db.session.commit()
+    flash("Marca eliminada", "success")
+    return redirect(url_for("main.settings_brands"))

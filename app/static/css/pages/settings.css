@@ -145,7 +145,7 @@ label {
   border: none;
   padding: 8px 12px;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--color-primary), #5d7bff);
+  background: var(--color-primary);
   color: #fff;
   font-weight: 600;
   cursor: pointer;
@@ -206,5 +206,21 @@ label {
 .wa-modal-message {
   min-height: 140px;
   resize: vertical;
+}
+
+.brands-add-form {
+  display: grid;
+  gap: 6px;
+}
+
+.brands-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.brands-add-row .input {
+  flex: 1;
+  min-width: 0;
 }
 

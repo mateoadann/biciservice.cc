@@ -64,7 +64,7 @@
           </div>
           <div>
             <div class="field-label">Bicicleta</div>
-            <div>{{ job.bicycle.brand or "Bicicleta" }} {{ job.bicycle.model or "" }}</div>
+            <div>{{ job.bicycle.brand_rel.name if job.bicycle.brand_rel else "Bicicleta" }} {{ job.bicycle.model or "" }}</div>
           </div>
           <div>
             <div class="field-label">Estado</div>

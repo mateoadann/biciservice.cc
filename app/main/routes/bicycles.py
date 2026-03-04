@@ -4,7 +4,7 @@ from sqlalchemy import func, or_
 
 from app.main import main_bp
 from app.extensions import db
-from app.models import Bicycle, Client, Job
+from app.models import Bicycle, BicycleBrand, Client, Job
 from app.services.client_service import ClientService
 from app.services.audit_service import AuditService
 from app.main.forms import BicycleForm, DeleteForm
@@ -14,7 +14,7 @@ from app.main.helpers import (
     bicycle_choices,
     client_choices,
     brand_choices,
-    resolve_brand
+    resolve_brand_id
 )
 
 @main_bp.route("/bicycles")
@@ -30,15 +30,15 @@ def bicycles():
     if not active_brand:
         active_brand = "all"
 
-    query = Bicycle.query.join(Client).filter(Bicycle.workshop_id == workshop.id)
+    query = Bicycle.query.join(Client).outerjoin(BicycleBrand).filter(Bicycle.workshop_id == workshop.id)
     if active_brand.lower() != "all":
-        query = query.filter(func.lower(func.coalesce(Bicycle.brand, "")) == active_brand.lower())
+        query = query.filter(func.lower(func.coalesce(BicycleBrand.name, "")) == active_brand.lower())
 
     if search_query:
         search_term = f"%{search_query.lower()}%"
         query = query.filter(
             or_(
-                func.lower(func.coalesce(Bicycle.brand, "")).like(search_term),
+                func.lower(func.coalesce(BicycleBrand.name, "")).like(search_term),
                 func.lower(func.coalesce(Bicycle.model, "")).like(search_term),
                 func.lower(func.coalesce(Bicycle.description, "")).like(search_term),
                 func.lower(func.coalesce(Client.full_name, "")).like(search_term),
@@ -60,10 +60,11 @@ def bicycles():
         return render_template("main/bicycles/_fragments.html", **table_template_data)
 
     brand_rows = (
-        db.session.query(Bicycle.brand)
-        .filter(Bicycle.workshop_id == workshop.id, Bicycle.brand.isnot(None))
+        db.session.query(BicycleBrand.name)
+        .join(Bicycle, Bicycle.brand_id == BicycleBrand.id)
+        .filter(Bicycle.workshop_id == workshop.id)
         .distinct()
-        .order_by(Bicycle.brand.asc())
+        .order_by(BicycleBrand.name.asc())
         .all()
     )
     brands = [row[0] for row in brand_rows]
@@ -114,14 +115,14 @@ def bicycles_create():
 
     form = BicycleForm()
     form.client_id.choices = choices
-    form.brand_select.choices = brand_choices()
+    form.brand_select.choices = brand_choices(workshop)
 
     if form.validate_on_submit():
-        brand = resolve_brand(form)
+        brand_id = resolve_brand_id(form)
         ClientService.create_bicycle(
             workshop_id=workshop.id,
             client_id=form.client_id.data,
-            brand=brand,
+            brand_id=brand_id,
             model=form.model.data,
             description=form.description.data
         )
@@ -155,20 +156,20 @@ def bicycles_edit(bicycle_id):
     form = BicycleForm()
     choices = client_choices(workshop)
     form.client_id.choices = choices
-    form.brand_select.choices = brand_choices()
+    form.brand_select.choices = brand_choices(workshop)
 
     if request.method == "GET":
         form.client_id.data = bicycle.client_id
-        form.brand_select.data = bicycle.brand or ""
+        form.brand_select.data = bicycle.brand_id or ""
         form.model.data = bicycle.model
         form.description.data = bicycle.description
 
     if form.validate_on_submit():
-        brand = resolve_brand(form)
+        brand_id = resolve_brand_id(form)
         ClientService.update_bicycle(
             bicycle,
             client_id=form.client_id.data,
-            brand=brand,
+            brand_id=brand_id,
             model=form.model.data,
             description=form.description.data
         )
