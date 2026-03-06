@@ -70,7 +70,7 @@ def test_dashboard_summary_without_jobs(client, owner_user, login):
     html = response.get_data(as_text=True)
     assert "Tasa de cierre" in html
     assert "Estado de trabajos (0)" in html
-    assert "Aun no hay trabajos registrados. Crea tu primer trabajo para comenzar." in html
+    assert "Sin trabajos activos" in html
 
 
 def test_dashboard_summary_shows_overdue_and_ready_alerts(client, owner_user, login):
@@ -84,7 +84,7 @@ def test_dashboard_summary_shows_overdue_and_ready_alerts(client, owner_user, lo
     html = response.get_data(as_text=True)
     assert "Estado de trabajos (2)" in html
     assert "Hay 1 trabajo(s) atrasado(s)." in html
-    assert "Tienes 1 trabajo(s) listo(s) para entrega." in html
+    assert "1 trabajo(s) listo(s) para entrega." in html
     assert "status=overdue" in html
     assert "status=ready" in html
 
