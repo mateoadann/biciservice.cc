@@ -169,3 +169,100 @@ html[data-theme="dark"] .detail-summary .job-code {
 .pagination-top {
   margin-left: auto;
 }
+
+/* Action cards */
+.stat-card-action {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stat-card-action:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card-warning {
+  background: rgba(255, 140, 43, 0.14);
+  border-color: rgba(255, 140, 43, 0.3);
+}
+
+html[data-theme="dark"] .stat-card-warning {
+  background: rgba(255, 140, 43, 0.18);
+  border-color: rgba(255, 140, 43, 0.35);
+}
+
+.stat-card-success {
+  background: rgba(25, 179, 107, 0.14);
+  border-color: rgba(25, 179, 107, 0.3);
+}
+
+html[data-theme="dark"] .stat-card-success {
+  background: rgba(25, 179, 107, 0.18);
+  border-color: rgba(25, 179, 107, 0.35);
+}
+
+.stat-card-info {
+  background: rgba(31, 76, 255, 0.08);
+  border-color: rgba(31, 76, 255, 0.2);
+}
+
+html[data-theme="dark"] .stat-card-info {
+  background: rgba(31, 76, 255, 0.15);
+  border-color: rgba(31, 76, 255, 0.3);
+}
+
+.stat-card-cta {
+  background: linear-gradient(135deg, var(--color-primary), #3b6bff);
+  color: #fff;
+  border-color: transparent;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-card-cta .stat-value {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.stat-card-cta .stat-label {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+@keyframes pulse-warning {
+  0%, 100% { box-shadow: var(--shadow-card); }
+  50% { box-shadow: var(--shadow-card), 0 0 0 4px rgba(255, 140, 43, 0.2); }
+}
+
+.stat-card-pulse {
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+/* Alerts top */
+.dashboard-alerts-top {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* Date range collapsible */
+.dashboard-range-details {
+  margin-top: 8px;
+}
+
+.dashboard-range-details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.dashboard-range-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.dashboard-range-details[open] > summary {
+  margin-bottom: 12px;
+}
