@@ -445,12 +445,14 @@
       confirmAccept.textContent = finalMessage ? 'Continuar' : finalAccept;
       confirmOverlay.classList.add('is-open');
       confirmOverlay.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
     };
 
     const closeConfirmModal = () => {
       if (!confirmOverlay) return;
       confirmOverlay.classList.remove('is-open');
       confirmOverlay.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
       confirmForm = null;
       confirmStep = 1;
     };
