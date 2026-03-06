@@ -32,6 +32,23 @@
 
 <section class="panel-grid">
   <section class="panel">
+    {% if summary.overdue > 0 or summary.ready_for_delivery > 0 %}
+    <div class="dashboard-alerts-top">
+      {% if summary.overdue > 0 %}
+      <div class="dashboard-alert warning">
+        Hay {{ summary.overdue }} trabajo(s) atrasado(s).
+        <a href="{{ url_for('main.jobs', status='overdue') }}">Ir a trabajos</a>
+      </div>
+      {% endif %}
+      {% if summary.ready_for_delivery > 0 %}
+      <div class="dashboard-alert accent">
+        {{ summary.ready_for_delivery }} trabajo(s) listo(s) para entrega.
+        <a href="{{ url_for('main.jobs', status='ready') }}">Ver trabajos</a>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
     <div class="panel-header">
       <h2>Agenda de trabajo</h2>
       <a class="button button-ghost button-compact" href="{{ url_for('main.jobs') }}">Ver todos</a>
@@ -40,17 +57,24 @@
     {% if agenda_jobs %}
     <div class="timeline">
       {% for job in agenda_jobs %}
-      <div class="timeline-item">
-        <span class="timeline-dot"></span>
-        <div>
+      {% set is_overdue = job.estimated_delivery_at and job.estimated_delivery_at < today and job.status in ['open', 'in_progress', 'ready'] %}
+      {% set days_late = (today - job.estimated_delivery_at).days if is_overdue else 0 %}
+      <a class="timeline-item {% if is_overdue %}timeline-item-overdue{% endif %}" href="{{ url_for('main.jobs_detail', job_id=job.id) }}">
+        <span class="timeline-dot {% if is_overdue %}timeline-dot-warning{% endif %}"></span>
+        <div class="timeline-content">
           <div class="timeline-title">{{ job.bicycle.client.full_name }}</div>
           <div class="muted">
             {{ job.bicycle.brand_rel.name if job.bicycle.brand_rel else "Bicicleta" }} {{ job.bicycle.model or "" }}
             {% if job.items %}
-            <span> • </span>
+            <span> &bull; </span>
             <span>{{ job.items[0].service_type.name }}</span>
             {% endif %}
           </div>
+          {% if is_overdue %}
+          <div class="timeline-overdue">{{ days_late }} dia{{ 's' if days_late != 1 else '' }} de atraso</div>
+          {% elif job.estimated_delivery_at %}
+          <div class="muted timeline-date">Entrega: {{ job.estimated_delivery_at.strftime('%d/%m') }}</div>
+          {% endif %}
         </div>
         <span class="chip {{ job.status }}">
           {% if job.status == "open" %}Abierto{% endif %}
@@ -59,7 +83,7 @@
           {% if job.status == "closed" %}Cerrado{% endif %}
           {% if job.status == "cancelled" %}Cancelado{% endif %}
         </span>
-      </div>
+      </a>
       {% endfor %}
     </div>
     {% else %}
@@ -76,39 +100,6 @@
       <h2>Resumen del taller</h2>
     </div>
 
-    <form class="dashboard-range-form" method="get" action="{{ url_for('main.dashboard') }}">
-      <label>
-        <span>Desde</span>
-        <input type="hidden" name="date_from" id="dashboardDateFrom" value="{{ summary.date_from }}">
-        <input
-          class="input input-compact js-dashboard-range-picker"
-          id="dashboardDateFromPicker"
-          type="text"
-          placeholder="dd/mm/aaaa"
-          autocomplete="off"
-        >
-      </label>
-      <label>
-        <span>Hasta</span>
-        <input type="hidden" name="date_to" id="dashboardDateTo" value="{{ summary.date_to }}">
-        <input
-          class="input input-compact js-dashboard-range-picker"
-          id="dashboardDateToPicker"
-          type="text"
-          placeholder="dd/mm/aaaa"
-          autocomplete="off"
-        >
-      </label>
-      <button class="button button-compact" type="submit">Aplicar</button>
-      <a class="button button-ghost button-compact" href="{{ url_for('main.dashboard') }}">Limpiar</a>
-    </form>
-
-    {% if summary.has_active_range %}
-    <div class="panel-note dashboard-range-note">
-      Periodo aplicado: {{ summary.date_from or "inicio" }} a {{ summary.date_to or "hoy" }}.
-    </div>
-    {% endif %}
-
     <div class="metric">
       <div class="metric-label">Ingresos estimados</div>
       <div class="metric-value">$ {{ summary.revenue|currency }}</div>
@@ -123,19 +114,43 @@
         <div class="summary-label">Tasa de cierre</div>
         <div class="summary-value">{{ summary.close_rate }}%</div>
       </div>
-      <div class="summary-card {% if summary.overdue > 0 %}summary-card-warning{% endif %}">
-        <div class="summary-label">Trabajos atrasados</div>
-        <div class="summary-value">{{ summary.overdue }}</div>
-      </div>
-      <div class="summary-card {% if summary.ready_for_delivery > 0 %}summary-card-success{% endif %}">
-        <div class="summary-label">Listos para entrega</div>
-        <div class="summary-value">{{ summary.ready_for_delivery }}</div>
-      </div>
-      <div class="summary-card">
-        <div class="summary-label">Servicios activos</div>
-        <div class="summary-value">{{ summary.services_active }}</div>
-      </div>
     </div>
+
+    <details class="dashboard-range-details" {% if summary.has_active_range %}open{% endif %}>
+      <summary class="button button-ghost button-compact">Filtrar por fecha</summary>
+      <form class="dashboard-range-form" method="get" action="{{ url_for('main.dashboard') }}">
+        <label>
+          <span>Desde</span>
+          <input type="hidden" name="date_from" id="dashboardDateFrom" value="{{ summary.date_from }}">
+          <input
+            class="input input-compact js-dashboard-range-picker"
+            id="dashboardDateFromPicker"
+            type="text"
+            placeholder="dd/mm/aaaa"
+            autocomplete="off"
+          >
+        </label>
+        <label>
+          <span>Hasta</span>
+          <input type="hidden" name="date_to" id="dashboardDateTo" value="{{ summary.date_to }}">
+          <input
+            class="input input-compact js-dashboard-range-picker"
+            id="dashboardDateToPicker"
+            type="text"
+            placeholder="dd/mm/aaaa"
+            autocomplete="off"
+          >
+        </label>
+        <button class="button button-compact" type="submit">Aplicar</button>
+        <a class="button button-ghost button-compact" href="{{ url_for('main.dashboard') }}">Limpiar</a>
+      </form>
+    </details>
+
+    {% if summary.has_active_range %}
+    <div class="panel-note dashboard-range-note">
+      Periodo aplicado: {{ summary.date_from or "inicio" }} a {{ summary.date_to or "hoy" }}.
+    </div>
+    {% endif %}
 
     <div class="metric">
       <div class="metric-label">
@@ -159,32 +174,6 @@
         <span class="chip closed">Cerrados: {{ summary.closed }}</span>
         <span class="chip cancelled">Cancelados: {{ summary.cancelled }}</span>
       </div>
-    </div>
-
-    <div class="panel-note panel-note-divider">
-      <div class="panel-note-title">Alertas del dia</div>
-      {% if counts.jobs == 0 %}
-      <p class="muted">Aun no hay trabajos registrados. Crea tu primer trabajo para comenzar.</p>
-      <a class="button button-compact" href="{{ url_for('main.jobs_create') }}">Crear trabajo</a>
-      {% else %}
-      <div class="dashboard-alerts">
-        {% if summary.overdue > 0 %}
-        <div class="dashboard-alert warning">
-          Hay {{ summary.overdue }} trabajo(s) atrasado(s).
-          <a href="{{ url_for('main.jobs', status='overdue') }}">Ir a trabajos</a>
-        </div>
-        {% else %}
-        <div class="dashboard-alert success">No hay trabajos atrasados hoy.</div>
-        {% endif %}
-
-        {% if summary.ready_for_delivery > 0 %}
-        <div class="dashboard-alert accent">
-          Tienes {{ summary.ready_for_delivery }} trabajo(s) listo(s) para entrega.
-          <a href="{{ url_for('main.jobs', status='ready') }}">Ver trabajos</a>
-        </div>
-        {% endif %}
-      </div>
-      {% endif %}
     </div>
   </section>
 </section>
