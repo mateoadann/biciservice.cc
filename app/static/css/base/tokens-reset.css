@@ -35,6 +35,7 @@ body {
     radial-gradient(circle at 30% 20%, rgba(25, 179, 107, 0.1), transparent 40%),
     linear-gradient(135deg, var(--color-background), #fefefe 50%);
   min-height: 100vh;
+  min-height: 100svh;
 }
 
 img,
