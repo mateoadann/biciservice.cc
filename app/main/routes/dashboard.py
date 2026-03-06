@@ -82,8 +82,22 @@ def dashboard():
 
         agenda_jobs = (
             Job.query.filter_by(workshop_id=workshop.id, store_id=store.id)
-            .order_by(Job.created_at.desc())
-            .limit(5)
+            .filter(Job.status.in_(["open", "in_progress", "ready"]))
+            .order_by(
+                case(
+                    (
+                        (Job.status.in_(["open", "in_progress", "ready"]))
+                        & (Job.estimated_delivery_at < today),
+                        0,
+                    ),
+                    (Job.status == "in_progress", 1),
+                    (Job.status == "open", 2),
+                    (Job.status == "ready", 3),
+                    else_=4,
+                ),
+                Job.estimated_delivery_at.asc().nullslast(),
+            )
+            .limit(10)
             .all()
         )
         service_revenue_row = (
@@ -189,6 +203,7 @@ def dashboard():
         workshop=workshop,
         agenda_jobs=agenda_jobs,
         summary=summary,
+        today=today,
     )
 
 @main_bp.route("/audit")
