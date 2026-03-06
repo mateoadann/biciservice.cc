@@ -231,6 +231,7 @@
 
       </nav>
     </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     {% endif %}
 
     <main class="content">
@@ -327,6 +328,8 @@
       }
     };
 
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
     const setMobileMenuState = (open) => {
       if (!sidebar || !nav) return;
       const isOpen = Boolean(open) && isMobileSidebar();
@@ -334,7 +337,13 @@
       sidebar.classList.toggle('mobile-menu-open', isOpen);
       navToggle?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
       collapseToggle?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      sidebarOverlay?.classList.toggle('is-active', isOpen);
+      document.body.style.overflow = isOpen ? 'hidden' : '';
     };
+
+    sidebarOverlay?.addEventListener('click', () => {
+      setMobileMenuState(false);
+    });
 
     const persisted = (() => {
       try {
