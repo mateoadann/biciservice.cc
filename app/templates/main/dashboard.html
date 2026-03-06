@@ -5,26 +5,29 @@
 
 {% block content %}
 <section class="stats-grid">
-  <div class="stat-card">
-    <div class="stat-label">Clientes</div>
-    <div class="stat-value">{{ counts.clients }}</div>
-    <div class="stat-meta">Activos en el taller</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Bicicletas</div>
-    <div class="stat-value">{{ counts.bicycles }}</div>
-    <div class="stat-meta">Registradas</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Servicios</div>
-    <div class="stat-value">{{ counts.services }}</div>
-    <div class="stat-meta">Tipos disponibles</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Trabajos</div>
-    <div class="stat-value">{{ counts.jobs }}</div>
-    <div class="stat-meta">En proceso ({{ summary.in_progress }})</div>
-  </div>
+  <a class="stat-card stat-card-action {% if summary.overdue > 0 %}stat-card-warning stat-card-pulse{% endif %}"
+     href="{{ url_for('main.jobs', status='overdue') }}">
+    <div class="stat-label">Atrasados</div>
+    <div class="stat-value">{{ summary.overdue }}</div>
+    <div class="stat-meta">{% if summary.overdue > 0 %}Requieren atencion{% else %}Todo al dia{% endif %}</div>
+  </a>
+  <a class="stat-card stat-card-action {% if summary.ready_for_delivery > 0 %}stat-card-success{% endif %}"
+     href="{{ url_for('main.jobs', status='ready') }}">
+    <div class="stat-label">Listos para entrega</div>
+    <div class="stat-value">{{ summary.ready_for_delivery }}</div>
+    <div class="stat-meta">{% if summary.ready_for_delivery > 0 %}Para entregar{% else %}Sin entregas pendientes{% endif %}</div>
+  </a>
+  <a class="stat-card stat-card-action {% if summary.in_progress > 0 %}stat-card-info{% endif %}"
+     href="{{ url_for('main.jobs', status='in_progress') }}">
+    <div class="stat-label">En progreso</div>
+    <div class="stat-value">{{ summary.in_progress }}</div>
+    <div class="stat-meta">Trabajos activos</div>
+  </a>
+  <a class="stat-card stat-card-action stat-card-cta"
+     href="{{ url_for('main.jobs_create') }}">
+    <div class="stat-value">+</div>
+    <div class="stat-label">Nuevo trabajo</div>
+  </a>
 </section>
 
 <section class="panel-grid">
