@@ -527,7 +527,9 @@
     justify-content: flex-start;
   }
 
-  .hide-mobile {
+  .hide-mobile,
+  a.hide-mobile,
+  button.hide-mobile {
     display: none;
   }
 
