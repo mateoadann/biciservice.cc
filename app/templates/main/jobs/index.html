@@ -36,34 +36,14 @@
       {% include "main/jobs/_table.html" %}
     </div>
   </section>
-  <div class="modal-overlay" id="jobModal" aria-hidden="true">
-    <div class="modal">
-      <div class="modal-header">
-        <h3>Detalle del trabajo</h3>
-        <button class="modal-close" type="button" aria-label="Cerrar">X</button>
-      </div>
-      <div class="modal-body"></div>
-    </div>
-  </div>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-    const modal = document.querySelector("#jobModal");
-    const modalBody = modal ? modal.querySelector(".modal-body") : null;
-    const modalClose = modal ? modal.querySelector(".modal-close") : null;
     const jobSearch = document.querySelector("#jobSearch");
     const jobStatusFilter = document.querySelector("#jobStatusFilter");
     const tableSearch = window.TableSearch;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-
-    const closeModal = () => {
-      if (modal) {
-        modal.classList.remove("is-open");
-        modal.setAttribute("aria-hidden", "true");
-        document.body.style.overflow = "";
-      }
-    };
 
     const statusClasses = [
       "status-open",
@@ -113,22 +93,6 @@
         noResults.classList.toggle("is-hidden", hasRows && visibleCount > 0);
       }
     };
-
-    document.addEventListener("click", (event) => {
-      const trigger = event.target.closest(".job-modal-trigger");
-      if (!trigger || !modalBody || !modal) {
-        return;
-      }
-      const targetId = trigger.dataset.target;
-      const template = document.querySelector(`#${targetId}`);
-      if (!template) {
-        return;
-      }
-      modalBody.innerHTML = template.innerHTML;
-      modal.classList.add("is-open");
-      modal.setAttribute("aria-hidden", "false");
-      document.body.style.overflow = "hidden";
-    });
 
     document.addEventListener("change", (event) => {
       const select = event.target.closest(".status-select");
@@ -180,24 +144,6 @@
 
     applyStatusClasses();
     applyJobFilters(jobSearch?.value || "");
-
-    if (modalClose) {
-      modalClose.addEventListener("click", closeModal);
-    }
-
-    if (modal) {
-      modal.addEventListener("click", (event) => {
-        if (event.target === modal) {
-          closeModal();
-        }
-      });
-    }
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
-        closeModal();
-      }
-    });
     });
   </script>
 {% endblock %}
