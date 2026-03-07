@@ -13,13 +13,19 @@
       </thead>
       <tbody>
         {% for client in clients %}
-          <tr data-bikes="{{ client.bicycles|length }}" data-search="{{ client.client_code }} {{ client.full_name }} {{ client.email or '' }} {{ client.phone or '' }}">
-            <td class="col-client-code" data-label="Codigo"><strong>#{{ client.client_code }}</strong></td>
-            <td class="col-client-name cell-wrap" data-label="Nombre"><span class="truncate" title="{{ client.full_name }}">{{ client.full_name }}</span></td>
-            <td class="col-client-email cell-wrap" data-label="Email"><span class="truncate" title="{{ client.email or '-' }}">{{ client.email or "-" }}</span></td>
-            <td class="col-client-phone" data-label="Telefono">{{ client.phone or "-" }}</td>
-            <td class="col-client-bikes" data-label="Bicicletas">{{ client.bicycles|length }}</td>
-            <td class="col-client-actions table-actions table-actions-cell" data-label="Acciones">
+          <tr data-bikes="{{ client.bicycles|length }}" data-search="{{ client.client_code }} {{ client.full_name }} {{ client.email or '' }} {{ client.phone or '' }}" data-drawer="client-detail-{{ client.id }}" data-drawer-title="Cliente">
+            <td class="col-client-code hide-mobile" data-label="Codigo"><strong>#{{ client.client_code }}</strong></td>
+            <td class="col-client-name cell-wrap mobile-line1" data-label="Nombre"><span class="truncate" title="{{ client.full_name }}">{{ client.full_name }}</span></td>
+            <td class="col-client-email cell-wrap hide-mobile" data-label="Email"><span class="truncate" title="{{ client.email or '-' }}">{{ client.email or "-" }}</span></td>
+            <td class="col-client-phone mobile-line2" data-label="Telefono">{{ client.phone or "-" }}</td>
+            <td class="col-client-bikes mobile-badge" data-label="Bicicletas">
+              <span class="hide-mobile">{{ client.bicycles|length }}</span>
+              <span class="mobile-bike-count show-mobile">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h3"/></svg>
+                {{ client.bicycles|length }}
+              </span>
+            </td>
+            <td class="col-client-actions table-actions table-actions-cell hide-mobile" data-label="Acciones">
               <a class="button button-ghost button-compact" href="{{ url_for('main.clients_detail', client_id=client.id) }}">Ver</a>
               <form
                 method="post"
@@ -40,6 +46,50 @@
               </form>
             </td>
           </tr>
+          <template id="client-detail-{{ client.id }}">
+            <div class="drawer-detail-body">
+              <div class="drawer-row">
+                <span class="drawer-label">Codigo</span>
+                <span class="drawer-value">#{{ client.client_code }}</span>
+              </div>
+              <div class="drawer-row">
+                <span class="drawer-label">Nombre</span>
+                <span class="drawer-value">{{ client.full_name }}</span>
+              </div>
+              <div class="drawer-row">
+                <span class="drawer-label">Email</span>
+                <span class="drawer-value">{{ client.email or "-" }}</span>
+              </div>
+              <div class="drawer-row">
+                <span class="drawer-label">Telefono</span>
+                <span class="drawer-value">{{ client.phone or "-" }}</span>
+              </div>
+              <div class="drawer-row">
+                <span class="drawer-label">Bicicletas</span>
+                <span class="drawer-value">{{ client.bicycles|length }}</span>
+              </div>
+            </div>
+            <div class="drawer-detail-footer">
+              <a class="button button-ghost button-compact" href="{{ url_for('main.clients_detail', client_id=client.id) }}">Ver detalle</a>
+              <form
+                method="post"
+                action="{{ url_for('main.clients_delete', client_id=client.id) }}"
+                class="inline-form js-confirm"
+                data-confirm-title="Eliminar cliente"
+                data-confirm-message="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?"
+                data-confirm-final-accept="Eliminar"
+              >
+                {{ delete_form.hidden_tag() }}
+                <button class="button button-danger icon-button button-compact" type="submit" aria-label="Eliminar">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 6V4h8v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M6 6l1 14h10l1-14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </form>
+            </div>
+          </template>
         {% endfor %}
       </tbody>
     </table>
