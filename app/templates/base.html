@@ -279,12 +279,12 @@
       </header>
       {% endif %}
 
-      {% set flash_stack_class = 'flash-stack flash-stack-page' %}
-      {% include '_flash.html' %}
-
       {% block content %}{% endblock %}
     </main>
   </div>
+
+  {% set flash_stack_class = 'flash-stack flash-stack-page' %}
+  {% include '_flash.html' %}
 
   <div class="modal-overlay" id="confirmOverlay" aria-hidden="true">
     <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">

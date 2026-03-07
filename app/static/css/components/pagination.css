@@ -19,6 +19,12 @@
   flex-shrink: 0;
 }
 
+.pagination-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .pagination-page {
   font-size: 0.6875rem;
   font-weight: 600;

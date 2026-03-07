@@ -35,7 +35,7 @@
                 {{ job.bicycle.brand_rel.name if job.bicycle.brand_rel else "" }} {{ job.bicycle.model or "" }}{% if job.items %} · {{ job.items[0].service_type.name }}{% endif %}
               </td>
               <td class="mobile-badge hide-desktop">
-                <span class="chip status-{{ job.status }}">
+                <span class="chip {{ job.status }}">
                   {% if job.status == "open" %}Abierto{% elif job.status == "in_progress" %}En prog.{% elif job.status == "ready" %}Listo{% elif job.status == "closed" %}Cerrado{% elif job.status == "cancelled" %}Cancel.{% endif %}
                 </span>
               </td>

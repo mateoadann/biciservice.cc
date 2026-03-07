@@ -159,6 +159,7 @@ html[data-theme="dark"] .detail-summary .job-code {
 .pagination {
   display: flex;
   align-items: center;
+  justify-content: space-around;
   gap: 8px;
   padding: 6px 10px;
   border: 1px solid var(--color-border);
