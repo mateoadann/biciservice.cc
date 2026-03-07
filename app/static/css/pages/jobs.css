@@ -495,4 +495,13 @@ html[data-theme="dark"] .job-sticky-bar {
   .detail-stack:has(.job-sticky-bar) {
     padding-bottom: 72px;
   }
+
+  .job-status-field {
+    max-width: none;
+    width: 100%;
+  }
+
+  .job-status-field .input {
+    width: 100%;
+  }
 }
