@@ -27,22 +27,22 @@
             </thead>
             <tbody>
               {% for service in services %}
-                <tr>
-                  <td class="col-service-name cell-wrap" data-label="Nombre">
-                    <div class="table-title">{{ service.name }}</div>
-                    <div class="muted">
+                <tr data-drawer="service-detail-{{ service.id }}" data-drawer-title="Service">
+                  <td class="col-service-name cell-wrap mobile-line1" data-label="Nombre">
+                    <div class="table-title"><span class="mobile-status-dot {{ 'active' if service.is_active else 'paused' }} show-mobile"></span>{{ service.name }}</div>
+                    <div class="muted hide-mobile">
                       {{ service.description|default("Sin descripcion")|truncate(50, True, "...") }}
                     </div>
                   </td>
-                  <td class="col-service-price" data-label="Precio base">$ {{ service.base_price|currency }}</td>
-                  <td class="col-service-status" data-label="Estado">
+                  <td class="col-service-price mobile-line2" data-label="Precio base">$ {{ service.base_price|currency }}</td>
+                  <td class="col-service-status hide-mobile" data-label="Estado">
                     {% if service.is_active %}
                       <span class="status success">Activo</span>
                     {% else %}
                       <span class="status muted">Pausado</span>
                     {% endif %}
                   </td>
-                  <td class="col-service-actions table-actions-cell" data-label="Acciones">
+                  <td class="col-service-actions table-actions-cell hide-mobile" data-label="Acciones">
                     <div class="table-actions">
                       <a class="button button-ghost button-compact" href="{{ url_for('main.services_detail', service_id=service.id) }}">Ver</a>
                       <a class="button button-ghost button-compact" href="{{ url_for('main.services_edit', service_id=service.id) }}">Editar</a>
@@ -59,6 +59,46 @@
                     </div>
                   </td>
                 </tr>
+                <template id="service-detail-{{ service.id }}">
+                  <div class="drawer-detail-body">
+                    <div class="drawer-row">
+                      <span class="drawer-label">Nombre</span>
+                      <span class="drawer-value">{{ service.name }}</span>
+                    </div>
+                    <div class="drawer-row">
+                      <span class="drawer-label">Descripcion</span>
+                      <span class="drawer-value">{{ service.description|default("Sin descripcion") }}</span>
+                    </div>
+                    <div class="drawer-row">
+                      <span class="drawer-label">Precio base</span>
+                      <span class="drawer-value">$ {{ service.base_price|currency }}</span>
+                    </div>
+                    <div class="drawer-row">
+                      <span class="drawer-label">Estado</span>
+                      <span class="drawer-value">
+                        {% if service.is_active %}
+                          <span class="status success">Activo</span>
+                        {% else %}
+                          <span class="status muted">Pausado</span>
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="drawer-detail-footer">
+                    <a class="button" href="{{ url_for('main.services_detail', service_id=service.id) }}">Ver detalle</a>
+                    <a class="button button-ghost" href="{{ url_for('main.services_edit', service_id=service.id) }}">Editar</a>
+                    <form method="post" action="{{ url_for('main.services_delete', service_id=service.id) }}" class="inline-form js-confirm" data-confirm-title="Eliminar service" data-confirm-message="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?" data-confirm-final-accept="Eliminar">
+                      {{ delete_form.hidden_tag() }}
+                      <button class="button button-danger icon-button button-compact" type="submit" aria-label="Eliminar">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M8 6V4h8v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M6 6l1 14h10l1-14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </button>
+                    </form>
+                  </div>
+                </template>
               {% endfor %}
             </tbody>
           </table>
