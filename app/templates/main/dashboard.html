@@ -3,6 +3,8 @@
 {% block page_title %}Dashboard{% endblock %}
 {% block page_subtitle %}Vista general del taller{% endblock %}
 
+{% block page_actions %}{% endblock %}
+
 {% block content %}
 <section class="stats-grid">
   <a class="stat-card stat-card-action {% if summary.overdue > 0 %}stat-card-warning stat-card-pulse{% endif %}"
@@ -100,57 +102,46 @@
       <h2>Resumen del taller</h2>
     </div>
 
-    <div class="metric">
-      <div class="metric-label">Ingresos estimados</div>
-      <div class="metric-value">$ {{ summary.revenue|currency }}</div>
-    </div>
-
-    <div class="summary-grid dashboard-summary-grid">
-      <div class="summary-card">
-        <div class="summary-label">Ingresos cerrados</div>
-        <div class="summary-value">$ {{ summary.revenue_closed|currency }}</div>
-      </div>
-      <div class="summary-card">
-        <div class="summary-label">Tasa de cierre</div>
-        <div class="summary-value">{{ summary.close_rate }}%</div>
-      </div>
-    </div>
-
-    <details class="dashboard-range-details" {% if summary.has_active_range %}open{% endif %}>
-      <summary class="button button-ghost button-compact">Filtrar por fecha</summary>
-      <form class="dashboard-range-form" method="get" action="{{ url_for('main.dashboard') }}">
-        <label>
-          <span>Desde</span>
-          <input type="hidden" name="date_from" id="dashboardDateFrom" value="{{ summary.date_from }}">
-          <input
-            class="input input-compact js-dashboard-range-picker"
-            id="dashboardDateFromPicker"
-            type="text"
-            placeholder="dd/mm/aaaa"
-            autocomplete="off"
-          >
-        </label>
-        <label>
-          <span>Hasta</span>
-          <input type="hidden" name="date_to" id="dashboardDateTo" value="{{ summary.date_to }}">
-          <input
-            class="input input-compact js-dashboard-range-picker"
-            id="dashboardDateToPicker"
-            type="text"
-            placeholder="dd/mm/aaaa"
-            autocomplete="off"
-          >
-        </label>
-        <button class="button button-compact" type="submit">Aplicar</button>
+    <div class="dashboard-summary-header">
+      <form class="dashboard-month-form" method="get" action="{{ url_for('main.dashboard') }}">
+        <input type="hidden" name="month" id="dashboardMonthValue" value="{{ summary.selected_month }}">
+        <input
+          class="input input-compact"
+          id="dashboardMonthPicker"
+          type="text"
+          placeholder="Seleccionar mes"
+          autocomplete="off"
+          readonly
+        >
+        {% if summary.has_active_range %}
         <a class="button button-ghost button-compact" href="{{ url_for('main.dashboard') }}">Limpiar</a>
+        {% endif %}
       </form>
-    </details>
+      <div class="metric metric-inline">
+        <div class="metric-label">Ingresos totales (cerrados)</div>
+        <div class="metric-value">$ {{ summary.revenue_closed|currency }}</div>
+      </div>
+    </div>
 
     {% if summary.has_active_range %}
     <div class="panel-note dashboard-range-note">
-      Periodo aplicado: {{ summary.date_from or "inicio" }} a {{ summary.date_to or "hoy" }}.
+      Periodo aplicado
     </div>
     {% endif %}
+
+    <div class="summary-grid dashboard-summary-grid">
+      <div class="summary-card">
+        <div class="summary-label">Promedio trabajos/mes</div>
+        <div class="summary-value">{{ summary.avg_jobs_per_month }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Servicio mas utilizado</div>
+        <div class="summary-value">{{ summary.top_service_name or "—" }}</div>
+        {% if summary.top_service_count %}
+        <div class="summary-meta muted">{{ summary.top_service_count }} trabajo{{ 's' if summary.top_service_count != 1 else '' }}</div>
+        {% endif %}
+      </div>
+    </div>
 
     <div class="metric">
       <div class="metric-label">
@@ -182,135 +173,54 @@
 <script src="{{ url_for('static', filename='vendor/air-datepicker/air-datepicker.min.js') }}"></script>
 <script>
   (() => {
-    const fromValueInput = document.querySelector("#dashboardDateFrom");
-    const toValueInput = document.querySelector("#dashboardDateTo");
-    const fromPickerInput = document.querySelector("#dashboardDateFromPicker");
-    const toPickerInput = document.querySelector("#dashboardDateToPicker");
+    const valueInput = document.querySelector("#dashboardMonthValue");
+    const pickerInput = document.querySelector("#dashboardMonthPicker");
+    if (!valueInput || !pickerInput) return;
 
-    if (!fromValueInput || !toValueInput || !fromPickerInput || !toPickerInput) {
-      return;
-    }
+    const monthNames = [
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
 
-    const parseIsoDate = (value) => {
-      if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        return null;
-      }
-      const [year, month, day] = value.split("-").map(Number);
-      const candidate = new Date(year, month - 1, day);
-      return Number.isNaN(candidate.getTime()) ? null : candidate;
-    };
-
-    const parseDisplayDate = (value) => {
-      if (!value || !/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
-        return null;
-      }
-      const [day, month, year] = value.split("/").map(Number);
-      const candidate = new Date(year, month - 1, day);
-      return Number.isNaN(candidate.getTime()) ? null : candidate;
-    };
-
-    const formatIsoDate = (date) => {
-      if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-        return "";
-      }
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    };
-
-    const formatDisplayDate = (date) => {
-      if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-        return "";
-      }
-      const day = String(date.getDate()).padStart(2, "0");
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    };
-
-    const airDatepickerLocaleEs = {
+    const airLocaleEs = {
       days: ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"],
       daysShort: ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"],
       daysMin: ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
-      months: [
-        "Enero",
-        "Febrero",
-        "Marzo",
-        "Abril",
-        "Mayo",
-        "Junio",
-        "Julio",
-        "Agosto",
-        "Septiembre",
-        "Octubre",
-        "Noviembre",
-        "Diciembre",
-      ],
+      months: monthNames,
       monthsShort: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
       today: "Hoy",
       clear: "Limpiar",
-      dateFormat: "dd/MM/yyyy",
+      dateFormat: "MM/yyyy",
       firstDay: 1,
     };
 
-    const setFromDate = (date) => {
-      fromValueInput.value = formatIsoDate(date);
-      fromPickerInput.value = formatDisplayDate(date);
-    };
-
-    const setToDate = (date) => {
-      toValueInput.value = formatIsoDate(date);
-      toPickerInput.value = formatDisplayDate(date);
-    };
-
-    const initialFromDate = parseIsoDate(fromValueInput.value);
-    const initialToDate = parseIsoDate(toValueInput.value);
-    setFromDate(initialFromDate);
-    setToDate(initialToDate);
-
-    const syncManualDate = (pickerInput, valueInput) => {
-      const typedDate = parseDisplayDate(pickerInput.value.trim()) || parseIsoDate(pickerInput.value.trim());
-      valueInput.value = formatIsoDate(typedDate);
-      pickerInput.value = formatDisplayDate(typedDate);
-    };
-
-    fromPickerInput.addEventListener("blur", () => syncManualDate(fromPickerInput, fromValueInput));
-    fromPickerInput.addEventListener("change", () => syncManualDate(fromPickerInput, fromValueInput));
-    toPickerInput.addEventListener("blur", () => syncManualDate(toPickerInput, toValueInput));
-    toPickerInput.addEventListener("change", () => syncManualDate(toPickerInput, toValueInput));
+    const currentValue = valueInput.value;
+    let initialDate = null;
+    if (currentValue && /^\d{4}-\d{2}$/.test(currentValue)) {
+      const [y, m] = currentValue.split("-").map(Number);
+      initialDate = new Date(y, m - 1, 1);
+      pickerInput.value = monthNames[m - 1] + " " + y;
+    }
 
     if (typeof AirDatepicker !== "undefined") {
-      const fromPicker = new AirDatepicker(fromPickerInput, {
-        locale: airDatepickerLocaleEs,
+      const picker = new AirDatepicker(pickerInput, {
+        locale: airLocaleEs,
+        view: "months",
+        minView: "months",
+        dateFormat: "MMMM yyyy",
         autoClose: true,
-        showEvent: "click",
-        toggleSelected: true,
-        dateFormat: "dd/MM/yyyy",
-        selectedDates: initialFromDate ? [initialFromDate] : [],
+        selectedDates: initialDate ? [initialDate] : [],
         onSelect: ({ date }) => {
-          const selectedDate = Array.isArray(date) ? date[0] : date;
-          setFromDate(selectedDate);
+          const d = Array.isArray(date) ? date[0] : date;
+          if (!d) return;
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, "0");
+          valueInput.value = y + "-" + m;
+          pickerInput.value = monthNames[d.getMonth()] + " " + y;
+          pickerInput.closest("form").submit();
         },
       });
-
-      const toPicker = new AirDatepicker(toPickerInput, {
-        locale: airDatepickerLocaleEs,
-        autoClose: true,
-        showEvent: "click",
-        toggleSelected: true,
-        dateFormat: "dd/MM/yyyy",
-        selectedDates: initialToDate ? [initialToDate] : [],
-        onSelect: ({ date }) => {
-          const selectedDate = Array.isArray(date) ? date[0] : date;
-          setToDate(selectedDate);
-        },
-      });
-
-      fromPickerInput.addEventListener("focus", () => fromPicker.show());
-      fromPickerInput.addEventListener("click", () => fromPicker.show());
-      toPickerInput.addEventListener("focus", () => toPicker.show());
-      toPickerInput.addEventListener("click", () => toPicker.show());
+      pickerInput.addEventListener("click", () => picker.show());
     }
   })();
 </script>

@@ -217,6 +217,21 @@
         <a href="{{ url_for('main.super_admin_audit') }}" class="nav-link{% if is_super_audit %} active{% endif %}" {% if is_super_audit %}aria-current="page"{% endif %}>Auditoria Global</a>
         {% endif %}
 
+        {% if current_user.role == "owner" and stores %}
+        <div class="nav-store-selector hide-desktop">
+          <form method="post" action="{{ url_for('main.stores_switch') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="store_id" onchange="this.form.submit()" class="input topbar-select">
+              {% for store in stores %}
+              <option value="{{ store.id }}" {% if active_store and store.id==active_store.id %}selected{% endif %}>
+                {{ store.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </form>
+        </div>
+        {% endif %}
+
         <a href="{{ url_for('auth.logout') }}" class="nav-link nav-link-logout" title="Cerrar Sesion">
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -255,12 +270,6 @@
           </form>
           {% endif %}
 
-          {% if app_tour.enabled %}
-          <button class="button button-ghost js-tour-launch" type="button" data-tour="tour-launcher">
-            Como empiezo?
-          </button>
-          {% endif %}
-
           {% block page_actions %}
           {% if current_user.role != "super_admin" %}
           <a class="button" href="{{ url_for('main.jobs_create') }}" data-tour="action-new-job">Nuevo trabajo</a>
@@ -293,10 +302,23 @@
     </div>
   </div>
 
+  <div class="drawer-overlay" id="detailDrawer" aria-hidden="true">
+    <div class="drawer" role="dialog" aria-modal="true">
+      <div class="drawer-header">
+        <h3 class="drawer-title"></h3>
+        <button class="modal-close" type="button" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="drawer-body"></div>
+      <div class="drawer-footer"></div>
+    </div>
+  </div>
+
   <script src="{{ asset_url('js/pwa-register.js') }}" defer></script>
   <script src="{{ asset_url('js/table-search.js') }}" defer></script>
   <script src="{{ asset_url('js/pagination.js') }}" defer></script>
   <script src="{{ asset_url('js/app-tour.js') }}" defer></script>
+  <script src="{{ asset_url('js/pull-to-refresh.js') }}" defer></script>
+  <script src="{{ asset_url('js/detail-drawer.js') }}" defer></script>
   <script>
     const navToggle = document.querySelector('.nav-toggle');
     const nav = document.querySelector('.nav');

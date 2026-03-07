@@ -123,16 +123,18 @@
                 <div class="drawer-row">
                   <div class="drawer-label">Estado</div>
                   <div class="drawer-value">
-                    {% if job.status == "open" %}Abierto{% elif job.status == "in_progress" %}En progreso{% elif job.status == "ready" %}Listo{% elif job.status == "closed" %}Cerrado{% elif job.status == "cancelled" %}Cancelado{% endif %}
+                    <span class="status {{ job.status }}">{% if job.status == "open" %}Abierto{% elif job.status == "in_progress" %}En progreso{% elif job.status == "ready" %}Listo{% elif job.status == "closed" %}Cerrado{% elif job.status == "cancelled" %}Cancelado{% endif %}</span>
                   </div>
                 </div>
-                <div class="drawer-row">
-                  <div class="drawer-label">Ingreso</div>
-                  <div class="drawer-value">{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "-" }}</div>
-                </div>
-                <div class="drawer-row">
-                  <div class="drawer-label">Entrega estimada</div>
-                  <div class="drawer-value">{{ job.estimated_delivery_at.strftime("%d/%m/%Y") if job.estimated_delivery_at else "-" }}</div>
+                <div class="drawer-row-inline">
+                  <div class="drawer-row">
+                    <div class="drawer-label">Ingreso</div>
+                    <div class="drawer-value">{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "-" }}</div>
+                  </div>
+                  <div class="drawer-row">
+                    <div class="drawer-label">Entrega estimada</div>
+                    <div class="drawer-value">{{ job.estimated_delivery_at.strftime("%d/%m/%Y") if job.estimated_delivery_at else "-" }}</div>
+                  </div>
                 </div>
                 {% if job.notes %}
                   <div class="drawer-row">

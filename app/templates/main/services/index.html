@@ -69,20 +69,6 @@
                       <span class="drawer-label">Descripcion</span>
                       <span class="drawer-value">{{ service.description|default("Sin descripcion") }}</span>
                     </div>
-                    <div class="drawer-row">
-                      <span class="drawer-label">Precio base</span>
-                      <span class="drawer-value">$ {{ service.base_price|currency }}</span>
-                    </div>
-                    <div class="drawer-row">
-                      <span class="drawer-label">Estado</span>
-                      <span class="drawer-value">
-                        {% if service.is_active %}
-                          <span class="status success">Activo</span>
-                        {% else %}
-                          <span class="status muted">Pausado</span>
-                        {% endif %}
-                      </span>
-                    </div>
                   </div>
                   <div class="drawer-detail-footer">
                     <a class="button" href="{{ url_for('main.services_detail', service_id=service.id) }}">Ver detalle</a>

@@ -1,3 +1,4 @@
+import calendar
 from datetime import date, datetime
 
 from flask import render_template, redirect, url_for, g, flash, request
@@ -12,14 +13,18 @@ from app.main.helpers import (
 )
 
 
-def _parse_date_param(value: str | None) -> date | None:
+def _parse_month_param(value: str | None):
+    """Parse 'YYYY-MM' string into (date_from, date_to) for that month."""
     raw = (value or "").strip()
     if not raw:
-        return None
+        return None, None
     try:
-        return datetime.strptime(raw, "%Y-%m-%d").date()
+        dt = datetime.strptime(raw, "%Y-%m")
+        year, month = dt.year, dt.month
+        last_day = calendar.monthrange(year, month)[1]
+        return date(year, month, 1), date(year, month, last_day)
     except ValueError:
-        return None
+        return None, None
 
 @main_bp.route("/")
 def index():
@@ -32,10 +37,8 @@ def dashboard():
     workshop = g.active_workshop
     store = g.active_store
     today = date.today()
-    date_from = _parse_date_param(request.args.get("date_from"))
-    date_to = _parse_date_param(request.args.get("date_to"))
-    if date_from and date_to and date_from > date_to:
-        date_from, date_to = date_to, date_from
+    selected_month = (request.args.get("month") or "").strip()
+    date_from, date_to = _parse_month_param(selected_month)
     counts = {
         "clients": Client.query.filter_by(workshop_id=workshop.id).count()
         if workshop
@@ -63,15 +66,16 @@ def dashboard():
         "ready_for_delivery": 0,
         "overdue": 0,
         "total_jobs": 0,
-        "close_rate": 0,
+        "avg_jobs_per_month": 0,
+        "top_service_name": None,
+        "top_service_count": 0,
         "open_pct": 0,
         "in_progress_pct": 0,
         "ready_pct": 0,
         "closed_pct": 0,
         "cancelled_pct": 0,
-        "date_from": date_from.isoformat() if date_from else "",
-        "date_to": date_to.isoformat() if date_to else "",
-        "has_active_range": bool(date_from or date_to),
+        "selected_month": selected_month,
+        "has_active_range": bool(date_from),
     }
     if workshop and store:
         date_filters = []
@@ -164,6 +168,36 @@ def dashboard():
             ).count()
         )
 
+        # Promedio de trabajos por mes (basado en meses con actividad)
+        month_expr = func.concat(
+            func.extract("year", Job.created_at),
+            func.extract("month", Job.created_at),
+        )
+        month_counts = (
+            db.session.query(func.count(Job.id))
+            .filter(Job.workshop_id == workshop.id, Job.store_id == store.id)
+            .group_by(month_expr)
+            .all()
+        )
+        avg_jobs_per_month = (
+            round(sum(r[0] for r in month_counts) / len(month_counts), 1)
+            if month_counts
+            else 0
+        )
+
+        # Servicio mas utilizado
+        top_service_row = (
+            db.session.query(
+                ServiceType.name, func.count(JobItem.id).label("cnt")
+            )
+            .join(JobItem, JobItem.service_type_id == ServiceType.id)
+            .join(Job, Job.id == JobItem.job_id)
+            .filter(Job.workshop_id == workshop.id, Job.store_id == store.id, *date_filters)
+            .group_by(ServiceType.name)
+            .order_by(func.count(JobItem.id).desc())
+            .first()
+        )
+
         summary = {
             "revenue": revenue,
             "revenue_closed": revenue_closed,
@@ -178,7 +212,9 @@ def dashboard():
             "ready_for_delivery": ready_for_delivery,
             "overdue": overdue_jobs,
             "total_jobs": total_jobs,
-            "close_rate": round((closed_jobs / total_jobs) * 100) if total_jobs else 0,
+            "avg_jobs_per_month": avg_jobs_per_month,
+            "top_service_name": top_service_row[0] if top_service_row else None,
+            "top_service_count": top_service_row[1] if top_service_row else 0,
             "open_pct": round((open_jobs / total_jobs) * 100) if total_jobs else 0,
             "in_progress_pct": round((in_progress_jobs / total_jobs) * 100)
             if total_jobs
@@ -188,9 +224,8 @@ def dashboard():
             "cancelled_pct": round((cancelled_jobs / total_jobs) * 100)
             if total_jobs
             else 0,
-            "date_from": date_from.isoformat() if date_from else "",
-            "date_to": date_to.isoformat() if date_to else "",
-            "has_active_range": bool(date_from or date_to),
+            "selected_month": selected_month,
+            "has_active_range": bool(date_from),
         }
     elif workshop:
         summary["services_active"] = ServiceType.query.filter_by(

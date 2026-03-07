@@ -7,6 +7,18 @@
 {% block page_actions %}{% endblock %}
 
 {% block content %}
+  {% if app_tour.enabled %}
+  <section class="onboarding-card">
+    <div>
+      <strong>Bienvenido a tu taller</strong>
+      <p class="muted">Aprende a usar la plataforma con un recorrido rapido.</p>
+    </div>
+    <button class="button button-ghost button-compact js-tour-launch" type="button" data-tour="tour-launcher">
+      Como empiezo?
+    </button>
+  </section>
+  {% endif %}
+
   <section class="panel">
     <div class="panel-header">
       <h2>Onboarding</h2>

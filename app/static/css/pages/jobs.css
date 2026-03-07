@@ -255,6 +255,7 @@ html[data-theme="dark"] .search-result.is-active {
 .parts-summary-row strong {
   font-variant-numeric: tabular-nums;
   color: var(--color-ink);
+  white-space: nowrap;
 }
 
 .parts-summary-row.total {
@@ -269,6 +270,14 @@ html[data-theme="dark"] .search-result.is-active {
 
 html[data-theme="dark"] .parts-summary {
   background: rgba(148, 163, 184, 0.1);
+}
+
+html[data-theme="dark"] .parts-summary-row.total strong {
+  color: #93b4ff;
+}
+
+html[data-theme="dark"] .parts-summary-row.total {
+  color: var(--color-ink);
 }
 
 .part-remove {

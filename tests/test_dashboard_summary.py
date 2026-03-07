@@ -68,7 +68,8 @@ def test_dashboard_summary_without_jobs(client, owner_user, login):
     assert response.status_code == 200
 
     html = response.get_data(as_text=True)
-    assert "Tasa de cierre" in html
+    assert "Ingresos totales (cerrados)" in html
+    assert "Promedio trabajos/mes" in html
     assert "Estado de trabajos (0)" in html
     assert "Sin trabajos activos" in html
 
@@ -89,7 +90,7 @@ def test_dashboard_summary_shows_overdue_and_ready_alerts(client, owner_user, lo
     assert "status=ready" in html
 
 
-def test_dashboard_summary_calculates_closed_revenue_and_close_rate(client, owner_user, login):
+def test_dashboard_summary_calculates_closed_revenue_and_top_service(client, owner_user, login):
     _create_job(owner_user, code="D101", status="closed", amount="20000.00")
     _create_job(owner_user, code="D102", status="open", amount="10000.00")
     login(owner_user.email, "Password1")
@@ -98,21 +99,19 @@ def test_dashboard_summary_calculates_closed_revenue_and_close_rate(client, owne
     assert response.status_code == 200
 
     html = response.get_data(as_text=True)
-    assert "Ingresos cerrados" in html
+    assert "Ingresos totales (cerrados)" in html
     assert "20.000,00" in html
-    assert "30.000,00" in html
-    assert "Tasa de cierre" in html
-    assert "50%" in html
+    assert "Servicio mas utilizado" in html
     assert "Cerrados: 1" in html
 
 
-def test_dashboard_summary_applies_date_range_to_metrics(client, owner_user, login):
+def test_dashboard_summary_applies_month_filter_to_metrics(client, owner_user, login):
     _create_job(
         owner_user,
         code="D201",
         status="closed",
         amount="20000.00",
-        created_offset_days=-20,
+        created_offset_days=-40,
     )
     _create_job(
         owner_user,
@@ -123,17 +122,16 @@ def test_dashboard_summary_applies_date_range_to_metrics(client, owner_user, log
     )
     login(owner_user.email, "Password1")
 
-    today = date.today().isoformat()
-    response = client.get(f"/dashboard?date_from={today}&date_to={today}")
+    current_month = date.today().strftime("%Y-%m")
+    response = client.get(f"/dashboard?month={current_month}")
     assert response.status_code == 200
 
     html = response.get_data(as_text=True)
     assert "Periodo aplicado" in html
-    assert f'value="{today}"' in html
+    assert f'value="{current_month}"' in html
     assert "Estado de trabajos en periodo (1)" in html
-    assert "10.000,00" in html
-    assert "Ingresos cerrados" in html
-    assert "0,00" in html
+    assert "Ingresos totales (cerrados)" in html
+    assert "$ 0,00" in html
 
 
 def test_dashboard_summary_includes_cancelled_in_distribution(client, owner_user, login):
@@ -146,5 +144,4 @@ def test_dashboard_summary_includes_cancelled_in_distribution(client, owner_user
 
     html = response.get_data(as_text=True)
     assert "Cancelados: 1" in html
-    assert "Tasa de cierre" in html
-    assert "50%" in html
+    assert "Cerrados: 1" in html
