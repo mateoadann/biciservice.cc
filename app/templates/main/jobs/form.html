@@ -56,7 +56,7 @@
           </label>
           <label class="job-status-field">
             Estado
-            {{ form.status(class_="input", required=True) }}
+            {{ form.status(class_="input status-select status-" ~ (form.status.data or "open"), required=True) }}
           </label>
         </div>
         <div class="panel-note">
@@ -518,7 +518,14 @@
 
       bicycleInput.addEventListener("input", updateState);
       if (statusSelect) {
-        statusSelect.addEventListener("change", updateState);
+        const applyStatusClass = (sel) => {
+          sel.className = sel.className.replace(/\bstatus-\w+/g, '');
+          sel.classList.add('status-select', 'status-' + sel.value);
+        };
+        statusSelect.addEventListener("change", () => {
+          applyStatusClass(statusSelect);
+          updateState();
+        });
       }
       if (deliveryValueInput) {
         deliveryValueInput.addEventListener("change", updateState);
