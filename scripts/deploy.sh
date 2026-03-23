@@ -117,6 +117,15 @@ if [[ "${PREV_SHA}" == "${NEW_SHA}" ]]; then
     exit 0
 fi
 
+# Actualizar ASSET_VERSION en .env con el SHA corto
+SHORT_SHA="${NEW_SHA:0:7}"
+if grep -q "^ASSET_VERSION=" .env 2>/dev/null; then
+    sed -i "s/^ASSET_VERSION=.*/ASSET_VERSION=${SHORT_SHA}/" .env
+else
+    echo "ASSET_VERSION=${SHORT_SHA}" >> .env
+fi
+echo ">>> ASSET_VERSION=${SHORT_SHA}"
+
 # ─── Phase 4: Build ──────────────────────────────────────────────────────────
 DEPLOY_PHASE="build"
 echo ">>> [4/6] Build y restart de contenedores..."
