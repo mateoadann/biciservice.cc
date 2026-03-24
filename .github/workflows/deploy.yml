@@ -45,7 +45,7 @@ jobs:
           command_timeout: 10m
           script: |
             cd /opt/apps/biciservice.cc
-            bash scripts/deploy.sh
+            bash scripts/release.sh
 
       - name: Notify Success
         if: success()
