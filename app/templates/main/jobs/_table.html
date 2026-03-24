@@ -1,11 +1,12 @@
 <div id="table-content">
   <div class="table-wrap table-scroll">
-    <table class="table table-jobs">
+    <table class="table table-mobile-cards table-jobs">
       <thead>
         <tr>
           <th class="col-jobs-code hide-mobile">Codigo</th>
           <th class="col-jobs-bike">Bicicleta</th>
-          <th class="show-mobile">Ver</th>
+          <th class="hide-desktop"></th>
+          <th class="hide-desktop"></th>
           <th class="col-jobs-service hide-mobile">Service</th>
           <th class="col-jobs-status hide-mobile">Estado</th>
           <th class="col-jobs-date hide-mobile">Ingreso</th>
@@ -17,6 +18,8 @@
         {% if jobs %}
           {% for job in jobs %}
             <tr
+              data-drawer="job-detail-{{ job.id }}"
+              data-drawer-title="Trabajo"
               data-status="{{ job.status }}"
               data-delivery-date="{{ job.estimated_delivery_at.isoformat() if job.estimated_delivery_at else '' }}"
               data-search="{{ job.code or '' }} {{ job.bicycle.client.full_name }} {{ job.bicycle.brand_rel.name if job.bicycle.brand_rel else '' }} {{ job.bicycle.model or '' }} {% for item in job.items %}{{ item.service_type.name }} {% endfor %}"
@@ -24,12 +27,17 @@
               <td class="col-jobs-code hide-mobile">
                 <span class="job-code">{{ job.code or "-" }}</span>
               </td>
-              <td class="cell-wrap col-jobs-bike">
+              <td class="cell-wrap col-jobs-bike mobile-line1">
                 <div class="table-title"><span class="truncate" title="{{ job.bicycle.client.full_name }}">{{ job.bicycle.client.full_name }}</span></div>
-                <div class="muted"><span class="truncate" title="{{ job.bicycle.brand_rel.name if job.bicycle.brand_rel else 'Bicicleta' }} {{ job.bicycle.model or '' }}">{{ job.bicycle.brand_rel.name if job.bicycle.brand_rel else "Bicicleta" }} {{ job.bicycle.model or "" }}</span></div>
+                <div class="muted hide-mobile"><span class="truncate" title="{{ job.bicycle.brand_rel.name if job.bicycle.brand_rel else 'Bicicleta' }} {{ job.bicycle.model or '' }}">{{ job.bicycle.brand_rel.name if job.bicycle.brand_rel else "Bicicleta" }} {{ job.bicycle.model or "" }}</span></div>
               </td>
-              <td class="show-mobile">
-                <button class="button button-ghost button-compact job-modal-trigger" type="button" data-target="job-details-{{ job.id }}">Ver</button>
+              <td class="mobile-line2 hide-desktop">
+                {{ job.bicycle.brand_rel.name if job.bicycle.brand_rel else "" }} {{ job.bicycle.model or "" }}{% if job.items %} · {{ job.items[0].service_type.name }}{% endif %}
+              </td>
+              <td class="mobile-badge hide-desktop">
+                <span class="chip {{ job.status }}">
+                  {% if job.status == "open" %}Abierto{% elif job.status == "in_progress" %}En prog.{% elif job.status == "ready" %}Listo{% elif job.status == "closed" %}Cerrado{% elif job.status == "cancelled" %}Cancel.{% endif %}
+                </span>
               </td>
               <td class="col-jobs-service hide-mobile">
                 {% if job.items %}
@@ -88,95 +96,68 @@
                 {% endif %}
               </td>
             </tr>
-            <template id="job-details-{{ job.id }}">
-              <div class="modal-section">
-                <div class="modal-title">Bicicleta</div>
-                <div>{{ job.bicycle.client.full_name }}</div>
-                <div class="muted">{{ job.bicycle.brand_rel.name if job.bicycle.brand_rel else "Bicicleta" }} {{ job.bicycle.model or "" }}</div>
-              </div>
-              <div class="modal-section">
-                <div class="modal-title">Codigo</div>
-                <div>{{ job.code or "-" }}</div>
-              </div>
-              <div class="modal-section">
-                <div class="modal-title">Estado</div>
-                <div>
-                  {% if job.status == "open" %}Abierto{% endif %}
-                  {% if job.status == "in_progress" %}En progreso{% endif %}
-                  {% if job.status == "ready" %}Listo{% endif %}
-                  {% if job.status == "closed" %}Cerrado{% endif %}
-                  {% if job.status == "cancelled" %}Cancelado{% endif %}
+            <template id="job-detail-{{ job.id }}">
+              <div class="drawer-detail-body">
+                <div class="drawer-row">
+                  <div class="drawer-label">Codigo</div>
+                  <div class="drawer-value">{{ job.code or "-" }}</div>
                 </div>
-              </div>
-              <div class="modal-section">
-                <div class="modal-title">Services</div>
-                {% set totals = namespace(service=0, parts=0) %}
-                {% if job.items %}
-                  <div class="modal-list">
-                    {% for item in job.items %}
-                      {% set item_total = (item.unit_price or 0) * item.quantity %}
-                      {% set totals.service = totals.service + item_total %}
-                      <div class="modal-row">
-                        <span>{{ item.service_type.name }}</span>
-                        <span>$ {{ item.unit_price|currency }}</span>
-                      </div>
-                    {% endfor %}
+                <div class="drawer-row">
+                  <div class="drawer-label">Cliente</div>
+                  <div class="drawer-value">{{ job.bicycle.client.full_name }}</div>
+                </div>
+                <div class="drawer-row">
+                  <div class="drawer-label">Bicicleta</div>
+                  <div class="drawer-value">{{ job.bicycle.brand_rel.name if job.bicycle.brand_rel else "Bicicleta" }} {{ job.bicycle.model or "" }}</div>
+                </div>
+                <div class="drawer-row">
+                  <div class="drawer-label">Services</div>
+                  <div class="drawer-value">
+                    {% if job.items %}
+                      {% for item in job.items %}{{ item.service_type.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                    {% else %}
+                      Sin services
+                    {% endif %}
                   </div>
-                  <div class="modal-total">
-                    <span>Total servicios</span>
-                    <span>$ {{ totals.service|currency }}</span>
+                </div>
+                <div class="drawer-row">
+                  <div class="drawer-label">Estado</div>
+                  <div class="drawer-value">
+                    <span class="status {{ job.status }}">{% if job.status == "open" %}Abierto{% elif job.status == "in_progress" %}En progreso{% elif job.status == "ready" %}Listo{% elif job.status == "closed" %}Cerrado{% elif job.status == "cancelled" %}Cancelado{% endif %}</span>
                   </div>
-                {% else %}
-                  <div class="muted">Sin services asignados.</div>
+                </div>
+                <div class="drawer-row-inline">
+                  <div class="drawer-row">
+                    <div class="drawer-label">Ingreso</div>
+                    <div class="drawer-value">{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "-" }}</div>
+                  </div>
+                  <div class="drawer-row">
+                    <div class="drawer-label">Entrega estimada</div>
+                    <div class="drawer-value">{{ job.estimated_delivery_at.strftime("%d/%m/%Y") if job.estimated_delivery_at else "-" }}</div>
+                  </div>
+                </div>
+                {% if job.notes %}
+                  <div class="drawer-row">
+                    <div class="drawer-label">Notas</div>
+                    <div class="drawer-value">{{ job.notes }}</div>
+                  </div>
                 {% endif %}
               </div>
-              <div class="modal-section">
-                <div class="modal-title">Repuestos y gastos</div>
-                {% if job.parts %}
-                  <div class="modal-list">
-                    {% for part in job.parts %}
-                      {% set part_total = (part.unit_price or 0) * part.quantity %}
-                      {% set totals.parts = totals.parts + part_total %}
-                      <div class="modal-row">
-                        <span>{{ part.description }}</span>
-                        <span>$ {{ part.unit_price|currency }}</span>
-                      </div>
-                    {% endfor %}
-                  </div>
-                  <div class="modal-total">
-                    <span>Total repuestos</span>
-                    <span>$ {{ totals.parts|currency }}</span>
-                  </div>
-                {% else %}
-                  <div class="muted">Sin repuestos cargados.</div>
+              <div class="drawer-detail-footer">
+                <a class="button" href="{{ url_for('main.jobs_detail', job_id=job.id) }}">Ver detalle</a>
+                <a class="button button-ghost" href="{{ url_for('main.jobs_edit', job_id=job.id) }}">Editar</a>
+                {% if job.status != "in_progress" %}
+                  <form method="post" action="{{ url_for('main.jobs_delete', job_id=job.id) }}" class="inline-form js-confirm" data-confirm-title="Eliminar trabajo" data-confirm-message="Esta accion no se puede deshacer. ¿Confirmas la eliminacion?" data-confirm-final-accept="Eliminar">
+                    {{ delete_form.hidden_tag() }}
+                    <button class="button button-danger" type="submit">Eliminar</button>
+                  </form>
                 {% endif %}
               </div>
-              <div class="modal-section">
-                <div class="modal-title">Total</div>
-                <div class="modal-total">
-                  <span>Total del trabajo</span>
-                  <span>$ {{ (totals.service + totals.parts)|currency }}</span>
-                </div>
-              </div>
-              <div class="modal-section">
-                <div class="modal-title">Ingreso al taller</div>
-                <div>{{ job.created_at.strftime("%d/%m/%Y") if job.created_at else "" }}</div>
-              </div>
-              <div class="modal-section">
-                <div class="modal-title">Entrega estimada</div>
-                <div>{{ job.estimated_delivery_at.strftime("%d/%m/%Y") if job.estimated_delivery_at else "" }}</div>
-              </div>
-              {% if job.notes %}
-                <div class="modal-section">
-                  <div class="modal-title">Notas</div>
-                  <div>{{ job.notes }}</div>
-                </div>
-              {% endif %}
             </template>
           {% endfor %}
         {% else %}
           <tr class="table-empty-row">
-            <td colspan="8" class="muted">
+            <td colspan="9" class="muted">
               {% if search_query %}
                 No hay trabajos que coincidan con la busqueda.
               {% elif active_status == "all" %}

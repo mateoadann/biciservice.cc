@@ -23,7 +23,7 @@ def _create_staff_user(create_owner_user):
     return staff
 
 
-def test_owner_sees_tour_prompt_on_first_login(owner_user, login):
+def test_owner_sees_tour_prompt_on_first_login(owner_user, login, client):
     response = login(owner_user.email, "Password1")
 
     assert response.status_code == 200
@@ -31,10 +31,12 @@ def test_owner_sees_tour_prompt_on_first_login(owner_user, login):
     assert 'window.__APP_TOUR__ =' in html
     assert '"enabled": true' in html
     assert '"should_prompt": true' in html
-    assert 'data-tour="tour-launcher"' in html
+
+    onboarding = client.get("/onboarding")
+    assert 'data-tour="tour-launcher"' in onboarding.get_data(as_text=True)
 
 
-def test_staff_has_manual_tour_launcher_and_prompt(create_owner_user, login):
+def test_staff_has_tour_config_enabled(create_owner_user, login):
     staff_user = _create_staff_user(create_owner_user)
     response = login(staff_user.email, "Password1")
 
@@ -43,7 +45,6 @@ def test_staff_has_manual_tour_launcher_and_prompt(create_owner_user, login):
     assert '"enabled": true' in html
     assert '"role": "staff"' in html
     assert '"should_prompt": true' in html
-    assert 'data-tour="tour-launcher"' in html
 
 
 def test_super_admin_does_not_get_tour(create_super_admin_user, login):

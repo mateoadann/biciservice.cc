@@ -3,32 +3,54 @@
 {% block page_title %}Dashboard{% endblock %}
 {% block page_subtitle %}Vista general del taller{% endblock %}
 
+{% block page_actions %}{% endblock %}
+
 {% block content %}
 <section class="stats-grid">
-  <div class="stat-card">
-    <div class="stat-label">Clientes</div>
-    <div class="stat-value">{{ counts.clients }}</div>
-    <div class="stat-meta">Activos en el taller</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Bicicletas</div>
-    <div class="stat-value">{{ counts.bicycles }}</div>
-    <div class="stat-meta">Registradas</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Servicios</div>
-    <div class="stat-value">{{ counts.services }}</div>
-    <div class="stat-meta">Tipos disponibles</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Trabajos</div>
-    <div class="stat-value">{{ counts.jobs }}</div>
-    <div class="stat-meta">En proceso ({{ summary.in_progress }})</div>
-  </div>
+  <a class="stat-card stat-card-action {% if summary.overdue > 0 %}stat-card-warning stat-card-pulse{% endif %}"
+     href="{{ url_for('main.jobs', status='overdue') }}">
+    <div class="stat-label">Atrasados</div>
+    <div class="stat-value">{{ summary.overdue }}</div>
+    <div class="stat-meta">{% if summary.overdue > 0 %}Requieren atencion{% else %}Todo al dia{% endif %}</div>
+  </a>
+  <a class="stat-card stat-card-action {% if summary.ready_for_delivery > 0 %}stat-card-success{% endif %}"
+     href="{{ url_for('main.jobs', status='ready') }}">
+    <div class="stat-label">Listos para entrega</div>
+    <div class="stat-value">{{ summary.ready_for_delivery }}</div>
+    <div class="stat-meta">{% if summary.ready_for_delivery > 0 %}Para entregar{% else %}Sin entregas pendientes{% endif %}</div>
+  </a>
+  <a class="stat-card stat-card-action {% if summary.in_progress > 0 %}stat-card-info{% endif %}"
+     href="{{ url_for('main.jobs', status='in_progress') }}">
+    <div class="stat-label">En progreso</div>
+    <div class="stat-value">{{ summary.in_progress }}</div>
+    <div class="stat-meta">Trabajos activos</div>
+  </a>
+  <a class="stat-card stat-card-action stat-card-cta"
+     href="{{ url_for('main.jobs_create') }}">
+    <div class="stat-value">+</div>
+    <div class="stat-label">Nuevo trabajo</div>
+  </a>
 </section>
 
 <section class="panel-grid">
   <section class="panel">
+    {% if summary.overdue > 0 or summary.ready_for_delivery > 0 %}
+    <div class="dashboard-alerts-top">
+      {% if summary.overdue > 0 %}
+      <div class="dashboard-alert warning">
+        Hay {{ summary.overdue }} trabajo(s) atrasado(s).
+        <a href="{{ url_for('main.jobs', status='overdue') }}">Ir a trabajos</a>
+      </div>
+      {% endif %}
+      {% if summary.ready_for_delivery > 0 %}
+      <div class="dashboard-alert accent">
+        {{ summary.ready_for_delivery }} trabajo(s) listo(s) para entrega.
+        <a href="{{ url_for('main.jobs', status='ready') }}">Ver trabajos</a>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
     <div class="panel-header">
       <h2>Agenda de trabajo</h2>
       <a class="button button-ghost button-compact" href="{{ url_for('main.jobs') }}">Ver todos</a>
@@ -37,17 +59,24 @@
     {% if agenda_jobs %}
     <div class="timeline">
       {% for job in agenda_jobs %}
-      <div class="timeline-item">
-        <span class="timeline-dot"></span>
-        <div>
+      {% set is_overdue = job.estimated_delivery_at and job.estimated_delivery_at < today and job.status in ['open', 'in_progress', 'ready'] %}
+      {% set days_late = (today - job.estimated_delivery_at).days if is_overdue else 0 %}
+      <a class="timeline-item {% if is_overdue %}timeline-item-overdue{% endif %}" href="{{ url_for('main.jobs_detail', job_id=job.id) }}">
+        <span class="timeline-dot {% if is_overdue %}timeline-dot-warning{% endif %}"></span>
+        <div class="timeline-content">
           <div class="timeline-title">{{ job.bicycle.client.full_name }}</div>
           <div class="muted">
             {{ job.bicycle.brand_rel.name if job.bicycle.brand_rel else "Bicicleta" }} {{ job.bicycle.model or "" }}
             {% if job.items %}
-            <span> • </span>
+            <span> &bull; </span>
             <span>{{ job.items[0].service_type.name }}</span>
             {% endif %}
           </div>
+          {% if is_overdue %}
+          <div class="timeline-overdue">{{ days_late }} dia{{ 's' if days_late != 1 else '' }} de atraso</div>
+          {% elif job.estimated_delivery_at %}
+          <div class="muted timeline-date">Entrega: {{ job.estimated_delivery_at.strftime('%d/%m') }}</div>
+          {% endif %}
         </div>
         <span class="chip {{ job.status }}">
           {% if job.status == "open" %}Abierto{% endif %}
@@ -56,7 +85,7 @@
           {% if job.status == "closed" %}Cerrado{% endif %}
           {% if job.status == "cancelled" %}Cancelado{% endif %}
         </span>
-      </div>
+      </a>
       {% endfor %}
     </div>
     {% else %}
@@ -73,64 +102,44 @@
       <h2>Resumen del taller</h2>
     </div>
 
-    <form class="dashboard-range-form" method="get" action="{{ url_for('main.dashboard') }}">
-      <label>
-        <span>Desde</span>
-        <input type="hidden" name="date_from" id="dashboardDateFrom" value="{{ summary.date_from }}">
+    <div class="dashboard-summary-header">
+      <form class="dashboard-month-form" method="get" action="{{ url_for('main.dashboard') }}">
+        <input type="hidden" name="month" id="dashboardMonthValue" value="{{ summary.selected_month }}">
         <input
-          class="input input-compact js-dashboard-range-picker"
-          id="dashboardDateFromPicker"
+          class="input input-compact"
+          id="dashboardMonthPicker"
           type="text"
-          placeholder="dd/mm/aaaa"
+          placeholder="Seleccionar mes"
           autocomplete="off"
+          readonly
         >
-      </label>
-      <label>
-        <span>Hasta</span>
-        <input type="hidden" name="date_to" id="dashboardDateTo" value="{{ summary.date_to }}">
-        <input
-          class="input input-compact js-dashboard-range-picker"
-          id="dashboardDateToPicker"
-          type="text"
-          placeholder="dd/mm/aaaa"
-          autocomplete="off"
-        >
-      </label>
-      <button class="button button-compact" type="submit">Aplicar</button>
-      <a class="button button-ghost button-compact" href="{{ url_for('main.dashboard') }}">Limpiar</a>
-    </form>
+        {% if summary.has_active_range %}
+        <a class="button button-ghost button-compact" href="{{ url_for('main.dashboard') }}">Limpiar</a>
+        {% endif %}
+      </form>
+      <div class="metric metric-inline">
+        <div class="metric-label">Ingresos totales (cerrados)</div>
+        <div class="metric-value">$ {{ summary.revenue_closed|currency }}</div>
+      </div>
+    </div>
 
     {% if summary.has_active_range %}
     <div class="panel-note dashboard-range-note">
-      Periodo aplicado: {{ summary.date_from or "inicio" }} a {{ summary.date_to or "hoy" }}.
+      Periodo aplicado
     </div>
     {% endif %}
 
-    <div class="metric">
-      <div class="metric-label">Ingresos estimados</div>
-      <div class="metric-value">$ {{ summary.revenue|currency }}</div>
-    </div>
-
     <div class="summary-grid dashboard-summary-grid">
       <div class="summary-card">
-        <div class="summary-label">Ingresos cerrados</div>
-        <div class="summary-value">$ {{ summary.revenue_closed|currency }}</div>
+        <div class="summary-label">Promedio trabajos/mes</div>
+        <div class="summary-value">{{ summary.avg_jobs_per_month }}</div>
       </div>
       <div class="summary-card">
-        <div class="summary-label">Tasa de cierre</div>
-        <div class="summary-value">{{ summary.close_rate }}%</div>
-      </div>
-      <div class="summary-card {% if summary.overdue > 0 %}summary-card-warning{% endif %}">
-        <div class="summary-label">Trabajos atrasados</div>
-        <div class="summary-value">{{ summary.overdue }}</div>
-      </div>
-      <div class="summary-card {% if summary.ready_for_delivery > 0 %}summary-card-success{% endif %}">
-        <div class="summary-label">Listos para entrega</div>
-        <div class="summary-value">{{ summary.ready_for_delivery }}</div>
-      </div>
-      <div class="summary-card">
-        <div class="summary-label">Servicios activos</div>
-        <div class="summary-value">{{ summary.services_active }}</div>
+        <div class="summary-label">Servicio mas utilizado</div>
+        <div class="summary-value">{{ summary.top_service_name or "—" }}</div>
+        {% if summary.top_service_count %}
+        <div class="summary-meta muted">{{ summary.top_service_count }} trabajo{{ 's' if summary.top_service_count != 1 else '' }}</div>
+        {% endif %}
       </div>
     </div>
 
@@ -157,32 +166,6 @@
         <span class="chip cancelled">Cancelados: {{ summary.cancelled }}</span>
       </div>
     </div>
-
-    <div class="panel-note panel-note-divider">
-      <div class="panel-note-title">Alertas del dia</div>
-      {% if counts.jobs == 0 %}
-      <p class="muted">Aun no hay trabajos registrados. Crea tu primer trabajo para comenzar.</p>
-      <a class="button button-compact" href="{{ url_for('main.jobs_create') }}">Crear trabajo</a>
-      {% else %}
-      <div class="dashboard-alerts">
-        {% if summary.overdue > 0 %}
-        <div class="dashboard-alert warning">
-          Hay {{ summary.overdue }} trabajo(s) atrasado(s).
-          <a href="{{ url_for('main.jobs', status='overdue') }}">Ir a trabajos</a>
-        </div>
-        {% else %}
-        <div class="dashboard-alert success">No hay trabajos atrasados hoy.</div>
-        {% endif %}
-
-        {% if summary.ready_for_delivery > 0 %}
-        <div class="dashboard-alert accent">
-          Tienes {{ summary.ready_for_delivery }} trabajo(s) listo(s) para entrega.
-          <a href="{{ url_for('main.jobs', status='ready') }}">Ver trabajos</a>
-        </div>
-        {% endif %}
-      </div>
-      {% endif %}
-    </div>
   </section>
 </section>
 
@@ -190,135 +173,54 @@
 <script src="{{ url_for('static', filename='vendor/air-datepicker/air-datepicker.min.js') }}"></script>
 <script>
   (() => {
-    const fromValueInput = document.querySelector("#dashboardDateFrom");
-    const toValueInput = document.querySelector("#dashboardDateTo");
-    const fromPickerInput = document.querySelector("#dashboardDateFromPicker");
-    const toPickerInput = document.querySelector("#dashboardDateToPicker");
+    const valueInput = document.querySelector("#dashboardMonthValue");
+    const pickerInput = document.querySelector("#dashboardMonthPicker");
+    if (!valueInput || !pickerInput) return;
 
-    if (!fromValueInput || !toValueInput || !fromPickerInput || !toPickerInput) {
-      return;
-    }
+    const monthNames = [
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
 
-    const parseIsoDate = (value) => {
-      if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        return null;
-      }
-      const [year, month, day] = value.split("-").map(Number);
-      const candidate = new Date(year, month - 1, day);
-      return Number.isNaN(candidate.getTime()) ? null : candidate;
-    };
-
-    const parseDisplayDate = (value) => {
-      if (!value || !/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
-        return null;
-      }
-      const [day, month, year] = value.split("/").map(Number);
-      const candidate = new Date(year, month - 1, day);
-      return Number.isNaN(candidate.getTime()) ? null : candidate;
-    };
-
-    const formatIsoDate = (date) => {
-      if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-        return "";
-      }
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    };
-
-    const formatDisplayDate = (date) => {
-      if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-        return "";
-      }
-      const day = String(date.getDate()).padStart(2, "0");
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    };
-
-    const airDatepickerLocaleEs = {
+    const airLocaleEs = {
       days: ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"],
       daysShort: ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"],
       daysMin: ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
-      months: [
-        "Enero",
-        "Febrero",
-        "Marzo",
-        "Abril",
-        "Mayo",
-        "Junio",
-        "Julio",
-        "Agosto",
-        "Septiembre",
-        "Octubre",
-        "Noviembre",
-        "Diciembre",
-      ],
+      months: monthNames,
       monthsShort: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
       today: "Hoy",
       clear: "Limpiar",
-      dateFormat: "dd/MM/yyyy",
+      dateFormat: "MM/yyyy",
       firstDay: 1,
     };
 
-    const setFromDate = (date) => {
-      fromValueInput.value = formatIsoDate(date);
-      fromPickerInput.value = formatDisplayDate(date);
-    };
-
-    const setToDate = (date) => {
-      toValueInput.value = formatIsoDate(date);
-      toPickerInput.value = formatDisplayDate(date);
-    };
-
-    const initialFromDate = parseIsoDate(fromValueInput.value);
-    const initialToDate = parseIsoDate(toValueInput.value);
-    setFromDate(initialFromDate);
-    setToDate(initialToDate);
-
-    const syncManualDate = (pickerInput, valueInput) => {
-      const typedDate = parseDisplayDate(pickerInput.value.trim()) || parseIsoDate(pickerInput.value.trim());
-      valueInput.value = formatIsoDate(typedDate);
-      pickerInput.value = formatDisplayDate(typedDate);
-    };
-
-    fromPickerInput.addEventListener("blur", () => syncManualDate(fromPickerInput, fromValueInput));
-    fromPickerInput.addEventListener("change", () => syncManualDate(fromPickerInput, fromValueInput));
-    toPickerInput.addEventListener("blur", () => syncManualDate(toPickerInput, toValueInput));
-    toPickerInput.addEventListener("change", () => syncManualDate(toPickerInput, toValueInput));
+    const currentValue = valueInput.value;
+    let initialDate = null;
+    if (currentValue && /^\d{4}-\d{2}$/.test(currentValue)) {
+      const [y, m] = currentValue.split("-").map(Number);
+      initialDate = new Date(y, m - 1, 1);
+      pickerInput.value = monthNames[m - 1] + " " + y;
+    }
 
     if (typeof AirDatepicker !== "undefined") {
-      const fromPicker = new AirDatepicker(fromPickerInput, {
-        locale: airDatepickerLocaleEs,
+      const picker = new AirDatepicker(pickerInput, {
+        locale: airLocaleEs,
+        view: "months",
+        minView: "months",
+        dateFormat: "MMMM yyyy",
         autoClose: true,
-        showEvent: "click",
-        toggleSelected: true,
-        dateFormat: "dd/MM/yyyy",
-        selectedDates: initialFromDate ? [initialFromDate] : [],
+        selectedDates: initialDate ? [initialDate] : [],
         onSelect: ({ date }) => {
-          const selectedDate = Array.isArray(date) ? date[0] : date;
-          setFromDate(selectedDate);
+          const d = Array.isArray(date) ? date[0] : date;
+          if (!d) return;
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, "0");
+          valueInput.value = y + "-" + m;
+          pickerInput.value = monthNames[d.getMonth()] + " " + y;
+          pickerInput.closest("form").submit();
         },
       });
-
-      const toPicker = new AirDatepicker(toPickerInput, {
-        locale: airDatepickerLocaleEs,
-        autoClose: true,
-        showEvent: "click",
-        toggleSelected: true,
-        dateFormat: "dd/MM/yyyy",
-        selectedDates: initialToDate ? [initialToDate] : [],
-        onSelect: ({ date }) => {
-          const selectedDate = Array.isArray(date) ? date[0] : date;
-          setToDate(selectedDate);
-        },
-      });
-
-      fromPickerInput.addEventListener("focus", () => fromPicker.show());
-      fromPickerInput.addEventListener("click", () => fromPicker.show());
-      toPickerInput.addEventListener("focus", () => toPicker.show());
-      toPickerInput.addEventListener("click", () => toPicker.show());
+      pickerInput.addEventListener("click", () => picker.show());
     }
   })();
 </script>

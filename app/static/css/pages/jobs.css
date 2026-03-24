@@ -249,22 +249,19 @@ html[data-theme="dark"] .search-result.is-active {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  color: var(--color-muted);
+  color: var(--color-ink);
 }
 
 .parts-summary-row strong {
   font-variant-numeric: tabular-nums;
-  color: var(--color-ink);
+  color: inherit;
+  white-space: nowrap;
 }
 
 .parts-summary-row.total {
   padding-top: 8px;
   border-top: 1px solid var(--color-border);
   font-weight: 700;
-}
-
-.parts-summary-row.total strong {
-  color: var(--color-primary);
 }
 
 html[data-theme="dark"] .parts-summary {
@@ -453,4 +450,46 @@ html[data-theme="dark"] .air-datepicker {
   color: var(--color-muted);
   font-size: 0.85rem;
   overflow-wrap: anywhere;
+}
+
+.job-sticky-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: none;
+  gap: 8px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+}
+
+.job-sticky-btn {
+  flex: 1;
+  justify-content: center;
+}
+
+html[data-theme="dark"] .job-sticky-bar {
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 640px) {
+  .job-sticky-bar.show-mobile {
+    display: flex;
+  }
+
+  .detail-stack:has(.job-sticky-bar) {
+    padding-bottom: 72px;
+  }
+
+  .job-status-field {
+    max-width: none;
+    width: 100%;
+  }
+
+  .job-status-field .input {
+    width: 100%;
+  }
 }

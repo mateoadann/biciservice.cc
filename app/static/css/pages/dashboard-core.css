@@ -159,6 +159,7 @@ html[data-theme="dark"] .detail-summary .job-code {
 .pagination {
   display: flex;
   align-items: center;
+  justify-content: space-around;
   gap: 8px;
   padding: 6px 10px;
   border: 1px solid var(--color-border);
@@ -168,4 +169,177 @@ html[data-theme="dark"] .detail-summary .job-code {
 
 .pagination-top {
   margin-left: auto;
+}
+
+/* Action cards */
+.stat-card-action {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stat-card-action:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card-warning {
+  background: rgba(255, 140, 43, 0.14);
+  border-color: rgba(255, 140, 43, 0.3);
+}
+
+html[data-theme="dark"] .stat-card-warning {
+  background: rgba(255, 140, 43, 0.22);
+  border-color: rgba(255, 140, 43, 0.45);
+  color: #fde68a;
+}
+
+html[data-theme="dark"] .stat-card-warning .stat-label,
+html[data-theme="dark"] .stat-card-warning .stat-meta {
+  color: #fcd34d;
+}
+
+.stat-card-success {
+  background: rgba(25, 179, 107, 0.14);
+  border-color: rgba(25, 179, 107, 0.3);
+}
+
+html[data-theme="dark"] .stat-card-success {
+  background: rgba(25, 179, 107, 0.22);
+  border-color: rgba(25, 179, 107, 0.45);
+  color: #a7f3d0;
+}
+
+html[data-theme="dark"] .stat-card-success .stat-label,
+html[data-theme="dark"] .stat-card-success .stat-meta {
+  color: #6ee7b7;
+}
+
+.stat-card-info {
+  background: rgba(31, 76, 255, 0.08);
+  border-color: rgba(31, 76, 255, 0.2);
+}
+
+html[data-theme="dark"] .stat-card-info {
+  background: rgba(96, 165, 250, 0.2);
+  border-color: rgba(96, 165, 250, 0.4);
+  color: #bfdbfe;
+}
+
+html[data-theme="dark"] .stat-card-info .stat-label,
+html[data-theme="dark"] .stat-card-info .stat-meta {
+  color: #93c5fd;
+}
+
+.stat-card-cta {
+  background: linear-gradient(135deg, var(--color-primary), #3b6bff);
+  color: #fff;
+  border-color: transparent;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-card-cta .stat-value {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.stat-card-cta .stat-label {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+@keyframes pulse-warning {
+  0%, 100% { box-shadow: var(--shadow-card); }
+  50% { box-shadow: var(--shadow-card), 0 0 0 4px rgba(255, 140, 43, 0.2); }
+}
+
+.stat-card-pulse {
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+/* Dark mode base stat card */
+html[data-theme="dark"] .stat-card {
+  background: var(--color-surface);
+  border-color: rgba(148, 163, 184, 0.25);
+}
+
+html[data-theme="dark"] .stat-card .stat-label,
+html[data-theme="dark"] .stat-card .stat-meta {
+  color: var(--color-muted);
+}
+
+html[data-theme="dark"] .stat-card-action:hover {
+  box-shadow: var(--shadow-card), 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Onboarding section */
+.dashboard-onboarding {
+  margin-top: 20px;
+}
+
+.onboarding-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: rgba(31, 76, 255, 0.06);
+  border: 1px solid rgba(31, 76, 255, 0.15);
+  margin-bottom: 20px;
+}
+
+.onboarding-card p {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+}
+
+html[data-theme="dark"] .onboarding-card {
+  background: rgba(96, 165, 250, 0.1);
+  border-color: rgba(96, 165, 250, 0.25);
+}
+
+/* Alerts top */
+.dashboard-alerts-top {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* Summary header: month picker + revenue inline */
+.dashboard-summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.dashboard-month-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.dashboard-month-form .input {
+  max-width: 200px;
+  cursor: pointer;
+}
+
+.metric-inline {
+  text-align: right;
+}
+
+.metric-inline .metric-value {
+  font-size: 1.5rem;
+}
+
+.summary-meta {
+  font-size: 0.78rem;
+  margin-top: 2px;
 }

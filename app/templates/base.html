@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta name="theme-color" content="{{ theme.primary or '#1f4cff' }}">
   <meta name="mobile-web-app-capable" content="yes">
@@ -217,6 +217,21 @@
         <a href="{{ url_for('main.super_admin_audit') }}" class="nav-link{% if is_super_audit %} active{% endif %}" {% if is_super_audit %}aria-current="page"{% endif %}>Auditoria Global</a>
         {% endif %}
 
+        {% if current_user.role == "owner" and stores %}
+        <div class="nav-store-selector hide-desktop">
+          <form method="post" action="{{ url_for('main.stores_switch') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="store_id" onchange="this.form.submit()" class="input topbar-select">
+              {% for store in stores %}
+              <option value="{{ store.id }}" {% if active_store and store.id==active_store.id %}selected{% endif %}>
+                {{ store.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </form>
+        </div>
+        {% endif %}
+
         <a href="{{ url_for('auth.logout') }}" class="nav-link nav-link-logout" title="Cerrar Sesion">
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -231,6 +246,7 @@
 
       </nav>
     </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     {% endif %}
 
     <main class="content">
@@ -254,12 +270,6 @@
           </form>
           {% endif %}
 
-          {% if app_tour.enabled %}
-          <button class="button button-ghost js-tour-launch" type="button" data-tour="tour-launcher">
-            Como empiezo?
-          </button>
-          {% endif %}
-
           {% block page_actions %}
           {% if current_user.role != "super_admin" %}
           <a class="button" href="{{ url_for('main.jobs_create') }}" data-tour="action-new-job">Nuevo trabajo</a>
@@ -269,12 +279,12 @@
       </header>
       {% endif %}
 
-      {% set flash_stack_class = 'flash-stack flash-stack-page' %}
-      {% include '_flash.html' %}
-
       {% block content %}{% endblock %}
     </main>
   </div>
+
+  {% set flash_stack_class = 'flash-stack flash-stack-page' %}
+  {% include '_flash.html' %}
 
   <div class="modal-overlay" id="confirmOverlay" aria-hidden="true">
     <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
@@ -292,10 +302,23 @@
     </div>
   </div>
 
+  <div class="drawer-overlay" id="detailDrawer" aria-hidden="true">
+    <div class="drawer" role="dialog" aria-modal="true">
+      <div class="drawer-header">
+        <h3 class="drawer-title"></h3>
+        <button class="modal-close" type="button" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="drawer-body"></div>
+      <div class="drawer-footer"></div>
+    </div>
+  </div>
+
   <script src="{{ asset_url('js/pwa-register.js') }}" defer></script>
   <script src="{{ asset_url('js/table-search.js') }}" defer></script>
   <script src="{{ asset_url('js/pagination.js') }}" defer></script>
   <script src="{{ asset_url('js/app-tour.js') }}" defer></script>
+  <script src="{{ asset_url('js/pull-to-refresh.js') }}" defer></script>
+  <script src="{{ asset_url('js/detail-drawer.js') }}" defer></script>
   <script>
     const navToggle = document.querySelector('.nav-toggle');
     const nav = document.querySelector('.nav');
@@ -327,6 +350,8 @@
       }
     };
 
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
     const setMobileMenuState = (open) => {
       if (!sidebar || !nav) return;
       const isOpen = Boolean(open) && isMobileSidebar();
@@ -334,7 +359,13 @@
       sidebar.classList.toggle('mobile-menu-open', isOpen);
       navToggle?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
       collapseToggle?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      sidebarOverlay?.classList.toggle('is-active', isOpen);
+      document.body.style.overflow = isOpen ? 'hidden' : '';
     };
+
+    sidebarOverlay?.addEventListener('click', () => {
+      setMobileMenuState(false);
+    });
 
     const persisted = (() => {
       try {
@@ -445,12 +476,14 @@
       confirmAccept.textContent = finalMessage ? 'Continuar' : finalAccept;
       confirmOverlay.classList.add('is-open');
       confirmOverlay.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
     };
 
     const closeConfirmModal = () => {
       if (!confirmOverlay) return;
       confirmOverlay.classList.remove('is-open');
       confirmOverlay.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
       confirmForm = null;
       confirmStep = 1;
     };

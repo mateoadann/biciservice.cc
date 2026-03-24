@@ -7,8 +7,8 @@
 .flash-stack-page {
   margin: 0;
   position: fixed;
-  top: 16px;
-  right: 16px;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
   width: min(360px, calc(100vw - 32px));
   z-index: 1200;
   justify-items: stretch;
