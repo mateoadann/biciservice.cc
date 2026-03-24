@@ -127,4 +127,4 @@ prod-backup-db: ## Backup de base de datos en produccion
 	$(PROD_COMPOSE) exec -T db pg_dump -U postgres biciservice_cc | gzip > /opt/apps/backups/manual/db_$$(date +%Y%m%d_%H%M%S).sql.gz
 
 prod-deploy: ## Ejecutar deploy manual en produccion
-	bash scripts/deploy.sh
+	bash scripts/release.sh
