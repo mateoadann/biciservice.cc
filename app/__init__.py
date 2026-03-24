@@ -60,7 +60,11 @@ def create_app(config_class=Config):
 
     @app.get("/health")
     def health_check():
-        return "ok", 200
+        try:
+            db.session.execute(db.text("SELECT 1"))
+            return {"status": "ok", "db": "connected"}, 200
+        except Exception:
+            return {"status": "error", "db": "disconnected"}, 503
 
     @app.get("/manifest.webmanifest")
     def manifest_file():

@@ -14,7 +14,8 @@ DB_SERVICE ?= db
 	build up up-build up-full down restart docker-ps logs \
 	docker-db-upgrade docker-db-migrate docker-db-downgrade docker-test \
 	shell db-shell landing-dev email-test docker-email-test \
-	prod-up prod-down prod-logs prod-db-upgrade prod-shell prod-email-test
+	prod-up prod-down prod-logs prod-db-upgrade prod-shell prod-email-test \
+	prod-backup-db prod-deploy
 
 help: ## Mostrar comandos disponibles
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUso:\n  make <objetivo>\n\nObjetivos:\n"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "  %-22s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -121,3 +122,9 @@ prod-shell: ## Abrir shell en contenedor web produccion
 
 prod-email-test: ## Enviar correo de prueba en produccion (pide email)
 	$(PROD_COMPOSE) exec web $(FLASK) send-test-email
+
+prod-backup-db: ## Backup de base de datos en produccion
+	$(PROD_COMPOSE) exec -T db pg_dump -U postgres biciservice_cc | gzip > /opt/apps/backups/manual/db_$$(date +%Y%m%d_%H%M%S).sql.gz
+
+prod-deploy: ## Ejecutar deploy manual en produccion
+	bash scripts/deploy.sh
