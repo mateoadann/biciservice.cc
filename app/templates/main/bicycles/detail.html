@@ -17,7 +17,10 @@
             <span class="muted" style="font-size:0.85rem">{{ bicycle.jobs|length }} trabajo{{ 's' if bicycle.jobs|length != 1 else '' }}</span>
           </div>
         </div>
-        <a class="button button-ghost button-compact" href="{{ url_for('main.bicycles') }}">Volver a bicicletas</a>
+        <a class="button button-ghost button-compact btn-back-mobile" href="{{ url_for('main.bicycles') }}">
+          <svg class="icon btn-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          <span class="btn-back-label">Volver a bicicletas</span>
+        </a>
       </div>
       <div class="panel-body">
         <div class="form-grid">

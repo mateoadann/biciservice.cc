@@ -54,3 +54,9 @@ app/static/uploads/
 
 # Logs
 *.log
+
+# Screenshots de referencia local
+*.png
+
+# Documentacion y planes locales (Claude Code)
+docs/
